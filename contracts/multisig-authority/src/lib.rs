@@ -183,7 +183,6 @@ impl MultisigAuthority {
         require_string_len(&description, MAX_DESCRIPTION_LEN)?;
         require_non_negative_amount(value)?;
 
-        proposer.require_auth();
         assert_is_signer(&env, &proposer, SIGNERS_KEY)?;
 
         let mut proposals = Self::load_proposals(&env);
@@ -224,7 +223,6 @@ impl MultisigAuthority {
     /// Emits a `signed` event for every signature collected (audit trail).
     pub fn sign(env: Env, signer: Address, proposal_id: String) -> Result<u32, ContractError> {
         Self::require_current_schema(&env)?;
-        signer.require_auth();
         assert_is_signer(&env, &signer, SIGNERS_KEY)?;
 
         let mut proposals = Self::load_proposals(&env);
@@ -265,7 +263,6 @@ impl MultisigAuthority {
         proposal_id: String,
     ) -> Result<i128, ContractError> {
         Self::require_current_schema(&env)?;
-        executor.require_auth();
         assert_is_signer(&env, &executor, SIGNERS_KEY)?;
 
         let mut proposals = Self::load_proposals(&env);
@@ -307,7 +304,6 @@ impl MultisigAuthority {
     /// Add a new signer. Admin only.
     pub fn add_signer(env: Env, admin: Address, new_signer: Address) -> Result<(), ContractError> {
         Self::require_current_schema(&env)?;
-        admin.require_auth();
         assert_is_admin(&env, &admin, ADMIN_KEY)?;
 
         let mut signers = Self::load_signers(&env)?;
@@ -332,7 +328,6 @@ impl MultisigAuthority {
     /// Remove a signer. Admin only. Fails if removal would make quorum unreachable.
     pub fn remove_signer(env: Env, admin: Address, signer: Address) -> Result<(), ContractError> {
         Self::require_current_schema(&env)?;
-        admin.require_auth();
         assert_is_admin(&env, &admin, ADMIN_KEY)?;
 
         let mut signers = Self::load_signers(&env)?;
@@ -369,7 +364,6 @@ impl MultisigAuthority {
         new_threshold: u32,
     ) -> Result<(), ContractError> {
         Self::require_current_schema(&env)?;
-        admin.require_auth();
         assert_is_admin(&env, &admin, ADMIN_KEY)?;
 
         let signers = Self::load_signers(&env)?;
@@ -394,7 +388,6 @@ impl MultisigAuthority {
         limit: i128,
     ) -> Result<(), ContractError> {
         Self::require_current_schema(&env)?;
-        admin.require_auth();
         assert_is_admin(&env, &admin, ADMIN_KEY)?;
         require_non_negative_amount(limit)?;
 
@@ -480,7 +473,6 @@ impl MultisigAuthority {
         admin: Address,
         new_wasm_hash: BytesN<32>,
     ) -> Result<(), ContractError> {
-        admin.require_auth();
         assert_is_admin(&env, &admin, ADMIN_KEY)?;
         env.deployer().update_current_contract_wasm(new_wasm_hash);
         env.events().publish((symbol_short!("upgrade"),), ());
@@ -489,7 +481,6 @@ impl MultisigAuthority {
 
     /// Convert persisted state to [`SCHEMA_VERSION`]. Returns the version migrated from.
     pub fn migrate(env: Env, admin: Address) -> Result<u32, ContractError> {
-        admin.require_auth();
         assert_is_admin(&env, &admin, ADMIN_KEY)?;
 
         let stored: u32 = env
