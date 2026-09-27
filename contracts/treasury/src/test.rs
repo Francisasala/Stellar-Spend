@@ -5,7 +5,10 @@ use stellar_spend_shared::errors::ContractError;
 
 use crate::test_utils::{assert_fresh_init_is_current, TreasuryTest};
 use crate::{MAX_FEE_TIERS, MAX_SINGLE_FEE_BP, SCHEMA_VERSION};
-use soroban_sdk::testutils::Events as _;
+use soroban_sdk::{
+    testutils::{Address as _, Events as _},
+    vec, Address, Symbol,
+};
 
 // ── Initialisation ───────────────────────────────────────────────────────────
 
@@ -323,7 +326,7 @@ fn treasury_fee_schedule_obeys_the_monotonic_invariant() {
         let expected = schedule
             .iter()
             .filter(|(threshold, _)| (*threshold as i128) <= amount)
-            .map(|(_, bps)| *bps)
+            .map(|(_, bps)| bps)
             .last()
             .unwrap_or(0);
 
@@ -641,8 +644,6 @@ fn collect_fee_batch_reports_overflow_across_items() {
 
 #[test]
 fn collect_fee_batch_emits_a_single_event_with_summary() {
-    use soroban_sdk::symbol_short;
-
     let t = TreasuryTest::setup();
     let amounts = vec![&t.env, 1_000_000, 5_000_000];
     let recipient = Address::generate(&t.env);
@@ -656,7 +657,7 @@ fn collect_fee_batch_emits_a_single_event_with_summary() {
         event,
         &t.contract_id,
         &t.env,
-        symbol_short!("collect_batch"),
+        Symbol::new(&t.env, "fee_batch"),
         (recipient, 15_000i128, 2u32),
     );
 }

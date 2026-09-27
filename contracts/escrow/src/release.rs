@@ -51,13 +51,7 @@ pub fn release(env: &Env, deposit_id: u64, recipient: Address) -> Result<i128, C
 // ── Helpers (shared with refund.rs) ──────────────────────────────────────────
 
 pub(crate) fn require_admin(env: &Env) -> Result<Address, ContractError> {
-    let admin: Address = env
-        .storage()
-        .instance()
-        .get(&DataKey::Admin)
-        .ok_or(ContractError::NotInitialized)?;
-    admin.require_auth();
-    Ok(admin)
+    stellar_spend_shared::auth::require_admin(env, &DataKey::Admin)
 }
 
 pub(crate) fn load_deposits(

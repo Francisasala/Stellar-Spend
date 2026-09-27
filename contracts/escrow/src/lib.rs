@@ -49,10 +49,9 @@ mod create;
 mod refund;
 mod release;
 
-use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Map, String};
+use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Map};
 use stellar_spend_shared::{errors::ContractError, validation::check_schema_version};
-use shared::EventFormat;
-use dispute::{DisputeHandler, DisputeError, DisputeStatus};
+use stellar_spend_shared::events::EventFormat;
 
 // ── Sub-modules (issue #812) ──────────────────────────────────────────────────
 
@@ -94,6 +93,39 @@ pub enum DataKey {
     Schema,
     /// Reentrancy guard: `true` while a release/refund is executing.
     Lock,
+}
+
+/// Deposit record (schema v2).
+///
+/// v1 records carried the same fields minus `fee_bps`; [`EscrowContract::migrate`]
+/// widens stored entries in place and defaults the fee to `0`.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EscrowDeposit {
+    pub depositor: Address,
+    pub amount: i128,
+    pub bridge_address: Address,
+    pub timestamp: u64,
+    pub timeout_ledger: u32,
+    pub released: bool,
+    pub refunded: bool,
+    pub fee_bps: u32,
+}
+
+/// Deposit record as written by schema v1 (no `fee_bps`).
+///
+/// Retained purely so [`EscrowContract::migrate`] can decode entries written by an
+/// older build; current code never writes this shape.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EscrowDepositV1 {
+    pub depositor: Address,
+    pub amount: i128,
+    pub bridge_address: Address,
+    pub timestamp: u64,
+    pub timeout_ledger: u32,
+    pub released: bool,
+    pub refunded: bool,
 }
 
 #[contracttype]
@@ -191,6 +223,17 @@ impl EscrowContract {
 
     // ── Upgrade surface (issue #817) ──────────────────────────────────────────
 
+    /// Report the stored schema version.
+    ///
+    /// Skips `require_current_schema` on purpose: a deployment that is still on an
+    /// older layout must be able to say so, otherwise `migrate` cannot be targeted.
+    pub fn schema_version(env: Env) -> Result<u32, ContractError> {
+        env.storage()
+            .instance()
+            .get(&DataKey::Schema)
+            .ok_or(ContractError::NotInitialized)
+    }
+
     /// Replace the contract WASM. Authority only.
     ///
     /// Storage is untouched by the swap, so the new build must be able to read the
@@ -277,3 +320,9 @@ impl EscrowContract {
             .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_EXTEND_TO);
     }
 }
+
+#[cfg(feature = "testutils")]
+pub mod test_utils;
+
+#[cfg(test)]
+mod test;

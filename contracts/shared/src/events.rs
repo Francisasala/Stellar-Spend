@@ -1,48 +1,48 @@
-use soroban_sdk::{Address, Env, Symbol, Vec, String};
+use soroban_sdk::{Address, Env, Symbol, Vec, String, Val};
 
 /// Shared event topics
 pub mod topics {
-    use soroban_sdk::symbol_short;
+    use soroban_sdk::{symbol_short, Symbol};
 
     // Admin events
-    pub const ADMIN_INITIALIZED: Symbol = symbol_short!("admin_init");
-    pub const ADMIN_UPDATED: Symbol = symbol_short!("admin_upd");
-    pub const ADMIN_REMOVED: Symbol = symbol_short!("admin_rem");
+    pub const ADMIN_INIT: Symbol = symbol_short!("adminini");
+    pub const ADMIN_UPDT: Symbol = symbol_short!("adminupd");
+    pub const ADMIN_RMV: Symbol = symbol_short!("adminrmv");
 
     // Escrow events
-    pub const ESCROW_CREATED: Symbol = symbol_short!("escrow_crt");
-    pub const ESCROW_FUNDED: Symbol = symbol_short!("escrow_fnd");
-    pub const ESCROW_RELEASED: Symbol = symbol_short!("escrow_rel");
-    pub const ESCROW_REFUNDED: Symbol = symbol_short!("escrow_ref");
-    pub const ESCROW_CANCELLED: Symbol = symbol_short!("escrow_can");
+    pub const ESCROW_CRT: Symbol = symbol_short!("escrowcr");
+    pub const ESCROW_FND: Symbol = symbol_short!("escrowfn");
+    pub const ESCROW_REL: Symbol = symbol_short!("escrowrl");
+    pub const ESCROW_REF: Symbol = symbol_short!("escrowrf");
+    pub const ESCROW_CAN: Symbol = symbol_short!("escrowca");
 
     // Dispute events
-    pub const DISPUTE_CREATED: Symbol = symbol_short!("dispute_crt");
-    pub const DISPUTE_RESOLVED: Symbol = symbol_short!("dispute_res");
+    pub const DISPUTE_CRT: Symbol = symbol_short!("dscrt");
+    pub const DISPUTE_RES: Symbol = symbol_short!("dsres");
 
     // Fee events
-    pub const FEE_SET: Symbol = symbol_short!("fee_set");
-    pub const FEE_COLLECTED: Symbol = symbol_short!("fee_col");
-    pub const FEE_UPDATED: Symbol = symbol_short!("fee_upd");
+    pub const FEE_SET: Symbol = symbol_short!("feeset");
+    pub const FEE_COL: Symbol = symbol_short!("feecol");
+    pub const FEE_UPDT: Symbol = symbol_short!("feeupd");
 
     // Multisig events
-    pub const MULTISIG_SUBMITTED: Symbol = symbol_short!("msig_sub");
-    pub const MULTISIG_APPROVED: Symbol = symbol_short!("msig_app");
-    pub const MULTISIG_EXECUTED: Symbol = symbol_short!("msig_exec");
-    pub const MULTISIG_REJECTED: Symbol = symbol_short!("msig_rej");
+    pub const MSIG_SUB: Symbol = symbol_short!("msigsub");
+    pub const MSIG_APP: Symbol = symbol_short!("msigapp");
+    pub const MSIG_EXEC: Symbol = symbol_short!("msigex");
+    pub const MSIG_REJ: Symbol = symbol_short!("msigrej");
 
     // Treasury events
-    pub const TREASURY_DEPOSIT: Symbol = symbol_short!("treasury_dep");
-    pub const TREASURY_WITHDRAWAL: Symbol = symbol_short!("treasury_wit");
-    pub const TREASURY_BALANCE: Symbol = symbol_short!("treasury_bal");
+    pub const TREASURY_D: Symbol = symbol_short!("trdsub");
+    pub const TREASURY_W: Symbol = symbol_short!("trdwth");
+    pub const TREASURY_B: Symbol = symbol_short!("trdbal");
 
     // Shared events
-    pub const CONTRACT_PAUSED: Symbol = symbol_short!("contract_pau");
-    pub const CONTRACT_UNPAUSED: Symbol = symbol_short!("contract_unp");
-    pub const CONTRACT_UPGRADED: Symbol = symbol_short!("contract_upg");
+    pub const CONTRACT_PAU: Symbol = symbol_short!("cnpause");
+    pub const CONTRACT_UNP: Symbol = symbol_short!("cnunpa");
+    pub const CONTRACT_UPG: Symbol = symbol_short!("cnupgd");
 
     // Error events
-    pub const ERROR_OCCURRED: Symbol = symbol_short!("error_occ");
+    pub const ERROR_OCC: Symbol = symbol_short!("errocc");
 }
 
 /// Shared event format structure
@@ -53,7 +53,7 @@ impl EventFormat {
     pub fn emit(
         env: &Env,
         topic: Symbol,
-        data: impl soroban_sdk::IntoVal<Env, Vec<Val>>,
+        data: impl soroban_sdk::IntoVal<Env, Val>,
     ) {
         env.events().publish((topic, "v1"), data);
     }
@@ -63,14 +63,14 @@ impl EventFormat {
         env: &Env,
         topic: Symbol,
         version: &str,
-        data: impl soroban_sdk::IntoVal<Env, Vec<Val>>,
+        data: impl soroban_sdk::IntoVal<Env, Val>,
     ) {
         env.events().publish((topic, Symbol::new(env, version)), data);
     }
 
     /// Emit an admin initialized event
     pub fn emit_admin_initialized(env: &Env, admin: Address) {
-        Self::emit(env, topics::ADMIN_INITIALIZED, (admin, env.ledger().timestamp()));
+        Self::emit(env, topics::ADMIN_INIT, (admin, env.ledger().timestamp()));
     }
 
     /// Emit an escrow created event
@@ -81,7 +81,7 @@ impl EventFormat {
         seller: Address,
         amount: i128,
     ) {
-        Self::emit(env, topics::ESCROW_CREATED, (escrow_id, buyer, seller, amount, env.ledger().timestamp()));
+        Self::emit(env, topics::ESCROW_CRT, (escrow_id, buyer, seller, amount, env.ledger().timestamp()));
     }
 
     /// Emit an escrow funded event
@@ -91,7 +91,7 @@ impl EventFormat {
         funder: Address,
         amount: i128,
     ) {
-        Self::emit(env, topics::ESCROW_FUNDED, (escrow_id, funder, amount, env.ledger().timestamp()));
+        Self::emit(env, topics::ESCROW_FND, (escrow_id, funder, amount, env.ledger().timestamp()));
     }
 
     /// Emit an escrow released event
@@ -101,7 +101,7 @@ impl EventFormat {
         recipient: Address,
         amount: i128,
     ) {
-        Self::emit(env, topics::ESCROW_RELEASED, (escrow_id, recipient, amount, env.ledger().timestamp()));
+        Self::emit(env, topics::ESCROW_REL, (escrow_id, recipient, amount, env.ledger().timestamp()));
     }
 
     /// Emit an escrow refunded event
@@ -111,7 +111,7 @@ impl EventFormat {
         recipient: Address,
         amount: i128,
     ) {
-        Self::emit(env, topics::ESCROW_REFUNDED, (escrow_id, recipient, amount, env.ledger().timestamp()));
+        Self::emit(env, topics::ESCROW_REF, (escrow_id, recipient, amount, env.ledger().timestamp()));
     }
 
     /// Emit a dispute created event
@@ -122,7 +122,7 @@ impl EventFormat {
         respondent: Address,
         reason: String,
     ) {
-        Self::emit(env, topics::DISPUTE_CREATED, (escrow_id, initiator, respondent, reason, env.ledger().timestamp()));
+        Self::emit(env, topics::DISPUTE_CRT, (escrow_id, initiator, respondent, reason, env.ledger().timestamp()));
     }
 
     /// Emit a dispute resolved event
@@ -132,7 +132,7 @@ impl EventFormat {
         resolver: Address,
         outcome: String,
     ) {
-        Self::emit(env, topics::DISPUTE_RESOLVED, (escrow_id, resolver, outcome, env.ledger().timestamp()));
+        Self::emit(env, topics::DISPUTE_RES, (escrow_id, resolver, outcome, env.ledger().timestamp()));
     }
 
     /// Emit a fee set event
@@ -151,7 +151,7 @@ impl EventFormat {
         amount: i128,
         recipient: Address,
     ) {
-        Self::emit(env, topics::FEE_COLLECTED, (fee_type, amount, recipient, env.ledger().timestamp()));
+        Self::emit(env, topics::FEE_COL, (fee_type, amount, recipient, env.ledger().timestamp()));
     }
 
     /// Emit a multisig submitted event
@@ -161,7 +161,7 @@ impl EventFormat {
         proposer: Address,
         description: String,
     ) {
-        Self::emit(env, topics::MULTISIG_SUBMITTED, (proposal_id, proposer, description, env.ledger().timestamp()));
+        Self::emit(env, topics::MSIG_SUB, (proposal_id, proposer, description, env.ledger().timestamp()));
     }
 
     /// Emit a multisig approved event
@@ -170,7 +170,7 @@ impl EventFormat {
         proposal_id: u64,
         approver: Address,
     ) {
-        Self::emit(env, topics::MULTISIG_APPROVED, (proposal_id, approver, env.ledger().timestamp()));
+        Self::emit(env, topics::MSIG_APP, (proposal_id, approver, env.ledger().timestamp()));
     }
 
     /// Emit a multisig executed event
@@ -179,7 +179,7 @@ impl EventFormat {
         proposal_id: u64,
         executor: Address,
     ) {
-        Self::emit(env, topics::MULTISIG_EXECUTED, (proposal_id, executor, env.ledger().timestamp()));
+        Self::emit(env, topics::MSIG_EXEC, (proposal_id, executor, env.ledger().timestamp()));
     }
 
     /// Emit a treasury deposit event
@@ -189,7 +189,7 @@ impl EventFormat {
         amount: i128,
         asset: String,
     ) {
-        Self::emit(env, topics::TREASURY_DEPOSIT, (depositor, amount, asset, env.ledger().timestamp()));
+        Self::emit(env, topics::TREASURY_D, (depositor, amount, asset, env.ledger().timestamp()));
     }
 
     /// Emit a treasury withdrawal event
@@ -199,7 +199,7 @@ impl EventFormat {
         amount: i128,
         asset: String,
     ) {
-        Self::emit(env, topics::TREASURY_WITHDRAWAL, (recipient, amount, asset, env.ledger().timestamp()));
+        Self::emit(env, topics::TREASURY_W, (recipient, amount, asset, env.ledger().timestamp()));
     }
 
     /// Emit a contract paused event
@@ -207,7 +207,7 @@ impl EventFormat {
         env: &Env,
         caller: Address,
     ) {
-        Self::emit(env, topics::CONTRACT_PAUSED, (caller, env.ledger().timestamp()));
+        Self::emit(env, topics::CONTRACT_PAU, (caller, env.ledger().timestamp()));
     }
 
     /// Emit a contract unpaused event
@@ -215,7 +215,7 @@ impl EventFormat {
         env: &Env,
         caller: Address,
     ) {
-        Self::emit(env, topics::CONTRACT_UNPAUSED, (caller, env.ledger().timestamp()));
+        Self::emit(env, topics::CONTRACT_UNP, (caller, env.ledger().timestamp()));
     }
 
     /// Emit a contract upgraded event
@@ -223,7 +223,7 @@ impl EventFormat {
         env: &Env,
         new_wasm_hash: Vec<u8>,
     ) {
-        Self::emit(env, topics::CONTRACT_UPGRADED, (new_wasm_hash, env.ledger().timestamp()));
+        Self::emit(env, topics::CONTRACT_UPG, (new_wasm_hash, env.ledger().timestamp()));
     }
 
     /// Emit an error event
@@ -233,6 +233,6 @@ impl EventFormat {
         error_message: String,
         context: String,
     ) {
-        Self::emit(env, topics::ERROR_OCCURRED, (error_code, error_message, context, env.ledger().timestamp()));
+        Self::emit(env, topics::ERROR_OCC, (error_code, error_message, context, env.ledger().timestamp()));
     }
 }

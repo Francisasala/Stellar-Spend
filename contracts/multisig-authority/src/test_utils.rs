@@ -2,7 +2,7 @@
 
 use soroban_sdk::{
     testutils::{Address as _, Ledger as _},
-    Address, Env, Map, String, Symbol, Vec,
+    vec, Address, Env, Map, String, Symbol, Vec,
 };
 
 use crate::{
@@ -188,16 +188,6 @@ impl MultisigTest {
         let id = fixture.with_legacy_v1_state(&target);
         (fixture, id, target)
     }
-}
-
-/// Assert a freshly-initialised contract records the current schema version.
-pub fn assert_fresh_init_is_current(fixture: &MultisigTest) {
-    assert_eq!(
-        fixture.stored_schema(),
-        Some(SCHEMA_VERSION),
-        "init must persist the current schema version"
-    );
-}
 
     /// Override the default threshold for a re‑initialisation.
     pub fn override_threshold(&mut self, new_threshold: u32) {
@@ -227,6 +217,7 @@ pub fn assert_fresh_init_is_current(fixture: &MultisigTest) {
         // Clear the existing storage so init passes.
         self.env.as_contract(&self.contract_id, || {
             let keys = vec![
+                &self.env,
                 Symbol::new(&self.env, "admin"),
                 Symbol::new(&self.env, "signers"),
                 Symbol::new(&self.env, "threshold"),
@@ -261,4 +252,12 @@ pub fn assert_fresh_init_is_current(fixture: &MultisigTest) {
             &high_value_limit,
         );
     }
+}
+/// Assert a freshly-initialised contract records the current schema version.
+pub fn assert_fresh_init_is_current(fixture: &MultisigTest) {
+    assert_eq!(
+        fixture.stored_schema(),
+        Some(SCHEMA_VERSION),
+        "init must persist the current schema version"
+    );
 }

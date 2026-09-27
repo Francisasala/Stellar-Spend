@@ -1,7 +1,7 @@
 //! Multisig-authority unit tests.
 //!
 //! All setup comes from [`crate::test_utils`] (issue #818).
-use soroban_sdk::{testutils::Address as _, Address, Vec};
+use soroban_sdk::{testutils::Address as _, vec, Address, Vec};
 use stellar_spend_shared::errors::ContractError;
 
 use crate::test_utils::{
@@ -1012,7 +1012,7 @@ fn signer_removal_while_proposal_pending_drops_their_vote_live_count_recomputed(
 fn threshold_one_with_one_signer_allowed() {
     // Special case: 1-of-1 signer set should be allowed by init.
     let t = MultisigTest::registered();
-    let single_signer = vec![t.signer(0)];
+    let single_signer = vec![&t.env, t.signer(0)];
     t.client().init(&t.admin, &single_signer, &1, &0);
 
     let target = Address::generate(&t.env);

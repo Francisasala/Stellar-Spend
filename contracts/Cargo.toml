@@ -7,8 +7,8 @@ version = "1.0.0"
 edition = "2021"
 
 [workspace.dependencies]
+stellar-spend-shared = { path = "shared", version = "1.0.0" }
 soroban-sdk = "22"
-stellar-spend-shared = { path = "shared" }
 proptest = "1.5"
 
 # Cargo only honours [profile.*] at the workspace root — per-member copies are

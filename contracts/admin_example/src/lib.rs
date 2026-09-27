@@ -1,6 +1,6 @@
 #![no_std]
 use soroban_sdk::{contract, contracttype, Address, Env, String, panic_with_error};
-use shared::{AdminAuth, AuthError, SharedError};
+use stellar_spend_shared::{AdminAuth, AuthError, SharedError};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
