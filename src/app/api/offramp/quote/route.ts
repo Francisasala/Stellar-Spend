@@ -3,12 +3,11 @@ import { NextResponse, type NextRequest } from 'next/server';
 import type { ChainDetailsWithTokens } from '@allbridge/bridge-core-sdk';
 import { env } from '@/lib/env';
 import { fetchPaycrestQuote, buildQuote, calculateBridgeAmount } from '@/lib/offramp';
-import { ErrorHandler } from '@/lib/error-handler';
+import { ErrorHandler, ApiError, ErrorType } from '@/lib/error-handler';
 import { withAllbridgeTimeout } from '@/lib/offramp';
 import { isSupportedCurrency } from '@/lib/currencies';
 import { screenAddress } from '@/lib/compliance-screening';
 import { quoteRouteSchema, formatZodErrors } from '@/lib/validators';
-import { ApiError, ErrorType } from '@/lib/error-types';
 
 export const maxDuration = 20;
 
@@ -55,9 +54,8 @@ export async function POST(request: NextRequest) {
         currency,
       });
       if (screeningResult.verdict === 'deny') {
-        return NextResponse.json(
-          { error: 'Source address blocked by compliance screening', screening: screeningResult },
-          { status: 403 },
+        return ErrorHandler.forbidden(
+          'Source address blocked by compliance screening',
         );
       }
     }
@@ -104,8 +102,10 @@ export async function POST(request: NextRequest) {
         sdk.getAmountToBeReceived(bridgeAmount, stellarUsdc, baseUsdc),
         'getAmountToBeReceived',
       );
-    } catch {
-      return NextResponse.json({ error: 'Bridge quote unavailable' }, { status: 502 });
+    } catch (error) {
+      return ErrorHandler.handle(
+        ApiError.externalService('Allbridge', 'Bridge quote unavailable'),
+      );
     }
 
     // Fetch Paycrest FX rate
@@ -113,8 +113,10 @@ export async function POST(request: NextRequest) {
     let destinationAmount: string;
     try {
       ({ rate, destinationAmount } = await fetchPaycrestQuote(receiveAmount, currency));
-    } catch {
-      return NextResponse.json({ error: 'FX rate unavailable' }, { status: 502 });
+    } catch (error) {
+      return ErrorHandler.handle(
+        ApiError.externalService('Paycrest', 'FX rate unavailable'),
+      );
     }
 
     const quote = buildQuote(destinationAmount, rate, currency, '0', '0', 300);
