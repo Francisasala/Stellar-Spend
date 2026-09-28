@@ -242,3 +242,11 @@ export const allbridgeBreaker = new CircuitBreaker({
   resetTimeoutMs: 60_000,
   timeoutMs: 20_000,
 });
+
+/** Shared breaker for Paycrest offramp provider calls (#1206). */
+export const paycrestBreaker = new CircuitBreaker({
+  name: 'paycrest',
+  failureThreshold: 5,
+  resetTimeoutMs: 30_000,
+  timeoutMs: 15_000,
+});

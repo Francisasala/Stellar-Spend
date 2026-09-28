@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { env } from '@/lib/env';
 import { get, set, isFresh } from '@/lib/polling/status-cache';
 import { ErrorHandler } from '@/lib/error-handler';
+import { paycrestBreaker } from '@/lib/circuit-breaker';
 
 export const maxDuration = 10;
 
@@ -12,7 +13,6 @@ const PAYOUT_TERMINAL_STATES = ['validated', 'settled', 'refunded', 'expired'];
 export async function GET(_req: Request, { params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params;
 
-  // Check cache first
   const cached = get(orderId);
   if (cached && isFresh(cached)) {
     return NextResponse.json({
@@ -23,19 +23,20 @@ export async function GET(_req: Request, { params }: { params: Promise<{ orderId
   }
 
   try {
-    const res = await fetch(`${PAYCREST_BASE_URL}/sender/orders/${orderId}`, {
-      headers: {
-        Authorization: `Bearer ${env.server.PAYCREST_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    });
+    const res = await paycrestBreaker.execute(() =>
+      fetch(`${PAYCREST_BASE_URL}/sender/orders/${orderId}`, {
+        headers: {
+          Authorization: `Bearer ${env.server.PAYCREST_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      })
+    );
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       const errorMessage = body.message ?? 'Failed to fetch order status';
 
-      // Return stale cache entry with upstreamError if available
       if (cached) {
         return NextResponse.json({
           status: cached.status,
@@ -55,7 +56,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ orderId
     const status: string = data.status;
     const isTerminal = PAYOUT_TERMINAL_STATES.includes(status);
 
-    // Populate cache
     set(orderId, {
       status,
       raw: data,
@@ -67,7 +67,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ orderId
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal server error';
 
-    // Return stale cache entry with upstreamError if available
     if (cached) {
       return NextResponse.json({
         status: cached.status,

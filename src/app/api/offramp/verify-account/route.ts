@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { env } from '@/lib/env';
 import { ErrorHandler } from '@/lib/error-handler';
 import { ApiError, ErrorType } from '@/lib/error-types';
+import { paycrestBreaker } from '@/lib/circuit-breaker';
 
 export const maxDuration = 10;
 
@@ -19,14 +20,16 @@ class PaycrestAdapter {
   }
 
   async verifyAccount(institution: string, accountIdentifier: string): Promise<string> {
-    const response = await fetch(`${this.apiUrl}/verify-account`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'API-Key': this.apiKey,
-      },
-      body: JSON.stringify({ institution, accountIdentifier }),
-    });
+    const response = await paycrestBreaker.execute(() =>
+      fetch(`${this.apiUrl}/verify-account`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'API-Key': this.apiKey,
+        },
+        body: JSON.stringify({ institution, accountIdentifier }),
+      })
+    );
 
     const data = await response.json();
 
