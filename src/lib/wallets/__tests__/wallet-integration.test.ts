@@ -30,7 +30,6 @@ describe('Wallet Integration Tests', () => {
 
     it('should handle multiple rapid connections', async () => {
       const attempts = 5;
-      let successCount = 0;
 
       for (let i = 0; i < attempts; i++) {
         try {
@@ -95,9 +94,9 @@ describe('Wallet Integration Tests', () => {
 
     it('should handle unknown wallet type gracefully', async () => {
       try {
-        await manager.connect('unknown' as any);
-      } catch (err: any) {
-        expect(err.message).toContain('Unknown wallet type');
+        await manager.connect('unknown' as never);
+      } catch (err) {
+        expect(err instanceof Error ? err.message : String(err)).toContain('Unknown wallet type');
       }
     });
 
@@ -109,16 +108,16 @@ describe('Wallet Integration Tests', () => {
     it('should handle getPublicKey without connection', async () => {
       try {
         await manager.getPublicKey();
-      } catch (err: any) {
-        expect(err.message).toContain('not connected');
+      } catch (err) {
+        expect(err instanceof Error ? err.message : String(err)).toContain('not connected');
       }
     });
 
     it('should handle signTransaction without connection', async () => {
       try {
         await manager.signTransaction('test', { networkPassphrase: 'test' });
-      } catch (err: any) {
-        expect(err.message).toContain('not connected');
+      } catch (err) {
+        expect(err instanceof Error ? err.message : String(err)).toContain('not connected');
       }
     });
   });
@@ -137,7 +136,7 @@ describe('Wallet Integration Tests', () => {
     it('should return list of available wallets', () => {
       const available = manager.getAvailableWallets();
       expect(Array.isArray(available)).toBe(true);
-      available.forEach(wallet => {
+      available.forEach((wallet) => {
         expect(wallet.name).toBeDefined();
         expect(wallet.type).toBeDefined();
       });
@@ -163,7 +162,7 @@ describe('Wallet Integration Tests', () => {
         throw new Error('Listener error');
       };
 
-      manager.on('accountChange', errorListener as any);
+      manager.on('accountChange', errorListener);
 
       // Should not crash - error is caught and logged
       expect(true).toBe(true);
@@ -184,10 +183,7 @@ describe('Wallet Integration Tests', () => {
     });
 
     it('should queue operations without race conditions', async () => {
-      const ops = [
-        manager.disconnect(),
-        manager.getCurrentWalletType(),
-      ];
+      const ops = [manager.disconnect(), manager.getCurrentWalletType()];
 
       await Promise.all([ops[0]]);
 

@@ -1,66 +1,62 @@
 import { logger } from '@/lib/logger';
 import { NextResponse, type NextRequest } from 'next/server';
+import { z } from 'zod';
 import { globalContainer } from '@/lib/di';
-import { SERVICE_KEYS } from '@/lib/di/registry';
+import { SERVICE_KEYS } from '@/lib/di';
 import { withIdempotency } from '@/lib/idempotency';
+import { ErrorHandler } from '@/lib/error-handler';
+import { validateBody } from '@/lib/validation/validate-request';
+import { amountSchema } from '@/lib/validators/schemas';
 
 export const maxDuration = 20;
 
+const createOrderSchema = z.object({
+  quoteId: z.string().min(1),
+  fiatAmount: amountSchema,
+  fiatCurrency: z.string().min(1),
+  destinationAmount: amountSchema,
+  destinationToken: z.string().min(1),
+  destinationAddress: z.string().min(1),
+  provider: z.string().min(1),
+  rate: z.number().positive(),
+});
+
 export async function POST(request: NextRequest) {
-  return withIdempotency(request, async () => {
-    try {
-      const body = await request.json();
-      const { quoteId, fiatAmount, fiatCurrency, destinationAmount, destinationToken, destinationAddress, provider, rate } = body;
+  return withIdempotency(
+    request,
+    async () => {
+      try {
+        const validation = await validateBody(request, createOrderSchema);
+        if (!validation.success) return validation.response;
+        const {
+          quoteId,
+          fiatAmount,
+          fiatCurrency,
+          destinationAmount,
+          destinationToken,
+          destinationAddress,
+          provider,
+          rate,
+        } = validation.data;
 
-      if (!quoteId) {
-        return NextResponse.json({ error: 'quoteId is required' }, { status: 400 });
+        const svc = await globalContainer.resolve(SERVICE_KEYS.ONRAMP_SERVICE);
+        const order = await svc.createOrder({
+          quoteId,
+          fiatAmount,
+          fiatCurrency,
+          destinationAmount,
+          destinationToken,
+          destinationAddress,
+          provider,
+          rate,
+        });
+
+        return NextResponse.json(order, { status: 201 });
+      } catch (error) {
+        logger.error('Onramp order error:', {}, error);
+        return ErrorHandler.serverError(error);
       }
-
-      if (!fiatAmount || parseFloat(fiatAmount) <= 0) {
-        return NextResponse.json({ error: 'Invalid fiatAmount' }, { status: 400 });
-      }
-
-      if (!fiatCurrency) {
-        return NextResponse.json({ error: 'fiatCurrency is required' }, { status: 400 });
-      }
-
-      if (!destinationAmount || parseFloat(destinationAmount) <= 0) {
-        return NextResponse.json({ error: 'Invalid destinationAmount' }, { status: 400 });
-      }
-
-      if (!destinationToken) {
-        return NextResponse.json({ error: 'destinationToken is required' }, { status: 400 });
-      }
-
-      if (!destinationAddress) {
-        return NextResponse.json({ error: 'destinationAddress is required' }, { status: 400 });
-      }
-
-      if (!provider) {
-        return NextResponse.json({ error: 'provider is required' }, { status: 400 });
-      }
-
-      if (!rate || rate <= 0) {
-        return NextResponse.json({ error: 'Invalid rate' }, { status: 400 });
-      }
-
-      const svc = await globalContainer.resolve(SERVICE_KEYS.ONRAMP_SERVICE);
-      const order = await svc.createOrder({
-        quoteId,
-        fiatAmount,
-        fiatCurrency,
-        destinationAmount,
-        destinationToken,
-        destinationAddress,
-        provider,
-        rate,
-      });
-
-      return NextResponse.json(order, { status: 201 });
-    } catch (error) {
-      logger.error('Onramp order error:', {}, error);
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      return NextResponse.json({ error: message }, { status: 500 });
-    }
-  });
+    },
+    { required: true },
+  );
 }

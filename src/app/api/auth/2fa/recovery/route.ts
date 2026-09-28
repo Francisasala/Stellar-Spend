@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { TwoFAService } from '@/lib/two-fa';
+import { ErrorHandler } from '@/lib/error-handler';
+import { ApiError, ErrorType } from '@/lib/error-types';
+import { validateBody } from '@/lib/validation/validate-request';
+
+const recoverySchema = z.object({
+  userId: z.string().min(1).optional(),
+  recoveryToken: z.string().min(1).optional(),
+  newMethod: z.string().min(1).optional(),
+});
 
 // Initiate recovery — issues a short-lived token
 export async function POST(req: NextRequest) {
   try {
-    const { userId, recoveryToken, newMethod } = await req.json();
+    const validation = await validateBody(req, recoverySchema);
+    if (!validation.success) return validation.response;
+    const { userId, recoveryToken, newMethod } = validation.data;
 
     // Start recovery: userId provided, no token yet
     if (userId && !recoveryToken) {
@@ -19,15 +31,12 @@ export async function POST(req: NextRequest) {
     // Complete recovery: token + new method provided
     if (recoveryToken && newMethod) {
       if (!['totp', 'sms'].includes(newMethod)) {
-        return NextResponse.json({ error: "newMethod must be 'totp' or 'sms'" }, { status: 400 });
+        return ErrorHandler.validation("newMethod must be 'totp' or 'sms'");
       }
 
       const config = TwoFAService.completeRecovery(recoveryToken, newMethod);
       if (!config) {
-        return NextResponse.json(
-          { error: 'Invalid or expired recovery token' },
-          { status: 400 },
-        );
+        return ErrorHandler.validation('Invalid or expired recovery token');
       }
 
       return NextResponse.json({
@@ -38,11 +47,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json(
-      { error: 'Provide userId to initiate, or recoveryToken + newMethod to complete' },
-      { status: 400 },
+    return ErrorHandler.validation(
+      'Provide userId to initiate, or recoveryToken + newMethod to complete',
     );
-  } catch (error) {
-    return NextResponse.json({ error: 'Recovery flow failed' }, { status: 500 });
+  } catch (_error) {
+    return ErrorHandler.handle(new ApiError(ErrorType.SERVER_ERROR, 'Recovery flow failed'));
   }
 }

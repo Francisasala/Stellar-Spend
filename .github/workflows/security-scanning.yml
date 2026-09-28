@@ -61,17 +61,24 @@ jobs:
         run: npm install --save-dev eslint-plugin-security
 
       - name: Run security linting
-        run: npx eslint . --ext .ts,.tsx --plugin security --rule 'security/detect-object-injection: warn'
+        run: |
+          npx eslint . --ext .ts,.tsx --plugin security --rule 'security/detect-object-injection: warn'
         continue-on-error: true
 
   # ── Secret scanning ────────────────────────────────────────────────────────
   secret-scan:
-    name: Secret Scanning
+    name: Secret Scanning (Gitleaks + TruffleHog)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Gitleaks Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: false
 
       - name: TruffleHog Secret Scan
         uses: trufflesecurity/trufflehog@main
@@ -161,21 +168,21 @@ jobs:
         run: |
           cat > SECURITY_REPORT.md << 'EOF'
           # Security Scan Report
-          
+
           Generated: $(date)
           Commit: ${{ github.sha }}
-          
+
           ## Scan Results
-          
+
           - **Dependency Scan**: ${{ needs.dependency-scan.result }}
           - **SAST**: ${{ needs.sast.result }}
           - **Secret Scan**: ${{ needs.secret-scan.result }}
           - **License Check**: ${{ needs.license-check.result }}
           - **Container Scan**: ${{ needs.container-scan.result }}
           - **CodeQL**: ${{ needs.codeql.result }}
-          
+
           ## Recommendations
-          
+
           1. Review all HIGH and CRITICAL vulnerabilities
           2. Update dependencies with security patches
           3. Rotate any exposed secrets immediately

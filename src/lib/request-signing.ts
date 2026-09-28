@@ -9,13 +9,13 @@ import { sign as _sign, safeCompare } from '@/lib/crypto/signature';
 export interface SignatureConfig {
   algorithm: 'sha256' | 'sha512';
   encoding: 'hex' | 'base64';
-  timestampTolerance: number;
+  timestampTolerance: number; // milliseconds
 }
 
 export const DEFAULT_SIGNATURE_CONFIG: SignatureConfig = {
   algorithm: 'sha256',
   encoding: 'hex',
-  timestampTolerance: 5 * 60 * 1000,
+  timestampTolerance: 5 * 60 * 1000, // 5 minutes
 };
 
 export function generateSignature(
@@ -41,21 +41,40 @@ export function verifySignature(
 ): { valid: boolean; error?: string } {
   const requestTime = parseInt(timestamp, 10);
   const now = Date.now();
-  if (isNaN(requestTime)) return { valid: false, error: 'Invalid timestamp format' };
+
+  if (isNaN(requestTime)) {
+    return { valid: false, error: 'Invalid timestamp format' };
+  }
+
   if (Math.abs(now - requestTime) > config.timestampTolerance) {
     return { valid: false, error: 'Request timestamp is too old or in the future' };
   }
+
   const expected = generateSignature(method, path, body, timestamp, secret, config);
   return safeCompare(expected, signature) ? { valid: true } : { valid: false };
 }
 
+/**
+ * Extract signature from request headers
+ */
 export function extractSignatureFromHeaders(
   headers: Record<string, string | string[] | undefined>,
-): { signature?: string; timestamp?: string; error?: string } {
+): {
+  signature?: string;
+  timestamp?: string;
+  error?: string;
+} {
   const signature = headers['x-signature'] || headers['x-hmac-signature'];
   const timestamp = headers['x-timestamp'] || headers['x-request-timestamp'];
-  if (!signature) return { error: 'Missing signature header (x-signature or x-hmac-signature)' };
-  if (!timestamp) return { error: 'Missing timestamp header (x-timestamp or x-request-timestamp)' };
+
+  if (!signature) {
+    return { error: 'Missing signature header (x-signature or x-hmac-signature)' };
+  }
+
+  if (!timestamp) {
+    return { error: 'Missing timestamp header (x-timestamp or x-request-timestamp)' };
+  }
+
   return {
     signature: Array.isArray(signature) ? signature[0] : signature,
     timestamp: Array.isArray(timestamp) ? timestamp[0] : timestamp,
@@ -75,7 +94,11 @@ export function createSignedRequestHeaders(
 ): Record<string, string> {
   const timestamp = generateTimestamp();
   const signature = generateSignature(method, path, body, timestamp, secret, config);
-  return { 'x-signature': signature, 'x-timestamp': timestamp };
+
+  return {
+    'x-signature': signature,
+    'x-timestamp': timestamp,
+  };
 }
 
 export function validateRequestSignature(
@@ -86,9 +109,16 @@ export function validateRequestSignature(
   secret: string,
   config: SignatureConfig = DEFAULT_SIGNATURE_CONFIG,
 ): { valid: boolean; error?: string } {
-  const { signature, timestamp, error } = extractSignatureFromHeaders(headers);
-  if (error) return { valid: false, error };
-  if (!signature || !timestamp) return { valid: false, error: 'Missing signature or timestamp' };
+  const { signature, timestamp, error: extractError } = extractSignatureFromHeaders(headers);
+
+  if (extractError) {
+    return { valid: false, error: extractError };
+  }
+
+  if (!signature || !timestamp) {
+    return { valid: false, error: 'Missing signature or timestamp' };
+  }
+
   return verifySignature(method, path, body, timestamp, signature, secret, config);
 }
 

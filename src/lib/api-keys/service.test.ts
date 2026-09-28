@@ -13,7 +13,7 @@ import {
   checkApiKeyRateLimit,
   createApiKey,
   isValidAdminToken,
-} from '@/lib/api-keys/service';
+} from '@/lib/api-keys';
 
 describe('api key service', () => {
   beforeEach(() => {
@@ -49,10 +49,7 @@ describe('api key service', () => {
     expect(result.status).toBe('active');
     expect(poolQueryMock).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO api_keys'),
-      expect.arrayContaining([
-        'Partner',
-        120,
-      ])
+      expect.arrayContaining(['Partner', 120]),
     );
   });
 

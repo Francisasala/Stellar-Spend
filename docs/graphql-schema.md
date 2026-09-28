@@ -24,7 +24,12 @@ query GetTransaction($id: ID!) {
     amount
     currency
     userAddress
-    beneficiary { institution accountIdentifier accountName currency }
+    beneficiary {
+      institution
+      accountIdentifier
+      accountName
+      currency
+    }
     stellarTxHash
     createdAt
   }
@@ -100,7 +105,11 @@ query {
     totalVolume
     completedTransactions
     failedTransactions
-    topCurrencies { currency count volume }
+    topCurrencies {
+      currency
+      count
+      volume
+    }
   }
 }
 ```
@@ -246,14 +255,14 @@ Errors are aligned with the REST middleware format:
 }
 ```
 
-| error code | HTTP equivalent |
-|---|---|
-| `UNAUTHORIZED` | 401 |
-| `FORBIDDEN` | 403 |
-| `VALIDATION_ERROR` | 400 |
-| `QUERY_TOO_DEEP` | 400 |
-| `QUERY_TOO_COMPLEX` | 400 |
-| `SERVER_ERROR` | 500 |
+| error code          | HTTP equivalent |
+| ------------------- | --------------- |
+| `UNAUTHORIZED`      | 401             |
+| `FORBIDDEN`         | 403             |
+| `VALIDATION_ERROR`  | 400             |
+| `QUERY_TOO_DEEP`    | 400             |
+| `QUERY_TOO_COMPLEX` | 400             |
+| `SERVER_ERROR`      | 500             |
 
 ## Security
 
@@ -261,3 +270,31 @@ Errors are aligned with the REST middleware format:
 - **Complexity limit**: Queries exceeding 500 nodes are rejected.
 - **Auth guards**: All queries/mutations require authentication. Admin/ops mutations require role headers.
 - **Error alignment**: Error responses follow the same `StandardErrorResponse` structure as REST endpoints.
+
+## Resolver usage audit (dead-field detection)
+
+Every `Query`, `Mutation`, and `Subscription` resolver is wrapped with usage
+tracking (`src/lib/graphql/resolver-usage.ts`) so call counts reflect what
+clients actually query, rather than a guess from reading the schema
+statically. Resolvers that never get called are the real candidates for
+removal.
+
+Fetch the live report:
+
+```
+GET /api/graphql?diagnostics=resolver-usage
+```
+
+Response:
+
+```json
+{
+  "usage": [{ "operationType": "Query", "fieldName": "transaction", "callCount": 42, "lastCalledAt": 1690000000000 }],
+  "unused": [{ "operationType": "Query", "fieldName": "legacyMerchantReport", "callCount": 0, "lastCalledAt": null }]
+}
+```
+
+Counters reset on server restart — treat this as a rolling window, not
+lifetime usage. Before deleting anything reported under `unused`, confirm
+it stays at zero calls over a full production traffic cycle (recommend at
+least 7 days) so infrequently-used-but-real fields aren't cut.

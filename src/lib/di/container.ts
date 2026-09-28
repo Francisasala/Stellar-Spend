@@ -22,9 +22,9 @@ export interface DIContainerConfig {
 }
 
 export class DIContainer {
-  private services: Map<string | symbol, ServiceRegistration<any>> = new Map();
-  private instances: Map<string | symbol, any> = new Map();
-  private scopes: Map<string, Map<string | symbol, any>> = new Map();
+  private services: Map<string | symbol, ServiceRegistration<unknown>> = new Map();
+  private instances: Map<string | symbol, unknown> = new Map();
+  private scopes: Map<string, Map<string | symbol, unknown>> = new Map();
   private config: DIContainerConfig;
 
   constructor(config: DIContainerConfig = { validateOnResolve: true }) {
@@ -77,7 +77,7 @@ export class DIContainer {
     // Create new instance
     let instance: T;
     if (typeof registration.provider === 'function') {
-      instance = await registration.provider();
+      instance = (await registration.provider()) as T;
     } else {
       instance = registration.provider as T;
     }
@@ -120,11 +120,11 @@ export class DIContainer {
     // Create new instance
     let instance: T;
     if (typeof registration.provider === 'function') {
-      const result = (registration.provider as any)();
+      const result = (registration.provider as () => unknown)();
       if (result instanceof Promise) {
         throw new Error(`Cannot resolve async service synchronously: ${String(key)}`);
       }
-      instance = result;
+      instance = result as T;
     } else {
       instance = registration.provider as T;
     }
@@ -192,7 +192,9 @@ export class DIContainer {
       try {
         await this.resolve(key);
       } catch (error) {
-        errors.push(`Failed to resolve ${String(key)}: ${error instanceof Error ? error.message : String(error)}`);
+        errors.push(
+          `Failed to resolve ${String(key)}: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     }
     return { valid: errors.length === 0, errors };

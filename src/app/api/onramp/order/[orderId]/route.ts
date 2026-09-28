@@ -1,10 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { globalContainer } from '@/lib/di';
-import { SERVICE_KEYS } from '@/lib/di/registry';
+import { SERVICE_KEYS } from '@/lib/di';
+import { ErrorHandler } from '@/lib/error-handler';
+import { ApiError, ErrorType } from '@/lib/error-types';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ orderId: string }> }
+  { params }: { params: Promise<{ orderId: string }> },
 ) {
   try {
     const { orderId } = await params;
@@ -14,8 +16,8 @@ export async function GET(
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     if (message.includes('not found')) {
-      return NextResponse.json({ error: message }, { status: 404 });
+      return ErrorHandler.handle(new ApiError(ErrorType.NOT_FOUND, message));
     }
-    return NextResponse.json({ error: message }, { status: 500 });
+    return ErrorHandler.serverError(error);
   }
 }

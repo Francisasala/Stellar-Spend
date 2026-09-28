@@ -1,0 +1,26 @@
+{
+  "chain_not_found": {
+    "status": 404,
+    "body": { "error": "ChainNotFound", "message": "Chain XYZ not found" }
+  },
+  "token_not_found": {
+    "status": 404,
+    "body": { "error": "TokenNotFound", "message": "Token DAI not found on chain SRB" }
+  },
+  "bridge_unavailable": {
+    "status": 503,
+    "body": { "error": "BridgeUnavailable", "message": "Bridge temporarily unavailable" }
+  },
+  "invalid_amount": {
+    "status": 400,
+    "body": { "error": "InvalidAmount", "message": "Amount must be positive" }
+  },
+  "timeout": {
+    "status": 504,
+    "body": { "error": "GatewayTimeout", "message": "Upstream request timed out" }
+  },
+  "rate_limit": {
+    "status": 429,
+    "body": { "error": "RateLimit", "message": "Rate limit exceeded" }
+  }
+}

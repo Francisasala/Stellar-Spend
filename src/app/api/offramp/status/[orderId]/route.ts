@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { env } from '@/lib/env';
-import { get, set, isFresh } from '@/lib/polling/status-cache';
+import { get, set, isFresh } from '@/lib/polling';
+import { ErrorHandler } from '@/lib/error-handler';
 
 export const maxDuration = 10;
 
@@ -44,10 +45,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ orderId
         });
       }
 
-      return NextResponse.json(
-        { error: errorMessage },
-        { status: res.status }
-      );
+      return NextResponse.json({ error: errorMessage }, { status: res.status });
     }
 
     const data = await res.json();
@@ -76,6 +74,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ orderId
       });
     }
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    return ErrorHandler.serverError(err);
   }
 }

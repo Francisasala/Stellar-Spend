@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  RecurringSchedule,
-  buildRecurringNotification,
-} from '@/lib/recurring-transactions';
+import { ErrorHandler } from '@/lib/error-handler';
+import { ApiError, ErrorType } from '@/lib/error-types';
+import { RecurringSchedule, buildRecurringNotification } from '@/lib/recurring-transactions';
 import { logger } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
   try {
     const secret = req.headers.get('x-cron-secret');
     if (secret !== process.env.CRON_SECRET) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ErrorHandler.unauthorized('Unauthorized');
     }
 
     const body = await req.json().catch(() => ({}));
     const dueSchedules: RecurringSchedule[] = body.schedules ?? [];
 
     if (!Array.isArray(dueSchedules)) {
-      return NextResponse.json({ error: 'schedules must be an array' }, { status: 400 });
+      return ErrorHandler.validation('schedules must be an array');
     }
 
     const results: Array<{ id: string; status: 'success' | 'failed'; error?: string }> = [];
@@ -25,7 +24,7 @@ export async function POST(req: NextRequest) {
     for (const schedule of dueSchedules) {
       try {
         // Execution logic: downstream services would process the offramp payment here.
-        logger.info('recurring.execute', { scheduleId: schedule.id, userAddress: schedule.userAddress });
+        logger.debug('recurring.execute', { scheduleId: schedule.id });
 
         results.push({ id: schedule.id, status: 'success' });
 
@@ -57,6 +56,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     logger.error('cron.execute-recurring.failed', {}, err);
-    return NextResponse.json({ error: 'Cron job failed' }, { status: 500 });
+    return ErrorHandler.handle(new ApiError(ErrorType.SERVER_ERROR, 'Cron job failed'));
   }
 }

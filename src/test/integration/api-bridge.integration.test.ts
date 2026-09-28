@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { createMocks } from 'node-mocks-http';
 
 describe('Bridge API Endpoints - Integration Tests', () => {
   describe('POST /api/offramp/bridge/build-tx', () => {
     it('should build valid Soroban transaction', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           amount: '100',
@@ -20,7 +20,7 @@ describe('Bridge API Endpoints - Integration Tests', () => {
     });
 
     it('should reject invalid Stellar address', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           amount: '100',
@@ -34,7 +34,7 @@ describe('Bridge API Endpoints - Integration Tests', () => {
     });
 
     it('should reject invalid Base address', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           amount: '100',
@@ -48,7 +48,7 @@ describe('Bridge API Endpoints - Integration Tests', () => {
     });
 
     it('should handle native fee payment', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           amount: '100',
@@ -64,7 +64,7 @@ describe('Bridge API Endpoints - Integration Tests', () => {
 
   describe('POST /api/offramp/bridge/submit-soroban', () => {
     it('should submit signed transaction', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           xdr: 'AAAAAgAAAAB...',
@@ -77,7 +77,7 @@ describe('Bridge API Endpoints - Integration Tests', () => {
     });
 
     it('should reject invalid XDR', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           xdr: 'INVALID',
@@ -91,7 +91,7 @@ describe('Bridge API Endpoints - Integration Tests', () => {
 
   describe('GET /api/offramp/bridge/status/:txHash', () => {
     it('should return bridge transfer status', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'GET',
         query: { txHash: 'test-tx-hash' },
       });
@@ -100,7 +100,7 @@ describe('Bridge API Endpoints - Integration Tests', () => {
     });
 
     it('should handle pending status', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'GET',
         query: { txHash: 'pending-tx' },
       });
@@ -109,7 +109,7 @@ describe('Bridge API Endpoints - Integration Tests', () => {
     });
 
     it('should handle completed status', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'GET',
         query: { txHash: 'completed-tx' },
       });
@@ -118,7 +118,7 @@ describe('Bridge API Endpoints - Integration Tests', () => {
     });
 
     it('should handle failed status', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'GET',
         query: { txHash: 'failed-tx' },
       });
@@ -129,7 +129,7 @@ describe('Bridge API Endpoints - Integration Tests', () => {
 
   describe('GET /api/offramp/bridge/gas-fee-options', () => {
     it('should return available gas fee options', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'GET',
       });
 

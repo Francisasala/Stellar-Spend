@@ -1,46 +1,49 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { ErrorHandler } from '@/lib/error-handler';
+import { ApiError, ErrorType } from '@/lib/error-types';
 import {
   performManualReconciliation,
   getReconciliationHistory,
   type ManualReconciliationAction,
 } from '@/lib/reconciliation';
 import { logger } from '@/lib/logger';
+import { withIdempotency } from '@/lib/idempotency';
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { transactionId, action, notes, resolvedBy } = body;
+  return withIdempotency(
+    request,
+    async () => {
+      try {
+        const body = await request.json();
+        const { transactionId, action, notes, resolvedBy } = body;
 
-    if (!transactionId || typeof transactionId !== 'string') {
-      return NextResponse.json({ error: 'transactionId is required' }, { status: 400 });
-    }
+        if (!transactionId || typeof transactionId !== 'string') {
+          return ErrorHandler.validation('transactionId is required');
+        }
 
-    if (!action || !['retry', 'mark_resolved', 'investigate'].includes(action)) {
-      return NextResponse.json(
-        { error: 'action must be one of: retry, mark_resolved, investigate' },
-        { status: 400 },
-      );
-    }
+        if (!action || !['retry', 'mark_resolved', 'investigate'].includes(action)) {
+          return ErrorHandler.validation(
+            'action must be one of: retry, mark_resolved, investigate',
+          );
+        }
 
-    const reconciliationAction: ManualReconciliationAction = {
-      transactionId,
-      action,
-      notes,
-      resolvedBy,
-    };
+        const reconciliationAction: ManualReconciliationAction = {
+          transactionId,
+          action,
+          notes,
+          resolvedBy,
+        };
 
-    const result = await performManualReconciliation(reconciliationAction);
+        const result = await performManualReconciliation(reconciliationAction);
 
-    return NextResponse.json(result);
-  } catch (error) {
-    logger.error('manual_reconciliation.error', {}, error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Failed to perform manual reconciliation',
-      },
-      { status: 500 },
-    );
-  }
+        return NextResponse.json(result);
+      } catch (error) {
+        logger.error('manual_reconciliation.error', {}, error);
+        return ErrorHandler.serverError(error);
+      }
+    },
+    { required: true },
+  );
 }
 
 export async function GET() {
@@ -49,6 +52,8 @@ export async function GET() {
     return NextResponse.json({ history });
   } catch (err) {
     logger.error('reconciliation.history_fetch_failed', {}, err);
-    return NextResponse.json({ error: 'Failed to fetch reconciliation history' }, { status: 500 });
+    return ErrorHandler.handle(
+      new ApiError(ErrorType.SERVER_ERROR, 'Failed to fetch reconciliation history'),
+    );
   }
 }

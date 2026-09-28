@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPendingScheduledTransactions, executeScheduledTransaction } from '@/lib/services/scheduling.service';
+import {
+  getPendingScheduledTransactions,
+  executeScheduledTransaction,
+} from '@/lib/services';
 import { logger } from '@/lib/logger';
+import { ErrorHandler } from '@/lib/error-handler';
+import { ApiError, ErrorType } from '@/lib/error-types';
 
 export async function POST(req: NextRequest) {
   try {
     // Verify cron secret
     const secret = req.headers.get('x-cron-secret');
     if (secret !== process.env.CRON_SECRET) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ErrorHandler.unauthorized('Unauthorized');
     }
 
     const pending = await getPendingScheduledTransactions();
@@ -20,7 +25,9 @@ export async function POST(req: NextRequest) {
         await executeScheduledTransaction(scheduled.id, '');
         logger.info(`Executed scheduled transaction ${scheduled.id}`);
       } catch (error) {
-        logger.error(`Failed to execute scheduled transaction ${scheduled.id}`, { error: String(error) });
+        logger.error(`Failed to execute scheduled transaction ${scheduled.id}`, {
+          error: String(error),
+        });
       }
     }
 
@@ -30,9 +37,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     logger.error('Cron job failed', { error: String(error) });
-    return NextResponse.json(
-      { error: 'Cron job failed' },
-      { status: 500 }
-    );
+    return ErrorHandler.handle(new ApiError(ErrorType.SERVER_ERROR, 'Cron job failed'));
   }
 }

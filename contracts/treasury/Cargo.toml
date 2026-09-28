@@ -1,15 +1,19 @@
 [package]
 name = "treasury"
-version = "1.0.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-soroban-sdk = "20"
+soroban-sdk = { workspace = true }
+stellar-spend-shared = { workspace = true }
+
+[dev-dependencies]
+treasury = { path = ".", features = ["testutils"] }
+soroban-sdk = { workspace = true, features = ["testutils"] }
+proptest = { workspace = true }
+
+[features]
+testutils = ["soroban-sdk/testutils"]
 
 [lib]
-crate-type = ["cdylib"]
-
-[profile.release]
-opt-level = "z"
-lto = true
-strip = true
+crate-type = ["cdylib", "rlib"]

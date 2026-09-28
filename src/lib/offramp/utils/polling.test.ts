@@ -30,7 +30,6 @@ describe('Polling Utility', () => {
       const mockPollFn = vi.fn().mockResolvedValue({ ready: true });
       const checkCondition = (result: { ready: boolean }) => result.ready;
 
-      const startTime = Date.now();
       const promise = pollWithTimeout(mockPollFn, checkCondition, { interval: 5000 });
 
       await vi.runAllTimersAsync();
@@ -48,7 +47,10 @@ describe('Polling Utility', () => {
       });
       const checkCondition = (result: { status: string }) => result.status === 'success';
 
-      const promise = pollWithTimeout(mockPollFn, checkCondition, { interval: 1000, timeout: 10000 });
+      const promise = pollWithTimeout(mockPollFn, checkCondition, {
+        interval: 1000,
+        timeout: 10000,
+      });
 
       // Advance timers to allow polling iterations
       await vi.runAllTimersAsync();
@@ -67,7 +69,10 @@ describe('Polling Utility', () => {
       });
       const checkCondition = (result: { value: number }) => result.value === attempts;
 
-      const promise = pollWithTimeout(mockPollFn, checkCondition, { interval: 500, timeout: 10000 });
+      const promise = pollWithTimeout(mockPollFn, checkCondition, {
+        interval: 500,
+        timeout: 10000,
+      });
 
       await vi.runAllTimersAsync();
 
@@ -80,7 +85,10 @@ describe('Polling Utility', () => {
       const mockPollFn = vi.fn().mockResolvedValue({ status: 'pending' });
       const checkCondition = (result: { status: string }) => result.status === 'success';
 
-      const promise = pollWithTimeout(mockPollFn, checkCondition, { interval: 1000, timeout: 3000 });
+      const promise = pollWithTimeout(mockPollFn, checkCondition, {
+        interval: 1000,
+        timeout: 3000,
+      });
       // Attach rejection handler immediately to prevent unhandled rejection
       const caught = promise.catch((e) => e);
       await vi.runAllTimersAsync();
@@ -116,10 +124,10 @@ describe('Polling Utility', () => {
       const checkCondition = (result: { status: string }) => result.status === 'success';
       const onProgress = vi.fn();
 
-      const promise = pollWithTimeout(mockPollFn, checkCondition, { 
-        interval: 1000, 
+      const promise = pollWithTimeout(mockPollFn, checkCondition, {
+        interval: 1000,
         timeout: 10000,
-        onProgress 
+        onProgress,
       });
 
       await vi.runAllTimersAsync();
@@ -139,9 +147,9 @@ describe('Polling Utility', () => {
         attemptNumbers.push(attempt);
       });
 
-      const promise = pollWithTimeout(mockPollFn, checkCondition, { 
+      const promise = pollWithTimeout(mockPollFn, checkCondition, {
         interval: 1000,
-        onProgress 
+        onProgress,
       });
 
       await vi.runAllTimersAsync();
@@ -159,10 +167,10 @@ describe('Polling Utility', () => {
       const checkCondition = (result: { status: string }) => result.status === 'success';
       const onProgress = vi.fn();
 
-      const promise = pollWithTimeout(mockPollFn, checkCondition, { 
-        interval: 1000, 
+      const promise = pollWithTimeout(mockPollFn, checkCondition, {
+        interval: 1000,
         timeout: 10000,
-        onProgress 
+        onProgress,
       });
 
       await vi.runAllTimersAsync();

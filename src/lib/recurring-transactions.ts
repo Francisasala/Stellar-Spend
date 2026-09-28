@@ -55,9 +55,34 @@ const STORAGE_KEY = 'stellar_spend_recurring';
 const MAX_HISTORY_PER_SCHEDULE = 20;
 
 // ---------------------------------------------------------------------------
+// Clock injection — decouples "what time is it" from schedule logic so the
+// latter can be unit tested (DST transitions, month-end rollovers, etc.)
+// without depending on the real system clock or a live cron trigger.
+// ---------------------------------------------------------------------------
+
+export interface Clock {
+  now(): number;
+}
+
+export const systemClock: Clock = {
+  now: () => Date.now(),
+};
+
+/** Builds a fixed clock for tests — now() always returns the same instant. */
+export function fixedClock(atMs: number): Clock {
+  return { now: () => atMs };
+}
+
+// ---------------------------------------------------------------------------
 // Pure helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Pure "next run" schedule computation — no side effects, no clock access.
+ * Handles month-end rollover (e.g. Jan 31 + 1 month) via JS Date's native
+ * overflow (Date.setMonth rolls Feb 31 -> Mar 2/3) and DST transitions,
+ * since it always operates on local wall-clock time via the Date object.
+ */
 export function computeNextRunAt(from: number, frequency: RecurringFrequency): number {
   const d = new Date(from);
   switch (frequency) {
@@ -74,19 +99,20 @@ export function computeNextRunAt(from: number, frequency: RecurringFrequency): n
   return d.getTime();
 }
 
-export function isDue(schedule: RecurringSchedule): boolean {
+export function isDue(schedule: RecurringSchedule, clock: Clock = systemClock): boolean {
   if (schedule.paused) return false;
-  if (schedule.maxExecutions !== undefined && schedule.executionCount >= schedule.maxExecutions) return false;
+  if (schedule.maxExecutions !== undefined && schedule.executionCount >= schedule.maxExecutions)
+    return false;
   if (schedule.retryConfig?.nextRetryAt) {
-    return Date.now() >= schedule.retryConfig.nextRetryAt;
+    return clock.now() >= schedule.retryConfig.nextRetryAt;
   }
-  return Date.now() >= schedule.nextRunAt;
+  return clock.now() >= schedule.nextRunAt;
 }
 
-export function isPendingRetry(schedule: RecurringSchedule): boolean {
+export function isPendingRetry(schedule: RecurringSchedule, clock: Clock = systemClock): boolean {
   if (!schedule.retryConfig) return false;
   if (schedule.retryConfig.currentRetryCount >= schedule.retryConfig.maxRetries) return false;
-  return !!schedule.retryConfig.nextRetryAt && Date.now() >= schedule.retryConfig.nextRetryAt;
+  return !!schedule.retryConfig.nextRetryAt && clock.now() >= schedule.retryConfig.nextRetryAt;
 }
 
 // ---------------------------------------------------------------------------
@@ -105,9 +131,7 @@ export class RecurringStorage {
   }
 
   static getByUser(userAddress: string): RecurringSchedule[] {
-    return this.getAll().filter(
-      (s) => s.userAddress.toLowerCase() === userAddress.toLowerCase(),
-    );
+    return this.getAll().filter((s) => s.userAddress.toLowerCase() === userAddress.toLowerCase());
   }
 
   static save(schedule: RecurringSchedule): void {
@@ -134,6 +158,7 @@ export class RecurringStorage {
   static recordResult(
     id: string,
     result: { status: 'success' | 'failed'; error?: string },
+    clock: Clock = systemClock,
   ): void {
     if (typeof window === 'undefined') return;
     const all = this.getAll();
@@ -141,11 +166,12 @@ export class RecurringStorage {
     if (idx === -1) return;
     const s = all[idx];
     const retryAttempt = s.retryConfig?.currentRetryCount ?? 0;
-    s.lastResult = { ...result, timestamp: Date.now() };
+    const now = clock.now();
+    s.lastResult = { ...result, timestamp: now };
 
     if (result.status === 'success') {
       s.executionCount += 1;
-      s.nextRunAt = computeNextRunAt(Date.now(), s.frequency);
+      s.nextRunAt = computeNextRunAt(now, s.frequency);
       if (s.retryConfig) {
         s.retryConfig.currentRetryCount = 0;
         s.retryConfig.nextRetryAt = undefined;
@@ -153,7 +179,7 @@ export class RecurringStorage {
     }
 
     RecurringStorage.pushHistoryInPlace(s, {
-      timestamp: Date.now(),
+      timestamp: now,
       status: result.status,
       error: result.error,
       retryAttempt,
@@ -177,7 +203,7 @@ export class RecurringStorage {
   }
 
   /** Schedule the next retry attempt. Returns false if retries are exhausted. */
-  static scheduleRetry(id: string): boolean {
+  static scheduleRetry(id: string, clock: Clock = systemClock): boolean {
     if (typeof window === 'undefined') return false;
     const all = this.getAll();
     const idx = all.findIndex((s) => s.id === id);
@@ -186,7 +212,7 @@ export class RecurringStorage {
     if (!s.retryConfig) return false;
     if (s.retryConfig.currentRetryCount >= s.retryConfig.maxRetries) return false;
     s.retryConfig.currentRetryCount += 1;
-    s.retryConfig.nextRetryAt = Date.now() + s.retryConfig.retryIntervalMs;
+    s.retryConfig.nextRetryAt = clock.now() + s.retryConfig.retryIntervalMs;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
     return true;
   }

@@ -1,47 +1,32 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import {
+  rankQuotes,
+  selectBestQuote,
+  getProviderStatus,
+  resetReliabilityHistory,
+  type ProviderQuote,
+} from '@/lib/quote-aggregator';
 
-interface ProviderQuote {
-  destinationAmount: string;
-  rate: number;
-  currency: string;
-  bridgeFee: string;
-  payoutFee: string;
-  estimatedTime: number;
-  provider: string;
-  success: boolean;
-  error?: string;
-  responseTime?: number;
-  reliability?: number;
-  netPayout?: number;
-}
+vi.mock('@/lib/offramp/utils/quote-fetcher', () => ({
+  fetchPaycrestQuote: vi.fn(),
+  buildQuote: vi.fn(),
+}));
 
-function rankQuotes(quotes: ProviderQuote[]): ProviderQuote[] {
-  const successfulQuotes = quotes.filter((q) => q.success);
+vi.mock('@/lib/offramp/adapters/provider-registry', () => ({
+  providerRegistry: {
+    getBridge: vi.fn(),
+    getPayout: vi.fn(),
+  },
+}));
 
-  if (successfulQuotes.length === 0) return quotes;
+vi.mock('@/lib/cache', () => ({
+  getCacheClient: vi.fn(() => ({
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue(undefined),
+  })),
+}));
 
-  return successfulQuotes.sort((a, b) => {
-    const netA = a.netPayout ?? parseFloat(a.destinationAmount);
-    const netB = b.netPayout ?? parseFloat(b.destinationAmount);
-
-    if (netB !== netA) return netB - netA;
-
-    const relA = a.reliability ?? 1.0;
-    const relB = b.reliability ?? 1.0;
-    if (relB !== relA) return relB - relA;
-
-    return (a.responseTime || 0) - (b.responseTime || 0);
-  });
-}
-
-function selectBestQuote(quotes: ProviderQuote[]): ProviderQuote | null {
-  const successful = quotes.filter(q => q.success);
-  if (successful.length === 0) return null;
-  const ranked = rankQuotes(quotes);
-  return ranked.length > 0 ? ranked[0] : null;
-}
-
-describe('quote aggregator ranking', () => {
+describe('rankQuotes', () => {
   it('ranks by net payout descending', () => {
     const quotes: ProviderQuote[] = [
       {
@@ -282,10 +267,208 @@ describe('quote aggregator ranking', () => {
     expect(best!.provider).toBe('a');
 
     const alternatives = quotes
-      .filter(q => q.success && q.provider !== best!.provider)
+      .filter((q) => q.success && q.provider !== best!.provider)
       .sort((a, b) => (b.netPayout ?? 0) - (a.netPayout ?? 0));
 
     expect(alternatives[0].provider).toBe('c');
     expect(alternatives[1].provider).toBe('b');
+  });
+
+  it('falls back to destinationAmount when netPayout is undefined', () => {
+    const quotes: ProviderQuote[] = [
+      {
+        provider: 'paycrest',
+        success: true,
+        destinationAmount: '150',
+        rate: 1500,
+        currency: 'NGN',
+        bridgeFee: '0',
+        payoutFee: '0',
+        estimatedTime: 300,
+      },
+      {
+        provider: 'allbridge',
+        success: true,
+        destinationAmount: '200',
+        rate: 1500,
+        currency: 'NGN',
+        bridgeFee: '0',
+        payoutFee: '0',
+        estimatedTime: 300,
+      },
+    ];
+
+    const best = selectBestQuote(quotes);
+    expect(best!.provider).toBe('allbridge');
+  });
+
+  it('excludes failed quotes from ranked results when successful ones exist', () => {
+    const quotes: ProviderQuote[] = [
+      {
+        provider: 'allbridge',
+        success: true,
+        destinationAmount: '100',
+        rate: 1500,
+        currency: 'NGN',
+        bridgeFee: '0',
+        payoutFee: '0',
+        estimatedTime: 300,
+        netPayout: 100,
+      },
+      {
+        provider: 'paycrest',
+        success: false,
+        destinationAmount: '0',
+        rate: 0,
+        currency: 'NGN',
+        bridgeFee: '0',
+        payoutFee: '0',
+        estimatedTime: 0,
+        error: 'Timeout',
+        netPayout: 0,
+      },
+    ];
+
+    const ranked = rankQuotes(quotes);
+    expect(ranked).toHaveLength(1);
+    expect(ranked[0].provider).toBe('allbridge');
+  });
+
+  it('handles single quote', () => {
+    const quotes: ProviderQuote[] = [
+      {
+        provider: 'paycrest',
+        success: true,
+        destinationAmount: '100',
+        rate: 1500,
+        currency: 'NGN',
+        bridgeFee: '0',
+        payoutFee: '0',
+        estimatedTime: 300,
+      },
+    ];
+
+    const best = selectBestQuote(quotes);
+    expect(best!.provider).toBe('paycrest');
+  });
+
+  it('defaults reliability to 1.0 when undefined', () => {
+    const quotes: ProviderQuote[] = [
+      {
+        provider: 'paycrest',
+        success: true,
+        destinationAmount: '100',
+        rate: 1500,
+        currency: 'NGN',
+        bridgeFee: '0',
+        payoutFee: '0',
+        estimatedTime: 300,
+        netPayout: 100,
+      },
+      {
+        provider: 'allbridge',
+        success: true,
+        destinationAmount: '100',
+        rate: 1500,
+        currency: 'NGN',
+        bridgeFee: '0',
+        payoutFee: '0',
+        estimatedTime: 300,
+        netPayout: 100,
+        reliability: 0.5,
+      },
+    ];
+
+    const ranked = rankQuotes(quotes);
+    expect(ranked).toHaveLength(2);
+    expect(ranked[0].provider).toBe('paycrest');
+    expect(ranked[1].provider).toBe('allbridge');
+  });
+});
+
+describe('getProviderStatus', () => {
+  it('returns provider configurations', () => {
+    resetReliabilityHistory();
+    const status = getProviderStatus();
+    expect(status).toHaveProperty('paycrest');
+    expect(status).toHaveProperty('allbridge');
+    expect(status.paycrest.enabled).toBe(true);
+    expect(status.allbridge.enabled).toBe(false);
+  });
+});
+
+describe('resetReliabilityHistory', () => {
+  it('clears reliability history for all providers', () => {
+    getProviderStatus();
+    resetReliabilityHistory();
+    const status = getProviderStatus();
+    expect(status.paycrest.reliabilityHistory).toEqual([]);
+    expect(status.allbridge.reliabilityHistory).toEqual([]);
+  });
+
+  it('can be called multiple times without error', () => {
+    resetReliabilityHistory();
+    resetReliabilityHistory();
+    resetReliabilityHistory();
+    const status = getProviderStatus();
+    expect(status.paycrest.reliabilityHistory).toEqual([]);
+  });
+});
+
+describe('selectBestQuote edge cases', () => {
+  it('returns null for empty array', () => {
+    expect(selectBestQuote([])).toBeNull();
+  });
+
+  it('handles quotes with all zeros but success true', () => {
+    const quotes: ProviderQuote[] = [
+      {
+        provider: 'paycrest',
+        success: true,
+        destinationAmount: '0',
+        rate: 0,
+        currency: 'NGN',
+        bridgeFee: '0',
+        payoutFee: '0',
+        estimatedTime: 0,
+        netPayout: 0,
+      },
+    ];
+
+    const best = selectBestQuote(quotes);
+    expect(best).not.toBeNull();
+    expect(best!.provider).toBe('paycrest');
+  });
+
+  it('handles zero netPayout tiebreaker', () => {
+    const quotes: ProviderQuote[] = [
+      {
+        provider: 'paycrest',
+        success: true,
+        destinationAmount: '0',
+        rate: 0,
+        currency: 'NGN',
+        bridgeFee: '0',
+        payoutFee: '0',
+        estimatedTime: 300,
+        netPayout: 0,
+        responseTime: 100,
+      },
+      {
+        provider: 'allbridge',
+        success: true,
+        destinationAmount: '0',
+        rate: 0,
+        currency: 'NGN',
+        bridgeFee: '0',
+        payoutFee: '0',
+        estimatedTime: 300,
+        netPayout: 0,
+        responseTime: 50,
+      },
+    ];
+
+    const ranked = rankQuotes(quotes);
+    expect(ranked[0].provider).toBe('allbridge');
   });
 });

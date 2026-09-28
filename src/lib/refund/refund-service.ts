@@ -2,15 +2,18 @@ import { logger } from '@/lib/logger';
 /**
  * Automated refund service for failed/expired transactions.
  */
-import { dal, DatabaseError } from '@/lib/db/dal';
+import { dal, DatabaseError } from '@/lib/db';
 import type { Transaction } from '@/lib/transaction-storage';
-import { notifyTransactionStatusUpdate } from '@/lib/notifications/service';
+import { notifyTransactionStatusUpdate } from '@/lib/notifications';
+import { transitionCompensation, type CompensationStatus } from '@/lib/compensation-state-machine';
 
 export type RefundReason = 'payment_failed' | 'timeout' | 'expired' | 'manual';
 
 export interface RefundResult {
   transactionId: string;
   success: boolean;
+  /** Outcome of this refund on the shared compensation state machine. */
+  status: CompensationStatus;
   refundAmount: string;
   reason: RefundReason;
   error?: string;
@@ -57,24 +60,29 @@ export function calculateRefundAmount(tx: Transaction, partial = false): string 
 export async function processRefund(
   transactionId: string,
   reason: RefundReason,
-  partial = false
+  partial = false,
 ): Promise<RefundResult> {
   const timestamp = new Date().toISOString();
+
+  const failed = (error: string, refundAmount = '0'): RefundResult => {
+    transitionCompensation('refund', transactionId, 'pending', 'failed');
+    return { transactionId, success: false, status: 'failed', refundAmount, reason, error, timestamp };
+  };
 
   let tx: Transaction | null;
   try {
     tx = await dal.getById(transactionId);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return { transactionId, success: false, refundAmount: '0', reason, error: msg, timestamp };
+    return failed(msg);
   }
 
   if (!tx) {
-    return { transactionId, success: false, refundAmount: '0', reason, error: 'Transaction not found', timestamp };
+    return failed('Transaction not found');
   }
 
   if (!isRefundEligible(tx)) {
-    return { transactionId, success: false, refundAmount: '0', reason, error: 'Transaction not eligible for refund', timestamp };
+    return failed('Transaction not eligible for refund');
   }
 
   const refundAmount = calculateRefundAmount(tx, partial);
@@ -87,7 +95,7 @@ export async function processRefund(
     });
   } catch (err) {
     const msg = err instanceof DatabaseError ? err.message : String(err);
-    return { transactionId, success: false, refundAmount, reason, error: msg, timestamp };
+    return failed(msg, refundAmount);
   }
 
   const updated = await dal.getById(transactionId);
@@ -111,7 +119,8 @@ export async function processRefund(
 
   emitRefundNotification(notification);
 
-  return { transactionId, success: true, refundAmount, reason, timestamp };
+  transitionCompensation('refund', transactionId, 'pending', 'completed');
+  return { transactionId, success: true, status: 'completed', refundAmount, reason, timestamp };
 }
 
 /**
@@ -132,9 +141,7 @@ export async function processEligibleRefunds(userAddress?: string): Promise<Refu
   }
 
   const eligible = transactions.filter(isRefundEligible);
-  const results = await Promise.all(
-    eligible.map((tx) => processRefund(tx.id, 'payment_failed'))
-  );
+  const results = await Promise.all(eligible.map((tx) => processRefund(tx.id, 'payment_failed')));
   return results;
 }
 
@@ -142,5 +149,5 @@ export async function processEligibleRefunds(userAddress?: string): Promise<Refu
  * Emits a refund notification (structured log; extend with email/webhook as needed).
  */
 function emitRefundNotification(notification: RefundNotification): void {
-    logger.info('refund.processed', { ...notification });
+  logger.info('refund.processed', { ...notification });
 }

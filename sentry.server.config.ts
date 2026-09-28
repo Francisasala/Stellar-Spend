@@ -1,25 +1,19 @@
+/**
+ * Sentry server-side (Node.js) configuration.
+ *
+ * Extends the shared base from `src/lib/sentryShared` with server-only
+ * integrations: OpenTelemetry trace correlation and CPU profiling.
+ *
+ * Loaded automatically by `@sentry/nextjs` for the Node.js runtime.
+ */
+
 import * as Sentry from '@sentry/nextjs';
 
+import { sharedSentryOptions } from '@/lib/sentryShared';
+
 Sentry.init({
-  dsn: process.env.SENTRY_DSN,
+  ...sharedSentryOptions,
 
-  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-
-  release: process.env.NEXT_PUBLIC_SENTRY_RELEASE,
-  environment: process.env.NEXT_PUBLIC_ENV ?? 'development',
-
-  // Capture unhandled promise rejections
-  captureUnhandledRejections: true,
-
-  beforeSend(event) {
-    // Redact secrets from breadcrumbs / request data
-    if (event.request?.headers) {
-      const h = event.request.headers as Record<string, string>;
-      if (h['authorization']) h['authorization'] = '[Filtered]';
-      if (h['x-api-key']) h['x-api-key'] = '[Filtered]';
-    }
-    return event;
-  },
-
-  debug: false,
+  // Server-side profiling sample rate (subset of traced transactions)
+  profilesSampleRate: parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE ?? '0.1'),
 });

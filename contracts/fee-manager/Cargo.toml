@@ -1,13 +1,22 @@
 [package]
 name = "fee-manager"
-version = "1.0.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-soroban-sdk = "20"
+soroban-sdk = { workspace = true }
+stellar-spend-shared = { workspace = true }
 
-[lib]
-crate-type = ["cdylib"]
+[dev-dependencies]
+fee-manager = { path = ".", features = ["testutils"] }
+soroban-sdk = { workspace = true, features = ["testutils"] }
+
+[features]
+testutils = ["soroban-sdk/testutils"]
+
+[[test]]
+name = "integration"
+path = "tests/integration.rs"
 
 [profile.release]
 opt-level = "z"

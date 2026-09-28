@@ -40,8 +40,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
 };
 
 export function getStatusCode(errorCode: string): number {
-  const code = parseInt(errorCode.split('_')[1]);
-  if (code >= 4000 && code < 5000) return 400;
+  const code = parseInt(errorCode.split('_')[1] ?? '5000');
   if (code >= 4010 && code < 4020) return 401;
+  if (code >= 4000 && code < 5000) return 400;
   return 500;
 }

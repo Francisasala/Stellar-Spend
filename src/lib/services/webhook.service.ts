@@ -1,6 +1,5 @@
-import { mapPaycrestStatus } from '@/lib/offramp/utils/mapPaycrestStatus';
-import { dal, DatabaseError } from '@/lib/db/dal';
-import { notifyTransactionStatusUpdate } from '@/lib/notifications/service';
+import { dal, DatabaseError } from '@/lib/db';
+import { notifyTransactionStatusUpdate } from '@/lib/notifications';
 
 export interface WebhookPayload {
   event: string;
@@ -89,4 +88,3 @@ export class WebhookService {
     }
   }
 }
-

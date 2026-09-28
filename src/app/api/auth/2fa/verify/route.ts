@@ -1,31 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { TwoFAService } from '@/lib/two-fa';
+import { ErrorHandler } from '@/lib/error-handler';
+import { validateBody } from '@/lib/validation/validate-request';
+
+const verifySchema = z.object({
+  userId: z.string().min(1),
+  code: z.string().min(1),
+  method: z.string().min(1),
+  secret: z.string().optional(),
+  backupCodes: z.array(z.string()).optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, code, method, secret, backupCodes } = await req.json();
-
-    if (!userId || !code || !method) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
+    const validation = await validateBody(req, verifySchema);
+    if (!validation.success) return validation.response;
+    const { userId, code, method, secret, backupCodes } = validation.data;
+    void userId;
 
     if (method === 'totp') {
       if (!secret) {
-        return NextResponse.json(
-          { error: 'Missing TOTP secret' },
-          { status: 400 }
-        );
+        return ErrorHandler.validation('Missing TOTP secret');
       }
 
       const isValid = TwoFAService.verifyTOTP(secret, code);
       if (!isValid) {
-        return NextResponse.json(
-          { error: 'Invalid TOTP code' },
-          { status: 401 }
-        );
+        return ErrorHandler.unauthorized('Invalid TOTP code');
       }
 
       return NextResponse.json({
@@ -37,23 +38,13 @@ export async function POST(req: NextRequest) {
 
     if (method === 'backup') {
       if (!backupCodes) {
-        return NextResponse.json(
-          { error: 'Missing backup codes' },
-          { status: 400 }
-        );
+        return ErrorHandler.validation('Missing backup codes');
       }
 
-      const { isValid, remainingCodes } = TwoFAService.verifyBackupCode(
-        backupCodes,
-        [],
-        code
-      );
+      const { isValid, remainingCodes } = TwoFAService.verifyBackupCode(backupCodes, [], code);
 
       if (!isValid) {
-        return NextResponse.json(
-          { error: 'Invalid backup code' },
-          { status: 401 }
-        );
+        return ErrorHandler.unauthorized('Invalid backup code');
       }
 
       return NextResponse.json({
@@ -64,14 +55,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json(
-      { error: 'Unsupported verification method' },
-      { status: 400 }
-    );
+    return ErrorHandler.validation('Unsupported verification method');
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
-    );
+    return ErrorHandler.serverError(error);
   }
 }

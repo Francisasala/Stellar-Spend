@@ -12,13 +12,16 @@ class EventBus {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   on<T = any>(type: EventType, handler: EventHandler<T>): void {
     if (!this.handlers.has(type)) {
       this.handlers.set(type, []);
     }
     const listeners = this.handlers.get(type)!;
     if (listeners.length >= this.config.maxListeners) {
-      logger.warn(`EventBus: Max listeners (${this.config.maxListeners}) reached for event type: ${type}`);
+      logger.warn(
+        `EventBus: Max listeners (${this.config.maxListeners}) reached for event type: ${type}`,
+      );
     }
     listeners.push(handler);
   }
@@ -32,6 +35,7 @@ class EventBus {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async emit<T = any>(type: EventType, data: T): Promise<void> {
     const event: Event<T> = {
       type,
@@ -45,17 +49,18 @@ class EventBus {
     }
 
     const handlers = this.handlers.get(type) || [];
-    const promises = handlers.map(handler =>
+    const promises = handlers.map((handler) =>
       Promise.resolve()
         .then(() => handler(event))
-        .catch(error => {
+        .catch((error) => {
           logger.error(`EventBus: Handler error for ${type}`, { error, eventId: event.id });
-        })
+        }),
     );
 
     await Promise.all(promises);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   once<T = any>(type: EventType, handler: EventHandler<T>): void {
     const wrapper: EventHandler<T> = async (event: Event<T>) => {
       await handler(event);
