@@ -114,8 +114,7 @@ pub struct EscrowDeposit {
     pub bridge_address: Address,
     pub timestamp: u64,
     pub timeout_ledger: u32,
-    pub released: bool,
-    pub refunded: bool,
+    pub status: EscrowStatus,
     pub fee_bps: u32,
 }
 
@@ -258,9 +257,6 @@ impl EscrowContract {
         }
 
         if stored == 1 {
-            // v1 -> v2: widen every record with `fee_bps`, defaulting to 0. Reading
-            // the map as its v1 type is what makes the old entries decodable at all;
-            // reading it as v2 would fail on the missing field.
             let old: Map<u64, EscrowDepositV1> = env
                 .storage()
                 .instance()
@@ -269,6 +265,13 @@ impl EscrowContract {
 
             let mut migrated: Map<u64, EscrowDeposit> = Map::new(&env);
             for (id, v1) in old.iter() {
+                let status = if v1.released {
+                    EscrowStatus::Resolved
+                } else if v1.refunded {
+                    EscrowStatus::Cancelled
+                } else {
+                    EscrowStatus::Pending
+                };
                 migrated.set(
                     id,
                     EscrowDeposit {
@@ -277,8 +280,7 @@ impl EscrowContract {
                         bridge_address: v1.bridge_address,
                         timestamp: v1.timestamp,
                         timeout_ledger: v1.timeout_ledger,
-                        released: v1.released,
-                        refunded: v1.refunded,
+                        status,
                         fee_bps: 0,
                     },
                 );

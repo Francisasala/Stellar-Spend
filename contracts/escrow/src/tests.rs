@@ -57,8 +57,7 @@ fn test_get_deposit_returns_record() {
     let deposit = client.get_deposit(&0u64);
     assert_eq!(deposit.amount, 750);
     assert_eq!(deposit.fee_bps, 10);
-    assert!(!deposit.released);
-    assert!(!deposit.refunded);
+    assert_eq!(deposit.status, EscrowStatus::Pending);
 }
 
 #[test]
