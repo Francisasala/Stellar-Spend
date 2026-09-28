@@ -1,7 +1,7 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { env } from '@/lib/env';
-import { getCorridorInstitutions, getCorridorConfig } from '@/lib/corridor-config';
+import { getCorridorConfig } from '@/lib/corridor-config';
 import { ErrorHandler } from '@/lib/error-handler';
 import { ApiError, ErrorType } from '@/lib/error-types';
 import { paycrestBreaker } from '@/lib/circuit-breaker';
@@ -24,22 +24,19 @@ class PaycrestAdapter {
 
   async getInstitutions(currency: string) {
     const response = await paycrestBreaker.execute(() =>
-      fetch(
-        `${this.apiUrl}/institutions/${encodeURIComponent(currency)}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'API-Key': this.apiKey,
-          },
-        }
-      )
+      fetch(`${this.apiUrl}/institutions/${encodeURIComponent(currency)}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'API-Key': this.apiKey,
+        },
+      }),
     );
 
     const data = await response.json();
 
     if (!response.ok) {
       const error = new Error(
-        data?.message ?? `Failed to fetch institutions: ${response.status}`
+        data?.message ?? `Failed to fetch institutions: ${response.status}`,
       ) as PaycrestHttpError;
       error.status = response.status;
       throw error;

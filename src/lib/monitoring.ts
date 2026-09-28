@@ -1,6 +1,6 @@
 /**
  * OpenTelemetry Monitoring Configuration
- * 
+ *
  * Sets up distributed tracing across the application
  * Exports traces to configured backend (Tempo/Jaeger)
  */
@@ -14,6 +14,7 @@ import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import { logger } from './logger';
 
 // Enable debug logging in development
 if (process.env.NODE_ENV === 'development') {
@@ -25,7 +26,7 @@ if (process.env.NODE_ENV === 'development') {
  */
 function getExporter() {
   const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces';
-  
+
   return new OTLPTraceExporter({
     url: endpoint,
     headers: {
@@ -38,12 +39,6 @@ function getExporter() {
  * Create and configure the OpenTelemetry SDK
  */
 export function createTracingSDK(): NodeSDK {
-  // Configure sampling
-  const sampleRate = parseFloat(process.env.OTEL_SAMPLE_RATE || '1.0');
-  const sampler = sampleRate < 1.0 
-    ? new TraceIdRatioBasedSampler(sampleRate)
-    : undefined;
-
   const resource = new Resource({
     [SemanticResourceAttributes.SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || 'stellar-spend',
     [SemanticResourceAttributes.SERVICE_VERSION]: process.env.npm_package_version || '1.0.0',
@@ -69,7 +64,7 @@ export function createTracingSDK(): NodeSDK {
           span.setAttribute('http.status_code', response.statusCode);
         },
       }),
-      
+
       // Express instrumentation for routes
       new ExpressInstrumentation({
         ignoreLayers: ['middleware', 'static'],
@@ -78,14 +73,15 @@ export function createTracingSDK(): NodeSDK {
           const route = request.route?.path || request.path;
           span.setAttribute('express.route', route);
           span.setAttribute('http.route', route);
-          
+
           // Add user ID if available
-          if ((request as any).user?.id) {
-            span.setAttribute('user.id', (request as any).user.id);
+          const reqUser = (request as { user?: { id?: unknown } }).user;
+          if (reqUser?.id !== undefined) {
+            span.setAttribute('user.id', String(reqUser.id));
           }
         },
       }),
-      
+
       // PostgreSQL instrumentation for database queries
       new PgInstrumentation({
         requestHook: (span, queryInfo) => {
@@ -110,17 +106,17 @@ export function createTracingSDK(): NodeSDK {
 export function initializeTracing(): NodeSDK | undefined {
   // Skip tracing if disabled
   if (process.env.OTEL_DISABLED === 'true') {
-    console.log('OpenTelemetry tracing is disabled');
+    logger.info('tracing.disabled');
     return undefined;
   }
 
   try {
     const sdk = createTracingSDK();
     sdk.start();
-    console.log('OpenTelemetry tracing initialized');
+    logger.info('tracing.initialized');
     return sdk;
   } catch (error) {
-    console.error('Failed to initialize OpenTelemetry:', error);
+    logger.error('tracing.init_failed', {}, error);
     return undefined;
   }
 }
@@ -131,9 +127,9 @@ export function initializeTracing(): NodeSDK | undefined {
 export async function shutdownTracing(sdk: NodeSDK): Promise<void> {
   try {
     await sdk.shutdown();
-    console.log('OpenTelemetry tracing shut down successfully');
+    logger.info('tracing.shutdown');
   } catch (error) {
-    console.error('Error shutting down OpenTelemetry:', error);
+    logger.error('tracing.shutdown_failed', {}, error);
   }
 }
 
@@ -144,7 +140,14 @@ export async function shutdownTracing(sdk: NodeSDK): Promise<void> {
 // For now, we'll use a simple wrapper
 class TraceIdRatioBasedSampler {
   constructor(private ratio: number) {}
-  shouldSample(context: any, traceId: string, spanName: string, spanKind: any, attributes: any, links: any) {
+  shouldSample(
+    context: any,
+    traceId: string,
+    spanName: string,
+    spanKind: any,
+    attributes: any,
+    links: any,
+  ) {
     // Simple random sampling
     const random = Math.random();
     return {

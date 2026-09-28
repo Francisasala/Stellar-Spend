@@ -1,6 +1,7 @@
 import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
-import { SorobanEventIndexer } from '@/lib/stellar/event-indexer';
+import { ErrorHandler, ApiError } from '@/lib/error-handler';
+import { SorobanEventIndexer } from '@/lib/stellar';
 import { db } from '@/lib/db';
 import { verifyAuth } from '@/lib/auth';
 
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest) {
   try {
     const user = await verifyAuth(req);
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ErrorHandler.unauthorized();
     }
 
     const { searchParams } = new URL(req.url);
@@ -18,20 +19,16 @@ export async function GET(req: NextRequest) {
     const transactionId = searchParams.get('transactionId');
 
     if (!txHash && !transactionId) {
-      return NextResponse.json(
-        { error: 'txHash or transactionId required' },
-        { status: 400 }
-      );
+      return ErrorHandler.validation('txHash or transactionId required');
     }
 
     const rpcUrl = process.env.SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
     const indexer = new SorobanEventIndexer(
       db,
       rpcUrl,
-      [
-        process.env.ESCROW_CONTRACT_ID || '',
-        process.env.FEE_MANAGER_CONTRACT_ID || '',
-      ].filter(Boolean)
+      [process.env.ESCROW_CONTRACT_ID || '', process.env.FEE_MANAGER_CONTRACT_ID || ''].filter(
+        Boolean,
+      ),
     );
 
     let hash = txHash;
@@ -42,10 +39,7 @@ export async function GET(req: NextRequest) {
       `;
 
       if (tx.length === 0) {
-        return NextResponse.json(
-          { error: 'Transaction not found' },
-          { status: 404 }
-        );
+        return ErrorHandler.notFound('Transaction');
       }
 
       hash = tx[0].tx_hash;
@@ -58,7 +52,7 @@ export async function GET(req: NextRequest) {
       txHash: hash,
       onChain,
       status,
-      events: events.map(e => ({
+      events: events.map((e) => ({
         type: e.type,
         data: e.data,
         ledgerSequence: e.ledgerSequence,
@@ -68,9 +62,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     logger.error('Failed to fetch on-chain status:', {}, error);
-    return NextResponse.json(
-      { error: 'Failed to fetch status', message: String(error) },
-      { status: 500 }
-    );
+    return ErrorHandler.handle(error);
   }
 }

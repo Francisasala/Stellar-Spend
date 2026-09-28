@@ -1,13 +1,49 @@
-# Pre-commit hook configuration for Stellar-Spend
-# Run this setup locally to enable pre-commit checks:
-#   pip install pre-commit
-#   pre-commit install
-#
-# To test hooks manually:
-#   pre-commit run --all-files
+default_language_version:
+  python: python3
 
 repos:
-  # Rust security audits for contract dependencies
+  - repo: local
+    hooks:
+      - id: npm-lint
+        name: ESLint
+        entry: npm run lint
+        language: system
+        stages: [commit]
+        pass_filenames: false
+        always_run: true
+
+      - id: npm-type-check
+        name: TypeScript type-check
+        entry: npm run type:check
+        language: system
+        stages: [commit]
+        pass_filenames: false
+        always_run: true
+
+      - id: npm-format
+        name: Prettier format check
+        entry: npm run format:check
+        language: system
+        stages: [commit]
+        pass_filenames: false
+        always_run: true
+
+      - id: cargo-fmt
+        name: Rustfmt check
+        entry: bash -c 'if [ -d contracts ]; then (cd contracts && cargo fmt --check); fi'
+        language: system
+        files: ^contracts/.*\.rs$
+        stages: [commit]
+        pass_filenames: false
+
+      - id: cargo-clippy
+        name: Clippy (deny warnings)
+        entry: bash -c 'if [ -d contracts ]; then (cd contracts && cargo clippy --all-targets -- -D warnings); fi'
+        language: system
+        files: ^contracts/.*\.rs$
+        stages: [commit]
+        pass_filenames: false
+
   - repo: local
     hooks:
       - id: cargo-audit
@@ -17,15 +53,3 @@ repos:
         files: ^contracts/(.*/)?(Cargo.toml|Cargo.lock)$
         stages: [commit]
         pass_filenames: false
-
-  # TypeScript/JavaScript linting is handled by the npm lint script
-  # Add it here if you want to enforce it at commit time:
-  # - repo: local
-  #   hooks:
-  #     - id: npm-lint
-  #       name: ESLint
-  #       entry: npm run lint
-  #       language: system
-  #       files: \.(ts|tsx|js)$
-  #       stages: [commit]
-  #       pass_filenames: false

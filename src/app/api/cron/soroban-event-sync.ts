@@ -1,6 +1,7 @@
 import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
-import { SorobanEventIndexer } from '@/lib/stellar/event-indexer';
+import { ErrorHandler } from '@/lib/error-handler';
+import { SorobanEventIndexer } from '@/lib/stellar';
 import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ErrorHandler.unauthorized();
     }
 
     const rpcUrl = process.env.SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
@@ -30,10 +31,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     logger.error('Event indexing failed:', {}, error);
-    return NextResponse.json(
-      { error: 'Event indexing failed', message: String(error) },
-      { status: 500 }
-    );
+    return ErrorHandler.handle(error);
   }
 }
 
@@ -41,7 +39,7 @@ export async function GET(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ErrorHandler.unauthorized();
     }
 
     const rpcUrl = process.env.SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
@@ -56,9 +54,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     logger.error('State check failed:', {}, error);
-    return NextResponse.json(
-      { error: 'State check failed', message: String(error) },
-      { status: 500 }
-    );
+    return ErrorHandler.handle(error);
   }
 }

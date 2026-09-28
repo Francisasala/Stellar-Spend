@@ -66,10 +66,14 @@ describe('reconcileTransaction', () => {
   });
 
   it('detects amount mismatch when Stellar and Paycrest disagree', async () => {
-    global.fetch = vi.fn()
+    global.fetch = vi
+      .fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ successful: true }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ result: { hash: '0xabc' } }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { status: 'completed', amount: '200.00' } }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { status: 'completed', amount: '200.00' } }),
+      });
 
     const record = makeRecord({ amount: '100.00' });
     const results = await reconcileTransaction(record);
@@ -77,10 +81,14 @@ describe('reconcileTransaction', () => {
   });
 
   it('detects status mismatch between Stellar and Paycrest', async () => {
-    global.fetch = vi.fn()
+    global.fetch = vi
+      .fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ successful: false }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ result: { hash: '0xabc' } }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { status: 'completed', amount: '100.00' } }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { status: 'completed', amount: '100.00' } }),
+      });
 
     const record = makeRecord({ amount: '100.00' });
     const results = await reconcileTransaction(record);
@@ -88,10 +96,14 @@ describe('reconcileTransaction', () => {
   });
 
   it('detects unsettled Paycrest order', async () => {
-    global.fetch = vi.fn()
+    global.fetch = vi
+      .fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ successful: true }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ result: { hash: '0xabc' } }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { status: 'pending', amount: '100.00' } }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { status: 'pending', amount: '100.00' } }),
+      });
 
     const record = makeRecord({ amount: '100.00' });
     const results = await reconcileTransaction(record);
@@ -99,10 +111,14 @@ describe('reconcileTransaction', () => {
   });
 
   it('returns empty discrepancies for well-matched records', async () => {
-    global.fetch = vi.fn()
+    global.fetch = vi
+      .fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ successful: true }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ result: { hash: '0xabc' } }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { status: 'completed', amount: '100.00' } }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { status: 'completed', amount: '100.00' } }),
+      });
 
     const record = makeRecord({ amount: '100.00' });
     const results = await reconcileTransaction(record);
@@ -119,8 +135,18 @@ describe('generateReconciliationReport', () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false });
 
     const records = [
-      makeRecord({ transactionId: 'tx-1', stellarTxHash: 'hash-1', baseTxHash: '0xbase1', paycrestOrderId: 'order-1' }),
-      makeRecord({ transactionId: 'tx-2', stellarTxHash: 'hash-2', baseTxHash: '0xbase2', paycrestOrderId: 'order-2' }),
+      makeRecord({
+        transactionId: 'tx-1',
+        stellarTxHash: 'hash-1',
+        baseTxHash: '0xbase1',
+        paycrestOrderId: 'order-1',
+      }),
+      makeRecord({
+        transactionId: 'tx-2',
+        stellarTxHash: 'hash-2',
+        baseTxHash: '0xbase2',
+        paycrestOrderId: 'order-2',
+      }),
     ];
 
     const report = await generateReconciliationReport(records);
@@ -298,5 +324,38 @@ describe('performManualReconciliation', () => {
     });
     expect(result.success).toBe(true);
     expect(result.message).toContain('investigate');
+  });
+});
+
+/* -------------------------------------------------------------------------
+ * Route delegation tests (#1203)
+ * Ensures the cron route uses runReconciliation and forwards params.
+ * ----------------------------------------------------------------------- */
+
+describe('daily-reconciliation cron route (#1203)', () => {
+  it('is a thin wrapper that imports runReconciliation', async () => {
+    const routePath = require.resolve('../../app/api/cron/daily-reconciliation/route.ts');
+    const src = require('fs').readFileSync(routePath, 'utf8');
+    expect(src).toMatch(/import\s+\{[^}]*runReconciliation[^}]*\}\s+from\s+['"]@\/lib\/reconciliation['"]/);
+  });
+
+  it('runReconciliation defaults windowEnd to now and windowStart to 24h earlier', async () => {
+    const mod = await import('../reconciliation');
+    const result = await mod.runReconciliation({ dryRun: true });
+    expect(result.dryRun).toBe(true);
+    expect(typeof result.windowStart).toBe('string');
+    expect(typeof result.windowEnd).toBe('string');
+    const start = new Date(result.windowStart).getTime();
+    const end = new Date(result.windowEnd).getTime();
+    expect(end).toBeGreaterThanOrEqual(start);
+  });
+
+  it('runReconciliation honours explicit windowStart / windowEnd', async () => {
+    const mod = await import('../reconciliation');
+    const start = '2025-01-01T00:00:00.000Z';
+    const end = '2025-01-02T00:00:00.000Z';
+    const result = await mod.runReconciliation({ windowStart: start, windowEnd: end });
+    expect(result.windowStart).toBe(start);
+    expect(result.windowEnd).toBe(end);
   });
 });

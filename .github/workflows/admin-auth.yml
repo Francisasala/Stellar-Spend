@@ -1,0 +1,36 @@
+name: Admin Authorization Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Run admin auth audit
+        run: ./scripts/audit-admin-auth.sh
+
+      - name: Run tests
+        run: cargo test --workspace --features testutils
+
+      - name: Check for admin functions without require_auth
+        run: |
+          echo "🔍 Checking admin functions for authorization..."
+          if grep -r "fn.*admin" contracts/ --include="*.rs" | grep -v "require_auth" | grep -v "tests" | grep -v "AdminAuth"; then
+            echo "❌ Found admin functions without require_auth!"
+            exit 1
+          else
+            echo "✅ All admin functions have authorization checks!"
+          fi

@@ -1,10 +1,10 @@
 import { randomUUID } from 'crypto';
-import { eventBus } from '@/lib/events/bus';
+import { eventBus } from '@/lib/events';
 import { getSubscriptionsByEvent } from './subscription-store';
 import { enqueue, attempt, markDelivered, markFailed } from './dispatcher';
 import { logDelivery } from './delivery-log';
 import { subscriptionRateLimiter } from './subscription-rate-limiter';
-import { scheduleNext, hasRemainingAttempts } from './retry-scheduler';
+import { scheduleNext } from './retry-scheduler';
 import { updateRecord } from './delivery-store';
 import type { WebhookEvent } from './subscription-types';
 import { buildPayloadForVersion, DEFAULT_SCHEMA_VERSION } from './schema-versions';
@@ -43,13 +43,13 @@ export function subscribeEventBus() {
 
           const payload = buildPayloadForVersion(
             { event, id: eventId, timestamp: eventData.timestamp, data: eventData.data },
-            sub.schemaVersion ?? DEFAULT_SCHEMA_VERSION
+            sub.schemaVersion ?? DEFAULT_SCHEMA_VERSION,
           );
           const payloadBody = JSON.stringify(payload);
 
           const record = await enqueue(
             { headers: {}, body: payloadBody, source: 'event-bus' },
-            sub.endpointUrl
+            sub.endpointUrl,
           );
 
           const result = await attempt(record, sub.signingSecret);

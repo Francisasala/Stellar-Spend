@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { createMocks } from 'node-mocks-http';
 import crypto from 'crypto';
 
@@ -20,7 +20,7 @@ describe('Webhook Endpoints - Integration Tests', () => {
 
       const hmac = generateHMAC(payload);
 
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         headers: {
           'x-paycrest-signature': hmac,
@@ -37,7 +37,7 @@ describe('Webhook Endpoints - Integration Tests', () => {
         status: 'completed',
       });
 
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         headers: {
           'x-paycrest-signature': 'invalid-hmac',
@@ -49,7 +49,7 @@ describe('Webhook Endpoints - Integration Tests', () => {
     });
 
     it('should reject webhook without signature', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           orderId: 'order-123',
@@ -71,7 +71,7 @@ describe('Webhook Endpoints - Integration Tests', () => {
 
       const hmac = generateHMAC(payload);
 
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         headers: {
           'x-paycrest-signature': hmac,
@@ -92,7 +92,7 @@ describe('Webhook Endpoints - Integration Tests', () => {
 
       const hmac = generateHMAC(payload);
 
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         headers: {
           'x-paycrest-signature': hmac,
@@ -112,7 +112,7 @@ describe('Webhook Endpoints - Integration Tests', () => {
 
       const hmac = generateHMAC(payload);
 
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         headers: {
           'x-paycrest-signature': hmac,
@@ -132,7 +132,7 @@ describe('Webhook Endpoints - Integration Tests', () => {
 
       const hmac = generateHMAC(payload);
 
-      const { req: req1, res: res1 } = createMocks({
+      const { req: req1 } = createMocks({
         method: 'POST',
         headers: {
           'x-paycrest-signature': hmac,
@@ -140,7 +140,7 @@ describe('Webhook Endpoints - Integration Tests', () => {
         body: JSON.parse(payload),
       });
 
-      const { req: req2, res: res2 } = createMocks({
+      const { req: req2 } = createMocks({
         method: 'POST',
         headers: {
           'x-paycrest-signature': hmac,
@@ -154,7 +154,7 @@ describe('Webhook Endpoints - Integration Tests', () => {
 
   describe('Error scenarios', () => {
     it('should handle malformed JSON', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         headers: {
           'x-paycrest-signature': 'some-signature',
@@ -173,7 +173,7 @@ describe('Webhook Endpoints - Integration Tests', () => {
 
       const hmac = generateHMAC(payload);
 
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         headers: {
           'x-paycrest-signature': hmac,

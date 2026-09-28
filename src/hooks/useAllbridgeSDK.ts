@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { logger } from '@/lib/logger';
 
 type AllbridgeSdk = ReturnType<typeof import('@allbridge/bridge-core-sdk').AllbridgeCoreSdk>;
 
@@ -28,10 +29,10 @@ async function initializeAllbridgeSDK(): Promise<AllbridgeSdk> {
     });
 
     return sdk;
-  } catch (error) {
-    console.error('Failed to initialize Allbridge SDK:', error);
-    throw error;
-  }
+    } catch (error) {
+      logger.error('allbridge.sdk_init_failed', {}, error);
+      throw error;
+    }
 }
 
 /**

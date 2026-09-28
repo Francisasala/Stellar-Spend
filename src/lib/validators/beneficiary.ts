@@ -1,4 +1,4 @@
-import { createValidationError, createValidationResult, type ValidationResult } from './types';
+import { createValidationError, type ValidationResult } from './types';
 import { ValidationService } from './service';
 
 export interface BeneficiaryData {
@@ -27,9 +27,10 @@ export function validateAccountNumberLegacy(accountNumber: string): ValidationRe
 export function validateInstitutionLegacy(institution: string): ValidationResult {
   const result = {
     valid: !!institution && institution.trim() !== '',
-    errors: !institution || institution.trim() === ''
-      ? [createValidationError('institution', 'Institution is required')]
-      : [],
+    errors:
+      !institution || institution.trim() === ''
+        ? [createValidationError('institution', 'Institution is required')]
+        : [],
   };
   return {
     valid: result.valid,

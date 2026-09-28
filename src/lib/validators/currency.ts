@@ -1,6 +1,5 @@
-import { createValidationError, createValidationResult, type ValidationResult } from './types';
+import { createValidationError, type ValidationResult } from './types';
 import { ValidationService } from './service';
-import { getSupportedCurrencies as getSupportedCurrenciesFromSchemas } from './schemas';
 
 const SUPPORTED_CURRENCIES = ['NGN', 'KES', 'GHS', 'UGX', 'ZAR', 'GBP', 'USD', 'EUR'];
 

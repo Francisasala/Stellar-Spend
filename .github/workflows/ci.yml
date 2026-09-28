@@ -54,32 +54,55 @@ jobs:
       - name: Run linting
         run: npm run lint
 
+      - name: Check dependency licenses
+        run: npm run license:check
+
+      - name: Check type coverage
+        run: npm run type:coverage
+
       - name: Run build
         run: npm run build
 
+      - name: Install dependencies
+        run: npm ci --frozen-lockfile
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: next-build-${{ github.sha }}
+          path: .next/
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Run E2E tests against built app (next start)
+        run: npm run test:e2e
+        env:
+          CI: true
+          PLAYWRIGHT_BASE_URL: http://localhost:3001
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
       - name: Run tests
         run: npm test
 
       - name: Check code formatting
         run: npm run format:check
 
-      - name: Run build
-        run: npm run build
-
-      - name: Run tests
-        run: |
-          if npm run | grep -q "test"; then
-            npm test
-          else
-            echo "No tests configured yet, skipping..."
-          fi
+      - name: Check dependency vulnerabilities
+        run: npm run audit:check
 
       - name: Check bundle sizes
         if: matrix.node-version == '20.x'
         run: |
           echo "## Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Analyze Next.js build output
           if [ -d ".next" ]; then
             echo "### JavaScript Bundles" >> $GITHUB_STEP_SUMMARY

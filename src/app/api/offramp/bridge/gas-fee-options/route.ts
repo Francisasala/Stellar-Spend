@@ -1,7 +1,8 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
+import type { ChainDetailsWithTokens } from '@allbridge/bridge-core-sdk';
 import { env } from '@/lib/env';
-import { withAllbridgeTimeout } from '@/lib/offramp/utils/timeout';
+import { withAllbridgeTimeout } from '@/lib/offramp';
 import { ErrorHandler } from '@/lib/error-handler';
 
 export const maxDuration = 20;
@@ -20,7 +21,7 @@ const CACHE_DURATION = 60 * 1000; // 60 seconds
 
 /**
  * GET /api/offramp/bridge/gas-fee-options
- * 
+ *
  * Fetches gas fee options from Allbridge SDK.
  * Returns native (XLM) and stablecoin (USDC) fee options.
  * Caches result for 60 seconds.
@@ -36,7 +37,9 @@ export async function GET(): Promise<NextResponse<GasFeeOptions | { error: strin
     }
 
     // Initialize Allbridge SDK
-    const { AllbridgeCoreSdk, nodeRpcUrlsDefault, Messenger, FeePaymentMethod } = await import('@allbridge/bridge-core-sdk');
+    const { AllbridgeCoreSdk, nodeRpcUrlsDefault, Messenger, FeePaymentMethod } = await import(
+      '@allbridge/bridge-core-sdk'
+    );
 
     const sdk = new AllbridgeCoreSdk({
       ...nodeRpcUrlsDefault,
@@ -46,20 +49,23 @@ export async function GET(): Promise<NextResponse<GasFeeOptions | { error: strin
     });
 
     // Get chain details to find USDC tokens
-    const chainDetails = await withAllbridgeTimeout(
-      sdk.chainDetailsMap(),
-      'chainDetailsMap'
-    );
+    const chainDetails = await withAllbridgeTimeout(sdk.chainDetailsMap(), 'chainDetailsMap');
 
-    let stellarChain: any = null;
-    let baseChain: any = null;
+    let stellarChain: ChainDetailsWithTokens | null = null;
+    let baseChain: ChainDetailsWithTokens | null = null;
 
     for (const [, chain] of Object.entries(chainDetails)) {
-      const chainObj = chain as any;
-      if (chainObj.name?.toLowerCase().includes('stellar') || chainObj.name?.toLowerCase().includes('soroban')) {
+      const chainObj = chain;
+      if (
+        chainObj.name?.toLowerCase().includes('stellar') ||
+        chainObj.name?.toLowerCase().includes('soroban')
+      ) {
         stellarChain = chainObj;
       }
-      if (chainObj.name?.toLowerCase().includes('ethereum') || chainObj.name?.toLowerCase().includes('base')) {
+      if (
+        chainObj.name?.toLowerCase().includes('ethereum') ||
+        chainObj.name?.toLowerCase().includes('base')
+      ) {
         baseChain = chainObj;
       }
     }
@@ -69,8 +75,8 @@ export async function GET(): Promise<NextResponse<GasFeeOptions | { error: strin
     }
 
     // Find USDC tokens on both chains
-    const stellarUsdc = stellarChain.tokens.find((t: any) => t.symbol === 'USDC');
-    const baseUsdc = baseChain.tokens.find((t: any) => t.symbol === 'USDC');
+    const stellarUsdc = stellarChain.tokens.find((t) => t.symbol === 'USDC');
+    const baseUsdc = baseChain.tokens.find((t) => t.symbol === 'USDC');
 
     if (!stellarUsdc || !baseUsdc) {
       throw new Error('USDC token not found on one or both chains');
@@ -79,12 +85,20 @@ export async function GET(): Promise<NextResponse<GasFeeOptions | { error: strin
     // Get gas fee options from Allbridge SDK
     const gasFeeOptions = await withAllbridgeTimeout(
       sdk.getGasFeeOptions(stellarUsdc, baseUsdc, Messenger.ALLBRIDGE),
-      'getGasFeeOptions'
+      'getGasFeeOptions',
     );
 
     // Normalize fee options — SDK returns keyed by FeePaymentMethod enum values
-    const nativeFee = (gasFeeOptions as any)[FeePaymentMethod.WITH_NATIVE_CURRENCY] ?? (gasFeeOptions as any).native;
-    const stablecoinFee = (gasFeeOptions as any)[FeePaymentMethod.WITH_STABLECOIN] ?? (gasFeeOptions as any).stablecoin;
+    type FeeAmount = { int?: string; float?: string; [key: string]: unknown };
+    const gasFeeOptionsTyped = gasFeeOptions as unknown as {
+      native?: FeeAmount;
+      stablecoin?: FeeAmount;
+      [key: string]: FeeAmount | undefined;
+    };
+    const nativeFee =
+      gasFeeOptionsTyped[FeePaymentMethod.WITH_NATIVE_CURRENCY] ?? gasFeeOptionsTyped.native;
+    const stablecoinFee =
+      gasFeeOptionsTyped[FeePaymentMethod.WITH_STABLECOIN] ?? gasFeeOptionsTyped.stablecoin;
 
     const result: GasFeeOptions = {
       feeOptions: {

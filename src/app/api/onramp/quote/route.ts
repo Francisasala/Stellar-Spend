@@ -1,43 +1,45 @@
 import { logger } from '@/lib/logger';
 import { NextResponse, type NextRequest } from 'next/server';
+import { z } from 'zod';
 import { globalContainer } from '@/lib/di';
-import { SERVICE_KEYS } from '@/lib/di/registry';
+import { SERVICE_KEYS } from '@/lib/di';
 import { isSupportedCurrency } from '@/lib/currencies';
 import { getCachedQuote } from '@/lib/cache';
 import { ErrorHandler } from '@/lib/error-handler';
+import { validateBody } from '@/lib/validation/validate-request';
+import { amountSchema } from '@/lib/validators/schemas';
 
 export const maxDuration = 15;
 
+const onrampQuoteSchema = z.object({
+  fiatAmount: amountSchema,
+  fiatCurrency: z.string().min(1),
+  destinationToken: z.string().min(1),
+  destinationAddress: z.string().min(1),
+  provider: z.string().optional(),
+});
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { fiatAmount, fiatCurrency, destinationToken, destinationAddress, provider } = body;
+    const validation = await validateBody(request, onrampQuoteSchema);
+    if (!validation.success) return validation.response;
+    const { fiatAmount, fiatCurrency, destinationToken, destinationAddress, provider } =
+      validation.data;
 
-    if (!fiatAmount || parseFloat(fiatAmount) <= 0) {
-      return ErrorHandler.validation('Invalid fiatAmount');
-    }
-
-    if (!fiatCurrency || !isSupportedCurrency(fiatCurrency)) {
+    if (!isSupportedCurrency(fiatCurrency)) {
       return ErrorHandler.validation(`Unsupported currency: ${fiatCurrency}`);
     }
 
-    if (!destinationToken) {
-      return ErrorHandler.validation('destinationToken is required');
-    }
-
-    if (!destinationAddress) {
-      return ErrorHandler.validation('destinationAddress is required');
-    }
-
-    const quote = await getCachedQuote(
-      fiatAmount,
-      fiatCurrency,
-      destinationToken,
-      async () => {
-        const svc = await globalContainer.resolve(SERVICE_KEYS.ONRAMP_SERVICE);
-        return svc.getQuote({ fiatAmount, fiatCurrency, destinationToken, destinationAddress, provider });
-      }
-    );
+    const quote = await getCachedQuote(fiatAmount, fiatCurrency, destinationToken, async () => {
+      const svc = await globalContainer.resolve(SERVICE_KEYS.ONRAMP_SERVICE);
+      return svc.getQuote({
+        fiatAmount,
+        fiatCurrency,
+        destinationToken,
+        destinationAddress,
+        provider,
+      });
+    });
 
     return NextResponse.json(quote);
   } catch (error) {

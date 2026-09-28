@@ -2,10 +2,10 @@
 -- Query optimization pass for #787.
 --
 -- 011_add_query_indexes.sql, 018_optimize_database_queries.sql, and
--- 024_db_optimization_701.sql all create indexes on
+-- 024_db_optimization_701.sql all attempt to add indexes on
 -- transactions(created_at DESC) / transactions(user_address, created_at DESC).
 -- The transactions table has no created_at column (only `timestamp`, see
--- 001_create_transactions.sql) so every one of those CREATE INDEX
+-- 001_create_transactions.sql) so every one of those index-creation
 -- statements fails whenever it is actually executed against Postgres, and
 -- the composite index intended to cover the getByUser history query
 -- (src/lib/db/dal.ts) never exists. This migration adds the correctly

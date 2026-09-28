@@ -15,10 +15,10 @@ export interface SnapshotTestOptions {
  * Create a snapshot test for a component
  */
 export function createComponentSnapshot(
-  Component: React.ComponentType<any>,
-  options?: SnapshotTestOptions
+  Component: React.ComponentType<Record<string, unknown>>,
+  options?: SnapshotTestOptions,
 ) {
-  const { props = {}, children, errorBoundary = false } = options || {};
+  const { props = {}, children } = options || {};
 
   const element = children ? (
     <Component {...props}>{children}</Component>
@@ -34,8 +34,8 @@ export function createComponentSnapshot(
  * Test component with different prop variations
  */
 export function testComponentVariations(
-  Component: React.ComponentType<any>,
-  variations: Array<{ name: string; props: Record<string, unknown> }>
+  Component: React.ComponentType<Record<string, unknown>>,
+  variations: Array<{ name: string; props: Record<string, unknown> }>,
 ) {
   return variations.map(({ name, props }) => ({
     name,
@@ -47,8 +47,8 @@ export function testComponentVariations(
  * Test component error states
  */
 export function testComponentErrorStates(
-  Component: React.ComponentType<any>,
-  errorProps: Record<string, unknown>[]
+  Component: React.ComponentType<Record<string, unknown>>,
+  errorProps: Record<string, unknown>[],
 ) {
   return errorProps.map((props, index) => ({
     name: `error-state-${index}`,
@@ -74,7 +74,7 @@ export function normalizeSnapshot(snapshot: unknown): string {
  */
 export function compareSnapshots(
   current: string,
-  previous: string
+  previous: string,
 ): { matches: boolean; diff?: string } {
   if (current === previous) {
     return { matches: true };
@@ -103,7 +103,7 @@ export function compareSnapshots(
 export function updateSnapshot(
   snapshotName: string,
   newValue: string,
-  snapshotMap: Map<string, string>
+  snapshotMap: Map<string, string>,
 ): void {
   snapshotMap.set(snapshotName, newValue);
 }
@@ -113,7 +113,7 @@ export function updateSnapshot(
  */
 export function getSnapshot(
   snapshotName: string,
-  snapshotMap: Map<string, string>
+  snapshotMap: Map<string, string>,
 ): string | undefined {
   return snapshotMap.get(snapshotName);
 }

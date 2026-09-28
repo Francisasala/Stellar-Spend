@@ -1,5 +1,3 @@
-import { dal } from "../db/dal";
-
 export interface CurrencyVolume {
   currency: string;
   count: number;
@@ -10,6 +8,13 @@ export interface DailyVolume {
   date: string;
   count: number;
   volume: string;
+}
+
+interface RawTransaction {
+  timestamp: number;
+  amount?: string;
+  status?: string;
+  currency?: string;
 }
 
 export interface AnalyticsSummary {
@@ -33,40 +38,40 @@ export async function generateAnalyticsSummary(
   const periodStart = from ?? now - 30 * 24 * 60 * 60 * 1000;
   const periodEnd = to ?? now;
 
-  let transactions: any[] = [];
+  let transactions: RawTransaction[] = [];
   try {
-    const { getTransactions } = await import("../db/dal");
+    const { getTransactions } = await import('../db/dal');
     transactions = await getTransactions({ limit: 10000 });
   } catch {}
 
   const inRange = transactions.filter(
-    (tx: any) => tx.timestamp >= periodStart && tx.timestamp <= periodEnd,
+    (tx: RawTransaction) => tx.timestamp >= periodStart && tx.timestamp <= periodEnd,
   );
 
   const totalTransactions = inRange.length;
   const totalVolume = inRange.reduce(
-    (sum: number, tx: any) => sum + parseFloat(tx.amount || "0"),
+    (sum: number, tx: RawTransaction) => sum + parseFloat(tx.amount || '0'),
     0,
   );
 
-  const completed = inRange.filter((tx: any) => tx.status === "completed");
-  const failed = inRange.filter((tx: any) => tx.status === "failed");
-  const pending = inRange.filter((tx: any) => tx.status === "pending");
+  const completed = inRange.filter((tx: RawTransaction) => tx.status === 'completed');
+  const failed = inRange.filter((tx: RawTransaction) => tx.status === 'failed');
+  const pending = inRange.filter((tx: RawTransaction) => tx.status === 'pending');
 
   const currencyMap = new Map<string, { count: number; volume: number }>();
   const dayMap = new Map<string, { count: number; volume: number }>();
 
   for (const tx of inRange) {
-    const cur = tx.currency || "UNKNOWN";
+    const cur = tx.currency || 'UNKNOWN';
     const existing = currencyMap.get(cur) ?? { count: 0, volume: 0 };
     existing.count++;
-    existing.volume += parseFloat(tx.amount || "0");
+    existing.volume += parseFloat(tx.amount || '0');
     currencyMap.set(cur, existing);
 
     const day = new Date(tx.timestamp).toISOString().slice(0, 10);
     const dayExisting = dayMap.get(day) ?? { count: 0, volume: 0 };
     dayExisting.count++;
-    dayExisting.volume += parseFloat(tx.amount || "0");
+    dayExisting.volume += parseFloat(tx.amount || '0');
     dayMap.set(day, dayExisting);
   }
 
@@ -93,9 +98,8 @@ export async function generateAnalyticsSummary(
     completedTransactions: completed.length,
     failedTransactions: failed.length,
     pendingTransactions: pending.length,
-    averageTransactionValue: totalTransactions > 0
-      ? (totalVolume / totalTransactions).toFixed(2)
-      : "0.00",
+    averageTransactionValue:
+      totalTransactions > 0 ? (totalVolume / totalTransactions).toFixed(2) : '0.00',
     topCurrencies,
     volumeByDay,
     periodStart: new Date(periodStart).toISOString(),

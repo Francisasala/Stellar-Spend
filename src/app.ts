@@ -1,6 +1,7 @@
 import express from 'express';
 import { tracingMiddleware } from './lib/middleware/tracing';
 import { initializeTracing } from './lib/monitoring';
+import { logger } from './lib/logger';
 
 // Initialize OpenTelemetry tracing
 const tracingSDK = initializeTracing();
@@ -14,7 +15,7 @@ app.use(tracingMiddleware);
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('Received SIGTERM, shutting down gracefully...');
+  logger.info('shutdown.signal', { signal: 'SIGTERM' });
   if (tracingSDK) {
     await tracingSDK.shutdown();
   }
@@ -22,7 +23,7 @@ process.on('SIGTERM', async () => {
 });
 
 process.on('SIGINT', async () => {
-  console.log('Received SIGINT, shutting down gracefully...');
+  logger.info('shutdown.signal', { signal: 'SIGINT' });
   if (tracingSDK) {
     await tracingSDK.shutdown();
   }

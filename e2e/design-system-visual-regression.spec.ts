@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:6006'; // Storybook URL
-const SNAPSHOT_DIR = 'e2e/snapshots/design-system';
 
 test.describe('Design System Component Visual Regression Tests', () => {
   test.describe('Button Component', () => {
@@ -313,8 +312,6 @@ test.describe('Design System Component Visual Regression Tests', () => {
       await page.waitForLoadState('networkidle');
 
       const button = page.locator('button').first();
-      const role = await button.getAttribute('role');
-      const ariaLabel = await button.getAttribute('aria-label');
 
       expect(button).toBeDefined();
     });

@@ -6,16 +6,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FxRateService } from './fx-rate.service';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function makeFetchMock(rate: number | null, status = 200) {
-  return vi.fn().mockResolvedValue({
-    ok: status === 200,
-    status,
-    json: async () => (rate !== null ? { rate: String(rate) } : { rate: '0' }),
-  });
-}
-
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('FxRateService', () => {
@@ -126,7 +116,11 @@ describe('FxRateService', () => {
     });
 
     it('throws for non-ok HTTP responses with no cache', async () => {
-      fetchSpy.mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({}) } as Response);
+      fetchSpy.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        json: async () => ({}),
+      } as Response);
 
       await expect(service.getRate('NGN')).rejects.toThrow('503');
     });

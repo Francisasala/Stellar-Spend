@@ -1,5 +1,4 @@
 import { fetchPaycrestQuote, buildQuote, type QuoteResult } from './offramp/utils/quote-fetcher';
-import { providerRegistry } from './offramp/adapters/provider-registry';
 import { getCacheClient } from './cache';
 
 export interface ProviderQuote extends QuoteResult {
@@ -22,6 +21,58 @@ export interface AggregatedQuoteResponse {
 }
 
 export type QuoteProvider = 'paycrest' | 'allbridge';
+
+/**
+ * Explicit, documented provider fallback order.
+ *
+ * When `aggregateQuotes` is called without an explicit `providers` list, this
+ * ordered array is the source of truth for which providers are queried and in
+ * what priority order results are preferred when ranking ties occur:
+ *
+ *   1. paycrest  - primary settlement provider, always enabled.
+ *   2. allbridge - secondary/backup bridge provider, disabled by default
+ *                  (see PROVIDER_CONFIGS.allbridge.enabled) and only used
+ *                  once explicitly enabled or passed in `providers`.
+ *
+ * This replaces the previous implicit branching (if/else on provider name
+ * inside the retry closure) with a single declarative list that can be
+ * unit-tested directly via `getOrderedProviders()`.
+ */
+export const PROVIDER_FALLBACK_ORDER: readonly QuoteProvider[] = ['paycrest', 'allbridge'];
+
+/** Returns the enabled providers in documented fallback-priority order. */
+export function getOrderedProviders(
+  requested: QuoteProvider[] = [...PROVIDER_FALLBACK_ORDER],
+): QuoteProvider[] {
+  const requestedSet = new Set(requested);
+  return PROVIDER_FALLBACK_ORDER.filter(
+    (p) => requestedSet.has(p) && PROVIDER_CONFIGS[p].enabled,
+  );
+}
+
+type QuoteStrategy = (receiveAmount: string, currency: string) => Promise<ProviderQuote>;
+
+/** Ordered-strategy map: one explicit fetch strategy per provider, keyed by fallback order. */
+const PROVIDER_STRATEGIES: Record<QuoteProvider, QuoteStrategy> = {
+  paycrest: fetchQuoteFromPaycrestStrategy,
+  allbridge: fetchQuoteFromAllbridgeStrategy,
+};
+
+function fetchQuoteFromPaycrestStrategy(receiveAmount: string, currency: string) {
+  return fetchQuoteFromPaycrest(receiveAmount, currency);
+}
+
+function fetchQuoteFromAllbridgeStrategy(receiveAmount: string, currency: string) {
+  return fetchQuoteFromAllbridge(receiveAmount, currency);
+}
+
+function getStrategyForProvider(provider: QuoteProvider): QuoteStrategy {
+  const strategy = PROVIDER_STRATEGIES[provider];
+  if (!strategy) {
+    throw new Error(`Unknown provider: ${provider}`);
+  }
+  return strategy;
+}
 
 interface ProviderConfig {
   name: string;
@@ -60,7 +111,7 @@ const CACHE_TTL_SECONDS = 30;
 
 function calculateReliability(history: number[]): number {
   if (history.length === 0) return 1.0;
-  const successes = history.filter(r => r === 1).length;
+  const successes = history.filter((r) => r === 1).length;
   return successes / history.length;
 }
 
@@ -79,7 +130,7 @@ function isProviderDegraded(provider: QuoteProvider): boolean {
 
 async function fetchQuoteFromPaycrest(
   receiveAmount: string,
-  currency: string
+  currency: string,
 ): Promise<ProviderQuote> {
   const start = Date.now();
   try {
@@ -118,7 +169,7 @@ async function fetchQuoteFromPaycrest(
 
 async function fetchQuoteFromAllbridge(
   receiveAmount: string,
-  currency: string
+  currency: string,
 ): Promise<ProviderQuote> {
   const start = Date.now();
   try {
@@ -128,7 +179,12 @@ async function fetchQuoteFromAllbridge(
 
     const sdk = initializeAllbridgeSdk();
     const tokens = await getAllbridgeTokens(sdk);
-    const quote = await getAllbridgeQuote(sdk, tokens.stellar.usdc, tokens.base.usdc, receiveAmount);
+    const quote = await getAllbridgeQuote(
+      sdk,
+      tokens.stellar.usdc,
+      tokens.base.usdc,
+      receiveAmount,
+    );
 
     const bridgeFee = parseFloat(quote.receiveAmount) * 0.005;
     const payoutFee = 0;
@@ -196,7 +252,7 @@ export function rankQuotes(quotes: ProviderQuote[]): ProviderQuote[] {
 }
 
 export function selectBestQuote(quotes: ProviderQuote[]): ProviderQuote | null {
-  const successful = quotes.filter(q => q.success);
+  const successful = quotes.filter((q) => q.success);
   if (successful.length === 0) return null;
   const ranked = rankQuotes(quotes);
   return ranked.length > 0 ? ranked[0] : null;
@@ -204,16 +260,16 @@ export function selectBestQuote(quotes: ProviderQuote[]): ProviderQuote | null {
 
 function getDegradedProviders(): string[] {
   return (Object.keys(PROVIDER_CONFIGS) as QuoteProvider[]).filter(
-    p => PROVIDER_CONFIGS[p].enabled && isProviderDegraded(p)
+    (p) => PROVIDER_CONFIGS[p].enabled && isProviderDegraded(p),
   );
 }
 
 export async function aggregateQuotes(
   receiveAmount: string,
   currency: string,
-  providers: QuoteProvider[] = ['paycrest']
+  providers: QuoteProvider[] = ['paycrest'],
 ): Promise<AggregatedQuoteResponse> {
-  const enabledProviders = providers.filter((p) => PROVIDER_CONFIGS[p].enabled);
+  const enabledProviders = getOrderedProviders(providers);
 
   if (enabledProviders.length === 0) {
     throw new Error('No enabled providers available');
@@ -236,17 +292,11 @@ export async function aggregateQuotes(
     const fetchWithRetry = async (retriesLeft: number): Promise<ProviderQuote> => {
       try {
         const timeoutPromise = new Promise<ProviderQuote>((_, reject) =>
-          setTimeout(() => reject(new Error('Provider timeout')), config.timeout)
+          setTimeout(() => reject(new Error('Provider timeout')), config.timeout),
         );
 
-        let fetchPromise: Promise<ProviderQuote>;
-        if (provider === 'paycrest') {
-          fetchPromise = fetchQuoteFromPaycrest(receiveAmount, currency);
-        } else if (provider === 'allbridge') {
-          fetchPromise = fetchQuoteFromAllbridge(receiveAmount, currency);
-        } else {
-          throw new Error(`Unknown provider: ${provider}`);
-        }
+        const strategy = getStrategyForProvider(provider);
+        const fetchPromise = strategy(receiveAmount, currency);
 
         return await Promise.race([fetchPromise, timeoutPromise]);
       } catch (error) {
@@ -276,9 +326,9 @@ export async function aggregateQuotes(
   const allQuotes = await Promise.all(quotePromises);
   const bestQuote = selectBestQuote(allQuotes);
 
-  const successful = allQuotes.filter(q => q.success);
+  const successful = allQuotes.filter((q) => q.success);
   const alternatives = allQuotes
-    .filter(q => q.success && q.provider !== bestQuote?.provider)
+    .filter((q) => q.success && q.provider !== bestQuote?.provider)
     .sort((a, b) => (b.netPayout ?? 0) - (a.netPayout ?? 0));
 
   const result: AggregatedQuoteResponse = {

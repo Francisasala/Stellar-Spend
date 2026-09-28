@@ -1,8 +1,8 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { globalContainer } from '@/lib/di';
-import { SERVICE_KEYS } from '@/lib/di/registry';
-import { onrampProviderRegistry } from '@/lib/onramp/adapters/provider-registry';
+import { SERVICE_KEYS } from '@/lib/di';
+import { onrampProviderRegistry } from '@/lib/onramp';
 import { verifyHmacSignature } from '@/lib/webhookVerify';
 import { ErrorHandler } from '@/lib/error-handler';
 import { ApiError, ErrorType } from '@/lib/error-types';
@@ -35,12 +35,17 @@ export async function POST(request: Request) {
     const secret = resolveProviderWebhookSecret(provider);
     if (!secret) {
       logger.error('Onramp webhook secret not configured for provider', { provider });
-      return ErrorHandler.handle(new ApiError(ErrorType.SERVER_ERROR, 'Webhook not configured for this provider'));
+      return ErrorHandler.handle(
+        new ApiError(ErrorType.SERVER_ERROR, 'Webhook not configured for this provider'),
+      );
     }
 
     const verification = await verifyHmacSignature(rawBody, signature, secret);
     if (!verification.valid) {
-      logger.warn('Onramp webhook signature verification failed', { provider, reason: verification.reason });
+      logger.warn('Onramp webhook signature verification failed', {
+        provider,
+        reason: verification.reason,
+      });
       return ErrorHandler.unauthorized(verification.reason ?? 'Invalid signature');
     }
 

@@ -14,5 +14,11 @@ soroban-sdk = { workspace = true, features = ["testutils"] }
 [features]
 testutils = ["soroban-sdk/testutils"]
 
-[lib]
-crate-type = ["cdylib", "rlib"]
+[[test]]
+name = "integration"
+path = "tests/integration.rs"
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true

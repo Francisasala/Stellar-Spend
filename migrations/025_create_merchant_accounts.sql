@@ -1,11 +1,30 @@
 -- Migration 025: Create merchant accounts and payout tables
 
-CREATE TYPE merchant_role AS ENUM ('owner', 'admin', 'viewer');
-CREATE TYPE merchant_status AS ENUM ('active', 'suspended');
-CREATE TYPE merchant_payout_status AS ENUM ('pending', 'processing', 'completed', 'failed');
-CREATE TYPE merchant_item_status AS ENUM ('pending', 'processing', 'completed', 'failed');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'merchant_role') THEN
+    CREATE TYPE merchant_role AS ENUM ('owner', 'admin', 'viewer');
+  END IF;
+END $$;
 
-CREATE TABLE merchant_accounts (
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'merchant_status') THEN
+    CREATE TYPE merchant_status AS ENUM ('active', 'suspended');
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'merchant_payout_status') THEN
+    CREATE TYPE merchant_payout_status AS ENUM ('pending', 'processing', 'completed', 'failed');
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'merchant_item_status') THEN
+    CREATE TYPE merchant_item_status AS ENUM ('pending', 'processing', 'completed', 'failed');
+  END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS merchant_accounts (
   id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id      TEXT NOT NULL,
   business_name  TEXT NOT NULL,
@@ -18,10 +37,10 @@ CREATE TABLE merchant_accounts (
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX merchant_accounts_user_id_idx ON merchant_accounts (user_id);
-CREATE INDEX merchant_accounts_status_idx ON merchant_accounts (status);
+CREATE UNIQUE INDEX IF NOT EXISTS merchant_accounts_user_id_idx ON merchant_accounts (user_id);
+CREATE INDEX IF NOT EXISTS merchant_accounts_status_idx ON merchant_accounts (status);
 
-CREATE TABLE merchant_payouts (
+CREATE TABLE IF NOT EXISTS merchant_payouts (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   merchant_id      UUID NOT NULL REFERENCES merchant_accounts(id) ON DELETE CASCADE,
   idempotency_key  TEXT NOT NULL UNIQUE,
@@ -32,10 +51,10 @@ CREATE TABLE merchant_payouts (
   completed_at     TIMESTAMPTZ
 );
 
-CREATE INDEX merchant_payouts_merchant_id_idx ON merchant_payouts (merchant_id);
-CREATE INDEX merchant_payouts_status_idx ON merchant_payouts (status);
+CREATE INDEX IF NOT EXISTS merchant_payouts_merchant_id_idx ON merchant_payouts (merchant_id);
+CREATE INDEX IF NOT EXISTS merchant_payouts_status_idx ON merchant_payouts (status);
 
-CREATE TABLE merchant_payout_items (
+CREATE TABLE IF NOT EXISTS merchant_payout_items (
   id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   payout_id                UUID NOT NULL REFERENCES merchant_payouts(id) ON DELETE CASCADE,
   beneficiary_institution  TEXT NOT NULL,
@@ -47,5 +66,5 @@ CREATE TABLE merchant_payout_items (
   error_message            TEXT
 );
 
-CREATE INDEX merchant_payout_items_payout_id_idx ON merchant_payout_items (payout_id);
-CREATE INDEX merchant_payout_items_status_idx ON merchant_payout_items (status);
+CREATE INDEX IF NOT EXISTS merchant_payout_items_payout_id_idx ON merchant_payout_items (payout_id);
+CREATE INDEX IF NOT EXISTS merchant_payout_items_status_idx ON merchant_payout_items (status);

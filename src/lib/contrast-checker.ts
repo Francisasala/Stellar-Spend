@@ -9,7 +9,7 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
 }
 
 function getLuminance(rgb: { r: number; g: number; b: number }): number {
-  const [r, g, b] = [rgb.r, rgb.g, rgb.b].map(val => {
+  const [r, g, b] = [rgb.r, rgb.g, rgb.b].map((val) => {
     val = val / 255;
     return val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4);
   });
@@ -63,6 +63,41 @@ export function auditContrastPairs(tokens: Record<string, string>): ContrastPair
         pairs.push({
           foreground: fg,
           foregroundName: textToken,
+          background: bg,
+          backgroundName: bgToken,
+          contrast: parseFloat(contrast.toFixed(2)),
+          wcagAA: isWcagAA(contrast),
+          wcagAAA: isWcagAAA(contrast),
+        });
+      }
+    }
+  }
+
+  return pairs;
+}
+
+/**
+ * Audits semantic foreground tokens (success, error, warning, info, accent,
+ * accent-hover) against the primary surface backgrounds (bg, panel,
+ * panel-elevated, panel-overlay).  These tokens are used as foreground text
+ * colours in badges, alerts, and interactive elements.
+ */
+export function auditSemanticTokens(tokens: Record<string, string>): ContrastPair[] {
+  const pairs: ContrastPair[] = [];
+
+  const semanticTokens = ['success', 'warning', 'error', 'info', 'accent', 'accent-hover'];
+  const bgTokens = ['bg', 'panel', 'panel-elevated', 'panel-overlay'];
+
+  for (const semanticToken of semanticTokens) {
+    for (const bgToken of bgTokens) {
+      const fg = tokens[semanticToken];
+      const bg = tokens[bgToken];
+
+      if (fg && bg) {
+        const contrast = getContrastRatio(fg, bg);
+        pairs.push({
+          foreground: fg,
+          foregroundName: semanticToken,
           background: bg,
           backgroundName: bgToken,
           contrast: parseFloat(contrast.toFixed(2)),

@@ -25,7 +25,7 @@ export class HttpClientError extends Error {
   constructor(
     message: string,
     public readonly status: number,
-    public readonly details?: unknown
+    public readonly details?: unknown,
   ) {
     super(message);
     this.name = 'HttpClientError';
@@ -34,7 +34,9 @@ export class HttpClientError extends Error {
 }
 
 export class HttpClient {
-  private readonly config: Required<Omit<HttpClientConfig, 'baseUrl' | 'headers' | 'onRequest' | 'onResponse'>> &
+  private readonly config: Required<
+    Omit<HttpClientConfig, 'baseUrl' | 'headers' | 'onRequest' | 'onResponse'>
+  > &
     Pick<HttpClientConfig, 'baseUrl' | 'headers' | 'onRequest' | 'onResponse'>;
   private circuitState: CircuitState = 'closed';
   private failures = 0;
@@ -112,9 +114,9 @@ export class HttpClient {
 
         if (!response.ok) {
           const err = new HttpClientError(
-            (data as any)?.message || response.statusText || 'Unknown error',
+            (data as { message?: string })?.message || response.statusText || 'Unknown error',
             response.status,
-            data
+            data,
           );
           // Don't retry 4xx except 429
           if (response.status >= 400 && response.status < 500 && response.status !== 429) {
@@ -125,20 +127,26 @@ export class HttpClient {
         }
 
         this.recordSuccess();
-        return ((data as any)?.data ?? data) as T;
-      } catch (error: any) {
+        return ((data as { data?: T })?.data ?? data) as T;
+      } catch (error) {
         clearTimeout(timerId);
-        if (error instanceof HttpClientError && error.status >= 400 && error.status < 500 && error.status !== 429) {
+        if (
+          error instanceof HttpClientError &&
+          error.status >= 400 &&
+          error.status < 500 &&
+          error.status !== 429
+        ) {
           throw error;
         }
         if (error instanceof CircuitOpenError) throw error;
 
-        if (error.name === 'AbortError') {
+        const err = error as { name?: string; message?: string };
+        if (err.name === 'AbortError') {
           lastError = new HttpClientError('Request timeout', 504);
         } else if (error instanceof HttpClientError) {
           lastError = error;
         } else {
-          lastError = new HttpClientError(error.message || 'Network error', 502);
+          lastError = new HttpClientError(err.message || 'Network error', 502);
         }
 
         if (attempt < this.config.retries) {

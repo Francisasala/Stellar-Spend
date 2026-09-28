@@ -1,10 +1,12 @@
 import { logger } from '@/lib/logger';
 import { NextResponse, type NextRequest } from 'next/server';
-import { validateAmount } from '@/lib/offramp/utils/validation';
-import { calculateBridgeAmount } from '@/lib/offramp/utils/quote-fetcher';
+import { z } from 'zod';
+import { validateAmount } from '@/lib/offramp';
+import { calculateBridgeAmount } from '@/lib/offramp';
 import { aggregateQuotes, type QuoteProvider } from '@/lib/quote-aggregator';
 import { ErrorHandler } from '@/lib/error-handler';
 import { ApiError, ErrorType } from '@/lib/error-types';
+import { validateBody } from '@/lib/validation/validate-request';
 
 export const maxDuration = 20;
 
@@ -17,17 +19,21 @@ const FEE_METHOD_MAP: Record<string, 'stablecoin' | 'native'> = {
   native: 'native',
 };
 
+const quoteAggregateSchema = z.object({
+  amount: z.union([z.string(), z.number()]),
+  currency: z.string().min(1),
+  feeMethod: z.string().min(1),
+  providers: z.array(z.string()).optional(),
+});
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { amount, currency, feeMethod, providers } = body;
+    const validation = await validateBody(request, quoteAggregateSchema);
+    if (!validation.success) return validation.response;
+    const { amount, currency, feeMethod, providers } = validation.data;
 
     if (!validateAmount(String(amount ?? ''))) {
       return ErrorHandler.validation('Invalid amount: must be a positive number');
-    }
-
-    if (!currency || typeof currency !== 'string') {
-      return ErrorHandler.validation('currency is required');
     }
 
     const normalizedFee = FEE_METHOD_MAP[feeMethod];
@@ -48,7 +54,9 @@ export async function POST(request: NextRequest) {
     const aggregatedQuotes = await aggregateQuotes(receiveAmount, currency, providerList);
 
     if (!aggregatedQuotes.bestQuote) {
-      return ErrorHandler.handle(new ApiError(ErrorType.EXTERNAL_SERVICE, 'No quotes available from any provider'));
+      return ErrorHandler.handle(
+        new ApiError(ErrorType.EXTERNAL_SERVICE, 'No quotes available from any provider'),
+      );
     }
 
     return NextResponse.json(aggregatedQuotes);

@@ -30,10 +30,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  */
 const queryMocks = new Map<string, ReturnType<typeof vi.fn>>();
 
-function registerQuery(sqlPrefix: string, mockFn: ReturnType<typeof vi.fn>) {
-  queryMocks.set(sqlPrefix.trim().toUpperCase().slice(0, 40), mockFn);
-}
-
 const mockPoolQuery = vi.fn(async (sql: string, params?: unknown[]) => {
   const key = sql.trim().toUpperCase().slice(0, 40);
   for (const [prefix, fn] of queryMocks.entries()) {
@@ -62,7 +58,7 @@ import {
   getReferralStats,
   trackReferral,
   createReferralCode,
-} from '@/lib/services/referral.service';
+} from '@/lib/services';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -187,17 +183,13 @@ describe('Referral program integration tests (#845)', () => {
         rows: [makeReward({ status: 'completed' })],
       });
 
-      await expect(distributeReward('rreward_1')).rejects.toThrow(
-        'Reward already processed',
-      );
+      await expect(distributeReward('rreward_1')).rejects.toThrow('Reward already processed');
     });
 
     it('distributeReward throws if reward id does not exist', async () => {
       mockPoolQuery.mockResolvedValueOnce({ rows: [] });
 
-      await expect(distributeReward('nonexistent_id')).rejects.toThrow(
-        'Referral reward not found',
-      );
+      await expect(distributeReward('nonexistent_id')).rejects.toThrow('Referral reward not found');
     });
   });
 
@@ -403,9 +395,7 @@ describe('Referral program integration tests (#845)', () => {
 
     it('respects the limit parameter', async () => {
       mockPoolQuery.mockResolvedValueOnce({
-        rows: [
-          { user_id: 'user_a', total_referrals: '5', total_rewards_earned: '25' },
-        ],
+        rows: [{ user_id: 'user_a', total_referrals: '5', total_rewards_earned: '25' }],
       });
 
       const leaderboard = await getReferralLeaderboard(1);

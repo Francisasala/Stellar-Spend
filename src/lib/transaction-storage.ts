@@ -66,11 +66,17 @@ export class TransactionStorage {
   static update(id: string, updates: Partial<Transaction>): void {
     if (typeof window === 'undefined') return;
     const all = this.getAll();
-    const i = all.findIndex(tx => tx.id === id);
+    const i = all.findIndex((tx) => tx.id === id);
     if (i !== -1) {
       all[i] = { ...all[i], ...updates };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
     }
+  }
+
+  static remove(id: string): void {
+    if (typeof window === 'undefined') return;
+    const all = this.getAll().filter((tx) => tx.id !== id);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
   }
 
   static getAll(): Transaction[] {
@@ -84,11 +90,11 @@ export class TransactionStorage {
   }
 
   static getByUser(userAddress: string): Transaction[] {
-    return this.getAll().filter(tx => tx.userAddress.toLowerCase() === userAddress.toLowerCase());
+    return this.getAll().filter((tx) => tx.userAddress.toLowerCase() === userAddress.toLowerCase());
   }
 
   static getById(id: string): Transaction | undefined {
-    return this.getAll().find(tx => tx.id === id);
+    return this.getAll().find((tx) => tx.id === id);
   }
 
   static clear(): void {
@@ -111,7 +117,7 @@ export class TransactionStorage {
   static reverse(id: string, amount: string, reason: string): void {
     const tx = this.getById(id);
     if (!tx || !this.isReversalEligible(tx)) return;
-    
+
     this.update(id, {
       reversal: {
         id: `rev_${Date.now()}`,
@@ -127,7 +133,7 @@ export class TransactionStorage {
   static updateReversalStatus(id: string, status: 'pending' | 'completed' | 'failed'): void {
     const tx = this.getById(id);
     if (!tx?.reversal) return;
-    
+
     this.update(id, {
       reversal: { ...tx.reversal, status },
     });
@@ -140,11 +146,11 @@ export class TransactionStorage {
   }
 
   static getFavorites(): Transaction[] {
-    return this.getAll().filter(tx => tx.isFavorite);
+    return this.getAll().filter((tx) => tx.isFavorite);
   }
 
   static getFavoritesByUser(userAddress: string): Transaction[] {
-    return this.getByUser(userAddress).filter(tx => tx.isFavorite);
+    return this.getByUser(userAddress).filter((tx) => tx.isFavorite);
   }
 
   /**
@@ -176,17 +182,17 @@ export class TransactionStorage {
   static removeTag(id: string, tagId: string): void {
     const tx = this.getById(id);
     if (!tx?.tags) return;
-    this.update(id, { tags: tx.tags.filter(t => t.id !== tagId) });
+    this.update(id, { tags: tx.tags.filter((t) => t.id !== tagId) });
   }
 
   static getTransactionsByTag(tagName: string): Transaction[] {
-    return this.getAll().filter(tx => tx.tags?.some(t => t.name === tagName));
+    return this.getAll().filter((tx) => tx.tags?.some((t) => t.name === tagName));
   }
 
   static getAllTags(): Array<{ name: string; color: string; count: number }> {
     const tagMap = new Map<string, { color: string; count: number }>();
-    this.getAll().forEach(tx => {
-      tx.tags?.forEach(tag => {
+    this.getAll().forEach((tx) => {
+      tx.tags?.forEach((tag) => {
         const existing = tagMap.get(tag.name);
         tagMap.set(tag.name, {
           color: tag.color,

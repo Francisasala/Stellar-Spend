@@ -2,13 +2,14 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axe from 'axe-core';
+import Image from 'next/image';
 
 // ─── Axe helper ───────────────────────────────────────────────────────────────
 
 async function runAxe(container: HTMLElement) {
   const result = await axe.run(container);
   const serious = result.violations.filter(
-    (v) => v.impact === 'serious' || v.impact === 'critical'
+    (v) => v.impact === 'serious' || v.impact === 'critical',
   );
   return { violations: result.violations, serious };
 }
@@ -67,7 +68,7 @@ describe('Accessibility: Forms', () => {
         <button type="submit" aria-label="Submit transaction for processing">
           Send
         </button>
-      </form>
+      </form>,
     );
 
     const { serious } = await runAxe(container);
@@ -88,7 +89,7 @@ describe('Accessibility: Forms', () => {
           Amount must be greater than 0
         </span>
         <button type="submit">Submit</button>
-      </form>
+      </form>,
     );
 
     const { serious } = await runAxe(container);
@@ -102,7 +103,7 @@ describe('Accessibility: Forms', () => {
           Amount <span aria-label="required field">*</span>
         </label>
         <input id="req" type="text" required aria-required="true" />
-      </form>
+      </form>,
     );
 
     const input = screen.getByRole('textbox');
@@ -117,7 +118,9 @@ describe('Accessibility: Modals', () => {
   it('transaction preview modal has no serious violations', async () => {
     const { container } = render(
       <div>
-        <button id="open-btn" aria-haspopup="dialog">Preview Transaction</button>
+        <button id="open-btn" aria-haspopup="dialog">
+          Preview Transaction
+        </button>
         <div
           role="dialog"
           aria-modal="true"
@@ -126,9 +129,7 @@ describe('Accessibility: Modals', () => {
           tabIndex={-1}
         >
           <h2 id="modal-title">Transaction Preview</h2>
-          <p id="modal-desc">
-            You are about to send 100 USDC. This action cannot be undone.
-          </p>
+          <p id="modal-desc">You are about to send 100 USDC. This action cannot be undone.</p>
           <dl>
             <dt>Amount</dt>
             <dd>100 USDC</dd>
@@ -140,7 +141,7 @@ describe('Accessibility: Modals', () => {
           <button aria-label="Confirm and proceed with transaction">Confirm</button>
           <button aria-label="Cancel transaction">Cancel</button>
         </div>
-      </div>
+      </div>,
     );
 
     const { serious } = await runAxe(container);
@@ -149,15 +150,10 @@ describe('Accessibility: Modals', () => {
 
   it('modal has required ARIA attributes', () => {
     render(
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="dlg-title"
-        tabIndex={-1}
-      >
+      <div role="dialog" aria-modal="true" aria-labelledby="dlg-title" tabIndex={-1}>
         <h2 id="dlg-title">Confirm</h2>
         <button aria-label="Close dialog">×</button>
-      </div>
+      </div>,
     );
 
     const dialog = screen.getByRole('dialog');
@@ -176,7 +172,7 @@ describe('Accessibility: Modals', () => {
         <button onClick={handleClose} aria-label="Close dialog">
           ×
         </button>
-      </div>
+      </div>,
     );
 
     const closeBtn = screen.getByLabelText('Close dialog');
@@ -191,16 +187,16 @@ describe('Accessibility: Modals', () => {
         <h2 id="wallet-modal-title">Select Wallet</h2>
         <ul role="listbox" aria-label="Available wallets">
           <li role="option" aria-selected="false" tabIndex={0}>
-            <img src="" alt="Freighter wallet logo" />
+            <Image src="" alt="Freighter wallet logo" width={24} height={24} />
             Freighter
           </li>
           <li role="option" aria-selected="false" tabIndex={0}>
-            <img src="" alt="xBull wallet logo" />
+            <Image src="" alt="xBull wallet logo" width={24} height={24} />
             xBull
           </li>
         </ul>
         <button aria-label="Close wallet selection dialog">Close</button>
-      </div>
+      </div>,
     );
 
     const { serious } = await runAxe(container);
@@ -215,16 +211,11 @@ describe('Accessibility: Charts and data visualizations', () => {
     const { container } = render(
       <section aria-labelledby="chart-title">
         <h3 id="chart-title">Exchange Rate</h3>
-        <figure
-          role="img"
-          aria-label="Exchange rate chart showing NGN/USDC over the last 24 hours"
-        >
+        <figure role="img" aria-label="Exchange rate chart showing NGN/USDC over the last 24 hours">
           {/* Placeholder for chart canvas */}
-          <figcaption>
-            NGN/USDC rate: 1,598 (last updated 2 minutes ago)
-          </figcaption>
+          <figcaption>NGN/USDC rate: 1,598 (last updated 2 minutes ago)</figcaption>
         </figure>
-      </section>
+      </section>,
     );
 
     const { serious } = await runAxe(container);
@@ -245,7 +236,7 @@ describe('Accessibility: Charts and data visualizations', () => {
         >
           <div style={{ width: '60%' }} />
         </div>
-      </div>
+      </div>,
     );
 
     const bar = screen.getByRole('progressbar');
@@ -279,7 +270,7 @@ describe('Accessibility: Charts and data visualizations', () => {
             </td>
           </tr>
         </tbody>
-      </table>
+      </table>,
     );
 
     const { serious } = await runAxe(container);
@@ -303,7 +294,7 @@ describe('Accessibility: Keyboard navigation', () => {
         <label htmlFor="kn-account">Account</label>
         <input id="kn-account" type="text" />
         <button type="submit">Send</button>
-      </form>
+      </form>,
     );
 
     const focusable = container.querySelectorAll<HTMLElement>('input, select, button');
@@ -336,7 +327,7 @@ describe('Accessibility: Keyboard navigation', () => {
       >
         <h2 id="esc-dlg">Confirm Transaction</h2>
         <button aria-label="Confirm">Confirm</button>
-      </div>
+      </div>,
     );
 
     const dialog = screen.getByRole('dialog');
@@ -353,7 +344,7 @@ describe('Accessibility: Keyboard navigation', () => {
           Skip to content
         </a>
         <input type="text" style={{ outlineOffset: '2px' }} />
-      </div>
+      </div>,
     );
 
     const interactive = container.querySelectorAll('button, a, input');
@@ -368,12 +359,9 @@ describe('Accessibility: Keyboard navigation', () => {
     const user = userEvent.setup();
 
     render(
-      <button
-        aria-label="Copy wallet address to clipboard"
-        onClick={onCopy}
-      >
+      <button aria-label="Copy wallet address to clipboard" onClick={onCopy}>
         Copy
-      </button>
+      </button>,
     );
 
     const btn = screen.getByLabelText('Copy wallet address to clipboard');
@@ -388,14 +376,9 @@ describe('Accessibility: Keyboard navigation', () => {
 describe('Accessibility: Live regions', () => {
   it('toast notification region has correct ARIA attributes', async () => {
     const { container } = render(
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        aria-label="Notifications"
-      >
+      <div role="status" aria-live="polite" aria-atomic="true" aria-label="Notifications">
         Transaction submitted successfully
-      </div>
+      </div>,
     );
 
     const region = screen.getByRole('status');
@@ -410,7 +393,7 @@ describe('Accessibility: Live regions', () => {
     render(
       <div role="alert" aria-live="assertive">
         Payment failed. Please try again.
-      </div>
+      </div>,
     );
 
     const alert = screen.getByRole('alert');
@@ -422,7 +405,7 @@ describe('Accessibility: Live regions', () => {
       <div aria-live="polite" aria-atomic="true">
         <span>Status: </span>
         <span>Processing</span>
-      </div>
+      </div>,
     );
 
     const region = screen.getByText('Processing').parentElement!;
@@ -439,7 +422,7 @@ describe('Keyboard Navigation', () => {
         <input type="text" placeholder="Amount" />
         <input type="text" placeholder="Account" />
         <button>Submit</button>
-      </form>
+      </form>,
     );
 
     const inputs = container.querySelectorAll('input, button');
@@ -454,7 +437,7 @@ describe('Keyboard Navigation', () => {
     render(
       <div role="dialog" onKeyDown={(e) => e.key === 'Escape' && handleClose()}>
         Modal Content
-      </div>
+      </div>,
     );
 
     const dialog = screen.getByRole('dialog');
@@ -468,7 +451,7 @@ describe('Screen Reader Compatibility', () => {
       <div>
         <label htmlFor="amount">Amount in USDC</label>
         <input id="amount" type="text" aria-label="Amount in USDC" />
-      </div>
+      </div>,
     );
 
     const input = screen.getByLabelText('Amount in USDC');
@@ -479,7 +462,7 @@ describe('Screen Reader Compatibility', () => {
     render(
       <div role="status" aria-live="polite">
         Transaction pending...
-      </div>
+      </div>,
     );
 
     const status = screen.getByRole('status');
@@ -495,7 +478,7 @@ describe('ARIA Label Validation', () => {
         <div role="dialog" aria-labelledby="dialog-title">
           Content
         </div>
-      </div>
+      </div>,
     );
 
     const dialog = screen.getByRole('dialog');
@@ -510,7 +493,7 @@ describe('Accessibility CI Checks', () => {
         <input id="amount" />
         <input id="currency" />
         <input id="account" />
-      </div>
+      </div>,
     );
 
     const ids = new Set();
@@ -527,7 +510,7 @@ describe('Accessibility CI Checks', () => {
         <button>Submit</button>
         <button aria-label="Close">×</button>
         <button title="Help">?</button>
-      </div>
+      </div>,
     );
 
     expect(screen.getByRole('button', { name: 'Submit' })).toBeInTheDocument();

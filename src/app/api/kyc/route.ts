@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { KYCLimitService } from '@/lib/kyc-limits';
+import { getKycService } from '@/lib/kyc-service';
 import { ErrorHandler } from '@/lib/error-handler';
 import { ApiError, ErrorType } from '@/lib/error-types';
+
+const kycService = getKycService();
 
 // GET: KYC status, AML result, reminders, or compliance report
 export async function GET(req: NextRequest) {
@@ -12,7 +14,7 @@ export async function GET(req: NextRequest) {
     if (action === 'compliance-report') {
       const from = parseInt(req.nextUrl.searchParams.get('from') || '0');
       const to = parseInt(req.nextUrl.searchParams.get('to') || String(Date.now()));
-      const report = KYCLimitService.generateComplianceReport(from, to);
+      const report = kycService.generateComplianceReport(from, to);
       return NextResponse.json({ report });
     }
 
@@ -21,31 +23,41 @@ export async function GET(req: NextRequest) {
     }
 
     if (action === 'aml') {
-      const result = KYCLimitService.getAMLResult(userId);
+      const result = kycService.getAMLResult(userId);
       return NextResponse.json({ aml: result });
     }
 
     if (action === 'reminders') {
-      const reminders = KYCLimitService.getKYCRenewalReminders(userId);
+      const reminders = kycService.getKYCRenewalReminders(userId);
       return NextResponse.json({ reminders });
     }
 
     if (action === 'limits') {
-      const limits = KYCLimitService.getUserLimits(userId);
+      const limits = kycService.getUserLimits(userId);
       return NextResponse.json({ limits });
     }
 
-    const kyc = KYCLimitService.getKYC(userId);
+    const kyc = kycService.getKYC(userId);
     return NextResponse.json({ kyc });
   } catch (error) {
     return ErrorHandler.serverError(error);
   }
 }
 
-// POST: submit KYC, upload document, run AML screening
+// POST: submit KYC, upload document, run AML screening, provider verification
 export async function POST(req: NextRequest) {
   try {
-    const { action, userId, documentType, documentId, fileName, mimeType, transactionAmount } = await req.json();
+    const {
+      action,
+      userId,
+      documentType,
+      documentId,
+      fileName,
+      mimeType,
+      transactionAmount,
+      requestedTier,
+      identityData,
+    } = await req.json();
 
     if (!userId) {
       return ErrorHandler.validation('userId is required');
@@ -55,12 +67,12 @@ export async function POST(req: NextRequest) {
       if (!documentType || !documentId) {
         return ErrorHandler.validation('documentType and documentId are required');
       }
-      const upload = KYCLimitService.uploadDocument(userId, documentType, documentId, fileName, mimeType);
-      return NextResponse.json({ success: true, upload, kyc: KYCLimitService.getKYC(userId) });
+      const upload = kycService.uploadDocument(userId, documentType, documentId, fileName, mimeType);
+      return NextResponse.json({ success: true, upload, kyc: kycService.getKYC(userId) });
     }
 
     if (action === 'aml-screen') {
-      const result = KYCLimitService.screenAML(userId, transactionAmount);
+      const result = kycService.screenAML(userId, transactionAmount);
       return NextResponse.json({ success: true, aml: result });
     }
 
@@ -68,11 +80,23 @@ export async function POST(req: NextRequest) {
       if (!documentType || !documentId) {
         return ErrorHandler.validation('documentType and documentId are required');
       }
-      const kyc = KYCLimitService.submitKYC(userId, documentType, documentId);
+      const kyc = kycService.submitKYC(userId, documentType, documentId);
       return NextResponse.json({ success: true, kyc });
     }
 
-    return ErrorHandler.validation('action must be "submit", "upload-document", or "aml-screen"');
+    if (action === 'provider-verify') {
+      if (!requestedTier) return ErrorHandler.validation('requestedTier is required');
+      const result = await kycService.submitProviderVerification(
+        userId,
+        requestedTier,
+        identityData ?? {},
+      );
+      return NextResponse.json({ success: true, verification: result });
+    }
+
+    return ErrorHandler.validation(
+      'action must be "submit", "upload-document", "aml-screen", or "provider-verify"',
+    );
   } catch (error) {
     return ErrorHandler.serverError(error);
   }
@@ -88,29 +112,38 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (action === 'verify') {
-      const kyc = KYCLimitService.verifyKYC(userId);
+      const kyc = kycService.verifyKYC(userId);
       if (!kyc) return ErrorHandler.notFound('KYC submission');
       return NextResponse.json({ success: true, kyc });
     }
 
     if (action === 'reject') {
       if (!reason) return ErrorHandler.validation('reason is required to reject KYC');
-      const kyc = KYCLimitService.rejectKYC(userId, reason);
+      const kyc = kycService.rejectKYC(userId, reason);
       if (!kyc) return ErrorHandler.notFound('KYC submission');
       return NextResponse.json({ success: true, kyc });
     }
 
     if (action === 'request-limit-increase') {
       if (!requestedTier) return ErrorHandler.validation('requestedTier is required');
-      const request = KYCLimitService.requestLimitIncrease(userId, requestedTier);
+      const request = kycService.requestLimitIncrease(userId, requestedTier);
       return NextResponse.json({ success: true, request });
     }
 
     if (action === 'approve-limit-increase') {
       if (!requestId) return ErrorHandler.validation('requestId is required');
-      const approved = KYCLimitService.approveLimitIncrease(userId, requestId);
-      if (!approved) return ErrorHandler.handle(new ApiError(ErrorType.NOT_FOUND, 'Request not found or already processed'));
-      return NextResponse.json({ success: true, limits: KYCLimitService.getUserLimits(userId) });
+      const approved = kycService.approveLimitIncrease(userId, requestId);
+      if (!approved)
+        return ErrorHandler.handle(
+          new ApiError(ErrorType.NOT_FOUND, 'Request not found or already processed'),
+        );
+      return NextResponse.json({ success: true, limits: kycService.getUserLimits(userId) });
+    }
+
+    if (action === 'request-reverification') {
+      if (!reason) return ErrorHandler.validation('reason is required');
+      const result = await kycService.requestReverification(userId, reason);
+      return NextResponse.json({ success: true, ...result });
     }
 
     return ErrorHandler.validation('Unknown action');

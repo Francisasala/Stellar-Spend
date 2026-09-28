@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { ErrorHandler } from '@/lib/error-handler';
 import { ApiError, ErrorType } from '@/lib/error-types';
-import { fxRateService } from '@/lib/services/fx-rate.service';
+import { fxRateService } from '@/lib/services';
 
 export const maxDuration = 10;
 // Edge CDN revalidation: 30 s
@@ -24,7 +24,7 @@ export async function GET() {
 
     return NextResponse.json(
       { rates },
-      { headers: { 'Cache-Control': 'public, max-age=30, stale-while-revalidate=60' } }
+      { headers: { 'Cache-Control': 'public, max-age=30, stale-while-revalidate=60' } },
     );
   } catch (error) {
     logger.error('fx-rates.error', {}, error);

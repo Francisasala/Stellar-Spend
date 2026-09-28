@@ -48,7 +48,10 @@ vi.mock('@/lib/env', () => ({
 
 import { POST as reconciliationPost } from '@/app/api/offramp/reconciliation/route';
 import { POST as alertsPost } from '@/app/api/offramp/reconciliation/alerts/route';
-import { POST as manualPost, GET as manualGet } from '@/app/api/offramp/reconciliation/manual/route';
+import {
+  POST as manualPost,
+  GET as manualGet,
+} from '@/app/api/offramp/reconciliation/manual/route';
 
 // ── Test fixtures ─────────────────────────────────────────────────────────────
 
@@ -104,10 +107,14 @@ function makeRequest(body: unknown): NextRequest {
 
 // Mock fetch to control what each external leg returns
 function mockFetchAllOk(amount = '100.00') {
-  global.fetch = vi.fn()
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ successful: true }) })   // Stellar
+  global.fetch = vi
+    .fn()
+    .mockResolvedValueOnce({ ok: true, json: async () => ({ successful: true }) }) // Stellar
     .mockResolvedValueOnce({ ok: true, json: async () => ({ result: { hash: '0xok' } }) }) // Base
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { status: 'completed', amount } }) }); // Paycrest
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: { status: 'completed', amount } }),
+    }); // Paycrest
 }
 
 function mockFetchAllFail() {
@@ -115,17 +122,25 @@ function mockFetchAllFail() {
 }
 
 function mockFetchPendingPaycrest(amount = '200.00') {
-  global.fetch = vi.fn()
+  global.fetch = vi
+    .fn()
     .mockResolvedValueOnce({ ok: true, json: async () => ({ successful: true }) })
     .mockResolvedValueOnce({ ok: true, json: async () => ({ result: { hash: '0xpending' } }) })
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { status: 'pending', amount } }) });
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: { status: 'pending', amount } }),
+    });
 }
 
 function mockFetchAmountMismatch() {
-  global.fetch = vi.fn()
+  global.fetch = vi
+    .fn()
     .mockResolvedValueOnce({ ok: true, json: async () => ({ successful: true }) })
     .mockResolvedValueOnce({ ok: true, json: async () => ({ result: { hash: '0xmismatch' } }) })
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { status: 'completed', amount: '999.00' } }) });
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: { status: 'completed', amount: '999.00' } }),
+    });
 }
 
 // ── POST /api/offramp/reconciliation ─────────────────────────────────────────
@@ -173,7 +188,7 @@ describe('POST /api/offramp/reconciliation — report generation', () => {
     const req = makeRequest({ records: [UNMATCHED_RECORD_AMOUNT_MISMATCH] });
     const res = await reconciliationPost(req);
     const report = await res.json();
-    expect(report.discrepancies.some((d: any) => d.type === 'amount_mismatch')).toBe(true);
+    expect(report.discrepancies.some((d: Record<string, unknown>) => d.type === 'amount_mismatch')).toBe(true);
   });
 
   it('detects unsettled order for pending settlement fixture', async () => {
@@ -181,7 +196,7 @@ describe('POST /api/offramp/reconciliation — report generation', () => {
     const req = makeRequest({ records: [PENDING_SETTLEMENT_RECORD] });
     const res = await reconciliationPost(req);
     const report = await res.json();
-    expect(report.discrepancies.some((d: any) => d.type === 'unsettled_order')).toBe(true);
+    expect(report.discrepancies.some((d: Record<string, unknown>) => d.type === 'unsettled_order')).toBe(true);
     expect(report.summary.unsettledOrders).toBeGreaterThan(0);
   });
 
@@ -198,7 +213,10 @@ describe('POST /api/offramp/reconciliation — report generation', () => {
 
   it('produces a daily report when format=daily', async () => {
     mockFetchAllFail();
-    const req = makeRequest({ records: [MATCHED_RECORD, PENDING_SETTLEMENT_RECORD], format: 'daily' });
+    const req = makeRequest({
+      records: [MATCHED_RECORD, PENDING_SETTLEMENT_RECORD],
+      format: 'daily',
+    });
     const res = await reconciliationPost(req);
     expect(res.status).toBe(200);
     const daily = await res.json();
@@ -208,11 +226,15 @@ describe('POST /api/offramp/reconciliation — report generation', () => {
 
   it('processes multiple mixed records in one run', async () => {
     // Call fetch enough times for 3 records × 3 external calls each (9 calls)
-    global.fetch = vi.fn()
+    global.fetch = vi
+      .fn()
       // matched record — all OK
       .mockResolvedValueOnce({ ok: true, json: async () => ({ successful: true }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ result: { hash: '0xa' } }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { status: 'completed', amount: '100.00' } }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { status: 'completed', amount: '100.00' } }),
+      })
       // unmatched — all fail
       .mockResolvedValueOnce({ ok: false })
       .mockResolvedValueOnce({ ok: false })
@@ -220,7 +242,10 @@ describe('POST /api/offramp/reconciliation — report generation', () => {
       // pending
       .mockResolvedValueOnce({ ok: true, json: async () => ({ successful: true }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ result: { hash: '0xb' } }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ data: { status: 'pending', amount: '200.00' } }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { status: 'pending', amount: '200.00' } }),
+      });
 
     const req = makeRequest({
       records: [MATCHED_RECORD, UNMATCHED_RECORD_MISSING_STELLAR, PENDING_SETTLEMENT_RECORD],
@@ -279,7 +304,7 @@ describe('POST /api/offramp/reconciliation/alerts — mismatch detection & alert
     });
     const res = await alertsPost(req);
     const body = await res.json();
-    expect(body.alerts.some((a: any) => a.severity === 'high')).toBe(true);
+    expect(body.alerts.some((a: Record<string, unknown>) => a.severity === 'high')).toBe(true);
   });
 
   it('includes optional daily report when includeDaily=true', async () => {

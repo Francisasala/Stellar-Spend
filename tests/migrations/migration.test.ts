@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { exec } from 'child_process';
 import util from 'util';
 
@@ -26,14 +26,14 @@ describe('Database Migrations', () => {
   });
 
   it('should run migrations successfully', async () => {
-    const { stdout, stderr } = await execAsync(
+    const { stdout } = await execAsync(
       'npx ts-node scripts/migrate.ts up --dry-run'
     );
     expect(stdout).toContain('Pending migrations');
   });
 
   it('should handle rollback correctly', async () => {
-    const { stdout, stderr } = await execAsync(
+    const { stderr } = await execAsync(
       'npx ts-node scripts/migrate.ts down 1'
     );
     // Should complete without errors
@@ -41,7 +41,7 @@ describe('Database Migrations', () => {
   });
 
   it('should verify migration integrity', async () => {
-    const { stdout, stderr } = await execAsync(
+    const { stdout } = await execAsync(
       'npx ts-node scripts/migrate.ts verify 001'
     );
     expect(stdout).toContain('Rollback verification passed');
@@ -49,7 +49,7 @@ describe('Database Migrations', () => {
 
   it('should enforce linting rules', async () => {
     // This would test the linting rules
-    const { stdout, stderr } = await execAsync(
+    const { stdout } = await execAsync(
       'npx ts-node scripts/migrate.ts lint'
     );
     expect(stdout).toContain('Linting passed');

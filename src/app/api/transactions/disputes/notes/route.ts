@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { disputeRepository } from '@/lib/repositories/dispute-repository';
+import { disputeRepository } from '@/lib/repositories';
 import { ErrorHandler } from '@/lib/error-handler';
 import { ApiError, ErrorType } from '@/lib/error-types';
 
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     const dispute = await disputeRepository.getDispute(disputeId);
     if (!dispute) {
-      return ErrorHandler.notFound("Dispute");
+      return ErrorHandler.notFound('Dispute');
     }
 
     // Only admins can post internal notes

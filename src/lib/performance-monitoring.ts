@@ -2,6 +2,7 @@
  * Performance Monitoring - SLO Tracking and Alerting
  */
 
+import { logger } from '@/lib/logger';
 import { sloConfig, SLO } from './slo-config';
 
 interface MetricPoint {
@@ -39,7 +40,7 @@ class PerformanceMonitor {
    * Get current SLO status
    */
   getSLOStatus(sloName: string): SLOStatus | null {
-    const slo = sloConfig.find(s => s.name === sloName);
+    const slo = sloConfig.find((s) => s.name === sloName);
     if (!slo) return null;
 
     const points = this.metrics.get(sloName) || [];
@@ -55,13 +56,13 @@ class PerformanceMonitor {
     }
 
     const recentPoints = points.slice(-100);
-    const goodEvents = recentPoints.filter(p => p.value >= slo.objective).length;
+    const goodEvents = recentPoints.filter((p) => p.value >= slo.objective).length;
     const totalEvents = recentPoints.length;
     const currentValue = totalEvents > 0 ? goodEvents / totalEvents : 1.0;
 
     // Calculate burn rate
     const errorBudget = 1 - slo.objective;
-    const errors = recentPoints.filter(p => p.value < slo.objective).length;
+    const errors = recentPoints.filter((p) => p.value < slo.objective).length;
     const errorRate = totalEvents > 0 ? errors / totalEvents : 0;
     const burnRate = errorBudget > 0 ? errorRate / errorBudget : 0;
 
@@ -106,17 +107,17 @@ class PerformanceMonitor {
    */
   private triggerAlert(slo: SLO, status: SLOStatus): void {
     const severity = status.status === 'critical' ? 'CRITICAL' : 'WARNING';
-    const message = `
-[${severity}] SLO Alert: ${slo.name}
-  Description: ${slo.description}
-  Objective: ${(slo.objective * 100).toFixed(1)}%
-  Current Value: ${(status.current_value * 100).toFixed(1)}%
-  Error Budget Remaining: ${(status.error_budget_remaining * 100).toFixed(1)}%
-  Burn Rate: ${status.burn_rate.toFixed(2)}
-  Runbook: ${slo.alerting.runbook_url}
-`;
 
-    console.error(message);
+    logger.error('slo.alert', {
+      severity,
+      slo: slo.name,
+      description: slo.description,
+      objective: slo.objective,
+      currentValue: status.current_value,
+      errorBudgetRemaining: status.error_budget_remaining,
+      burnRate: status.burn_rate,
+      runbook: slo.alerting.runbook_url,
+    });
 
     // Send to alerting system
     if (typeof window !== 'undefined' && window.fetch) {
@@ -127,10 +128,9 @@ class PerformanceMonitor {
         body: JSON.stringify({
           severity: status.status,
           slo: slo.name,
-          message,
           timestamp: new Date().toISOString(),
         }),
-      }).catch(console.error);
+      }).catch((err) => logger.error('slo.alert.send_failed', {}, err));
     }
   }
 
@@ -146,11 +146,11 @@ class PerformanceMonitor {
       total: number;
     };
   } {
-    const slos = sloConfig.map(slo => this.getSLOStatus(slo.name)).filter(Boolean) as SLOStatus[];
+    const slos = sloConfig.map((slo) => this.getSLOStatus(slo.name)).filter(Boolean) as SLOStatus[];
     const summary = {
-      healthy: slos.filter(s => s.status === 'healthy').length,
-      warning: slos.filter(s => s.status === 'warning').length,
-      critical: slos.filter(s => s.status === 'critical').length,
+      healthy: slos.filter((s) => s.status === 'healthy').length,
+      warning: slos.filter((s) => s.status === 'warning').length,
+      critical: slos.filter((s) => s.status === 'critical').length,
       total: slos.length,
     };
     return { slos, summary };

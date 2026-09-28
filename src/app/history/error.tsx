@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import * as Sentry from '@sentry/nextjs';
+import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
+import { logger } from '@/lib/logger';
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -11,7 +13,8 @@ interface ErrorProps {
 
 export default function HistoryError({ error, reset }: ErrorProps) {
   useEffect(() => {
-    console.error('History error:', error);
+    Sentry.captureException(error);
+    logger.error('history.error', { digest: error.digest }, error);
   }, [error]);
 
   return (
@@ -23,9 +26,7 @@ export default function HistoryError({ error, reset }: ErrorProps) {
             Unable to load transaction history at this time.
           </p>
           {error.message && (
-            <p className="mt-2 text-xs text-muted-foreground break-words">
-              {error.message}
-            </p>
+            <p className="mt-2 text-xs text-muted-foreground break-words">{error.message}</p>
           )}
         </div>
         <div className="flex gap-3 justify-center">
@@ -33,9 +34,7 @@ export default function HistoryError({ error, reset }: ErrorProps) {
             Try again
           </Button>
           <Link href="/">
-            <Button variant="outline">
-              Go home
-            </Button>
+            <Button variant="outline">Go home</Button>
           </Link>
         </div>
       </div>

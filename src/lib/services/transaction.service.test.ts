@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TransactionService } from './transaction.service';
-import * as dalModule from '@/lib/db/dal';
+import * as dalModule from '@/lib/db';
 import type { Transaction } from '@/lib/transaction-storage';
 
 vi.mock('@/lib/db/dal');
 
 describe('TransactionService', () => {
   let service: TransactionService;
-  let mockDal: any;
+  let mockDal: typeof dalModule.dal;
 
   beforeEach(() => {
-    mockDal = dalModule.dal as any;
+    mockDal = vi.mocked(dalModule.dal);
     service = new TransactionService();
     vi.clearAllMocks();
   });
@@ -79,29 +79,14 @@ describe('TransactionService', () => {
     });
 
     it('should throw error when order ID is not provided', async () => {
-      await expect(service.getTransactionByPayoutOrderId('')).rejects.toThrow('Order ID is required');
+      await expect(service.getTransactionByPayoutOrderId('')).rejects.toThrow(
+        'Order ID is required',
+      );
     });
   });
 
   describe('listTransactions', () => {
     it('should list transactions with default limit of 50', async () => {
-      const mockTransactions: Transaction[] = Array(10)
-        .fill(null)
-        .map((_, i) => ({
-          id: `tx-${i}`,
-          timestamp: Date.now() - i * 1000,
-          userAddress: 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5',
-          amount: `${100 + i}`,
-          currency: 'USD',
-          beneficiary: {
-            institution: 'Bank',
-            accountIdentifier: '1234567890',
-            accountName: 'User',
-            currency: 'USD',
-          },
-          status: 'completed',
-        }));
-
       const result = await service.listTransactions({});
 
       expect(Array.isArray(result)).toBe(true);
@@ -148,7 +133,7 @@ describe('TransactionService', () => {
 
     it('should throw error when ID is not provided', async () => {
       await expect(service.updateTransaction('', { status: 'completed' })).rejects.toThrow(
-        'Transaction ID is required'
+        'Transaction ID is required',
       );
     });
 

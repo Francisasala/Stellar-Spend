@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { QuoteService } from './quote.service';
 
 describe('QuoteService', () => {
@@ -28,7 +28,7 @@ describe('QuoteService', () => {
           amount: '-100',
           currency: 'NGN',
           feeMethod: 'USDC',
-        })
+        }),
       ).rejects.toThrow();
     });
 
@@ -38,7 +38,7 @@ describe('QuoteService', () => {
           amount: '100',
           currency: 'INVALID',
           feeMethod: 'USDC',
-        })
+        }),
       ).rejects.toThrow();
     });
 

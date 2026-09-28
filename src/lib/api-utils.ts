@@ -1,8 +1,22 @@
 /**
- * Shared API utilities — client-side fetch helpers and server-side response envelope.
+ * Shared API utilities — server-side response envelope plus thin
+ * backward-compatible wrappers around the single client-side HTTP
+ * implementation in `@/lib/api/client`.
+ *
+ * All retry/timeout/error-mapping logic for client requests lives in
+ * `@/lib/api/client`; this module no longer duplicates it. It exists so
+ * existing callers of `apiRequest`/`apiGet`/`apiPost`/`apiPut`/`apiDelete`
+ * with the legacy `ApiRequestOptions` shape keep working unchanged.
  */
 
 import { NextResponse } from 'next/server';
+import {
+  apiGet as clientGet,
+  apiPost as clientPost,
+  apiPut as clientPut,
+  apiDelete as clientDelete,
+  type ApiRequestConfig,
+} from './api/client';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -43,75 +57,54 @@ export function successResponse<T>(data: T, status = 200): NextResponse<SuccessE
 
 // ---------------------------------------------------------------------------
 // Client-side fetch helpers
+//
+// These delegate to `@/lib/api/client`'s single HTTP implementation
+// (timeout/abort handling, JSON parsing, error normalization) instead of
+// re-implementing it, translating the legacy `ApiRequestOptions` (a
+// `RequestInit` extension) into `ApiRequestConfig`.
 // ---------------------------------------------------------------------------
 
+function toClientConfig(options?: ApiRequestOptions): ApiRequestConfig {
+  if (!options) return {};
+  const { timeout, headers, credentials, cache } = options;
+  return {
+    timeout,
+    headers: headers as Record<string, string> | undefined,
+    credentials,
+    cache,
+  };
+}
+
 /**
- * Make an API request with error handling and timeout.
+ * Make a GET request with error handling and timeout.
+ * @deprecated Prefer `apiClient` from `@/lib/api/client` in new code.
  */
-export async function apiRequest<T>(
-  endpoint: string,
-  options: ApiRequestOptions = {}
-): Promise<T> {
-  const { timeout = 30000, ...fetchOptions } = options;
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(endpoint, {
-      ...fetchOptions,
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({})) as Record<string, unknown>;
-      throw new Error((data['error'] as string | undefined) ?? `HTTP ${response.status}`);
-    }
-
-    return await response.json() as T;
-  } finally {
-    clearTimeout(timeoutId);
-  }
+export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
+  return clientGet<T>(endpoint, toClientConfig(options));
 }
 
 export async function apiGet<T>(endpoint: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(endpoint, { ...options, method: 'GET' });
+  return clientGet<T>(endpoint, toClientConfig(options));
 }
 
 export async function apiPost<T>(
   endpoint: string,
   body?: unknown,
-  options?: ApiRequestOptions
+  options?: ApiRequestOptions,
 ): Promise<T> {
-  return apiRequest<T>(endpoint, {
-    ...options,
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  return clientPost<T>(endpoint, body, toClientConfig(options));
 }
 
 export async function apiPut<T>(
   endpoint: string,
   body?: unknown,
-  options?: ApiRequestOptions
+  options?: ApiRequestOptions,
 ): Promise<T> {
-  return apiRequest<T>(endpoint, {
-    ...options,
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  return clientPut<T>(endpoint, body, toClientConfig(options));
 }
 
 export async function apiDelete<T>(endpoint: string, options?: ApiRequestOptions): Promise<T> {
-  return apiRequest<T>(endpoint, { ...options, method: 'DELETE' });
+  return clientDelete<T>(endpoint, toClientConfig(options));
 }
 
 export function getErrorMessage(error: unknown): string {

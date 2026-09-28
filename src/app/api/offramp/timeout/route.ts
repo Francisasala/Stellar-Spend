@@ -1,18 +1,36 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { ErrorHandler } from '@/lib/error-handler';
-import { cancelTimedOutTransaction, checkAndCancelTimedOutTransactions, isTransactionTimedOut, TRANSACTION_TIMEOUT_MS } from '@/lib/transaction-timeout';
-import { dal } from '@/lib/db/dal';
+import {
+  cancelTimedOutTransaction,
+  checkAndCancelTimedOutTransactions,
+  isTransactionTimedOut,
+  TRANSACTION_TIMEOUT_MS,
+} from '@/lib/transaction-timeout';
+import { dal } from '@/lib/db';
+import { validateBody } from '@/lib/validation/validate-request';
 
 export const maxDuration = 30;
+
+const timeoutBodySchema = z
+  .object({
+    userAddress: z.string().min(1).optional(),
+    transactionId: z.string().min(1).optional(),
+  })
+  .refine((data) => Boolean(data.userAddress || data.transactionId), {
+    message: 'userAddress or transactionId is required',
+  });
 
 /**
  * POST /api/offramp/timeout
  * Body: { transactionId: string } — check and cancel a single transaction
  *   OR: { userAddress: string }  — check all pending transactions for a user
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const validation = await validateBody(request, timeoutBodySchema);
+    if (!validation.success) return validation.response;
+    const body = validation.data;
 
     if (body.userAddress && !body.transactionId) {
       const results = await checkAndCancelTimedOutTransactions(body.userAddress);
@@ -20,7 +38,7 @@ export async function POST(request: Request) {
     }
 
     const { transactionId } = body;
-    if (!transactionId || typeof transactionId !== 'string') {
+    if (!transactionId) {
       return ErrorHandler.validation('transactionId is required');
     }
 

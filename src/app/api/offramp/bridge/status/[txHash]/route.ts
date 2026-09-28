@@ -1,8 +1,8 @@
 import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
-import { extractErrorMessage } from '@/lib/offramp/utils/errors';
-import { get, set, isFresh } from '@/lib/polling/status-cache';
-import type { BridgeStatus } from '@/lib/offramp/types';
+import { extractErrorMessage } from '@/lib/offramp';
+import { get, set, isFresh } from '@/lib/polling';
+import type { BridgeStatus } from '@/lib/offramp';
 import { ErrorHandler } from '@/lib/error-handler';
 
 const BRIDGE_TERMINAL_STATES: BridgeStatus[] = ['completed', 'failed', 'expired'];
@@ -24,10 +24,7 @@ const BRIDGE_TERMINAL_STATES: BridgeStatus[] = ['completed', 'failed', 'expired'
  *   }
  * }
  */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ txHash: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ txHash: string }> }) {
   const { txHash } = await params;
 
   // Check cache first
@@ -51,9 +48,14 @@ export async function GET(
     const sdk = new AllbridgeCoreSdk({ ...nodeRpcUrlsDefault });
 
     // Get transfer status from Allbridge
-    let transferStatus: any;
+    interface TransferStatusData {
+      status?: string;
+      receiveAmount?: string;
+      [key: string]: unknown;
+    }
+    let transferStatus: TransferStatusData;
     try {
-      transferStatus = await sdk.getTransferStatus('SRB', txHash);
+      transferStatus = (await sdk.getTransferStatus('SRB', txHash)) as TransferStatusData;
     } catch (error) {
       // Handle 404 gracefully - return pending status
       const message = extractErrorMessage(error);

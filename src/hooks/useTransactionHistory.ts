@@ -1,8 +1,10 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
-import type { Transaction } from "@/lib/transaction-storage";
-import { TransactionStorage } from "@/lib/transaction-storage";
+import { useCallback, useEffect, useState } from 'react';
+import type { Transaction } from '@/lib/transaction-storage';
+import { TransactionStorage } from '@/lib/transaction-storage';
+import { apiGet, apiPatch, apiPost, ApiErrorClass } from '@/lib/api/client';
+import { useToast } from '@/contexts/NotificationProvider';
 
 export interface UseTransactionHistoryResult {
   transactions: Transaction[];
@@ -16,6 +18,13 @@ export interface UseTransactionHistoryResult {
   saveNote: (id: string, note: string) => Promise<string | null>;
   /** Patch a transaction in local state + local storage (e.g. after a claim). */
   updateTransaction: (id: string, updates: Partial<Transaction>) => void;
+  /**
+   * Optimistically submit a new transaction: adds it to UI + local storage
+   * immediately, persists to the server, rolling both back (with a toast) on
+   * failure. Resolves to an error message when the submission fails, or
+   * `null` on success.
+   */
+  submitTransaction: (transaction: Transaction) => Promise<string | null>;
 }
 
 /**
@@ -24,12 +33,11 @@ export interface UseTransactionHistoryResult {
  *
  * Fetch failures fall back to local storage so the user still sees cached data.
  */
-export function useTransactionHistory(
-  walletAddress?: string,
-): UseTransactionHistoryResult {
+export function useTransactionHistory(walletAddress?: string): UseTransactionHistoryResult {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!walletAddress) {
@@ -43,20 +51,7 @@ export function useTransactionHistory(
     setIsLoading(true);
     setError(null);
 
-    fetch(`/api/transactions?wallet=${encodeURIComponent(address)}`)
-      .then((res) => {
-        if (!res.ok) {
-          return res.json().then(
-            (body) => {
-              throw new Error(body?.error ?? "Failed to load transactions");
-            },
-            () => {
-              throw new Error("Failed to load transactions");
-            },
-          );
-        }
-        return res.json() as Promise<Transaction[]>;
-      })
+    apiGet<Transaction[]>(`/api/transactions?wallet=${encodeURIComponent(address)}`)
       .then((data) => {
         if (cancelled) return;
         const localTransactions = TransactionStorage.getByUser(address);
@@ -71,9 +66,9 @@ export function useTransactionHistory(
         setError(
           localTransactions.length > 0
             ? null
-            : err instanceof Error
+            : err instanceof ApiErrorClass || err instanceof Error
               ? err.message
-              : "Failed to load transactions",
+              : 'Failed to load transactions',
         );
       })
       .finally(() => {
@@ -85,47 +80,59 @@ export function useTransactionHistory(
     };
   }, [walletAddress]);
 
-  const saveNote = useCallback(
-    async (id: string, note: string): Promise<string | null> => {
-      const trimmed = note.slice(0, 500);
-      let previous: string | undefined;
-      setTransactions((prev) => {
-        previous = prev.find((tx) => tx.id === id)?.note;
-        return prev.map((tx) => (tx.id === id ? { ...tx, note: trimmed } : tx));
-      });
-      const rollbackLocal = TransactionStorage.applyOptimistic(id, { note: trimmed });
+  const saveNote = useCallback(async (id: string, note: string): Promise<string | null> => {
+    const trimmed = note.slice(0, 500);
+    let previous: string | undefined;
+    setTransactions((prev) => {
+      previous = prev.find((tx) => tx.id === id)?.note;
+      return prev.map((tx) => (tx.id === id ? { ...tx, note: trimmed } : tx));
+    });
+    const rollbackLocal = TransactionStorage.applyOptimistic(id, { note: trimmed });
+
+    try {
+      await apiPatch(`/api/transactions/${encodeURIComponent(id)}`, { note: trimmed });
+      return null;
+    } catch (err) {
+      setTransactions((prev) => prev.map((tx) => (tx.id === id ? { ...tx, note: previous } : tx)));
+      rollbackLocal();
+      return err instanceof ApiErrorClass || err instanceof Error
+        ? err.message
+        : 'Failed to save note';
+    }
+  }, []);
+
+  const updateTransaction = useCallback((id: string, updates: Partial<Transaction>) => {
+    setTransactions((prev) => prev.map((tx) => (tx.id === id ? { ...tx, ...updates } : tx)));
+    TransactionStorage.update(id, updates);
+  }, []);
+
+  /**
+   * Optimistically submit a new transaction. The transaction is added to UI
+   * state and local storage immediately so the user sees it right away; if
+   * the server persist fails, both are rolled back and a toast surfaces the
+   * failure so the user knows the submission didn't go through.
+   */
+  const submitTransaction = useCallback(
+    async (transaction: Transaction): Promise<string | null> => {
+      setTransactions((prev) => [transaction, ...prev]);
+      TransactionStorage.save(transaction);
 
       try {
-        const res = await fetch(`/api/transactions/${encodeURIComponent(id)}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ note: trimmed }),
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body?.error ?? `Save failed (${res.status})`);
-        }
+        await apiPost('/api/transactions', transaction);
         return null;
       } catch (err) {
-        setTransactions((prev) =>
-          prev.map((tx) => (tx.id === id ? { ...tx, note: previous } : tx)),
-        );
-        rollbackLocal();
-        return err instanceof Error ? err.message : "Failed to save note";
+        setTransactions((prev) => prev.filter((tx) => tx.id !== transaction.id));
+        TransactionStorage.remove(transaction.id);
+        const message =
+          err instanceof ApiErrorClass || err instanceof Error
+            ? err.message
+            : 'Failed to submit transaction';
+        showToast(`Transaction failed to submit: ${message}`, 'error');
+        return message;
       }
     },
-    [],
+    [showToast],
   );
 
-  const updateTransaction = useCallback(
-    (id: string, updates: Partial<Transaction>) => {
-      setTransactions((prev) =>
-        prev.map((tx) => (tx.id === id ? { ...tx, ...updates } : tx)),
-      );
-      TransactionStorage.update(id, updates);
-    },
-    [],
-  );
-
-  return { transactions, isLoading, error, saveNote, updateTransaction };
+  return { transactions, isLoading, error, saveNote, updateTransaction, submitTransaction };
 }

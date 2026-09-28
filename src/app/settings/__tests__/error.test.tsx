@@ -1,11 +1,17 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import * as Sentry from '@sentry/nextjs';
 import SettingsError from '../error';
 
+vi.mock('@sentry/nextjs', () => ({
+  captureException: vi.fn(),
+}));
+
 describe('Settings Error Boundary', () => {
-  const mockReset = jest.fn();
+  const mockReset = vi.fn();
 
   beforeEach(() => {
-    mockReset.mockClear();
+    vi.clearAllMocks();
   });
 
   it('displays settings error title', () => {
@@ -39,8 +45,15 @@ describe('Settings Error Boundary', () => {
     expect(screen.getByText('Go home')).toBeInTheDocument();
   });
 
+  it('reports the error to Sentry', () => {
+    const error = new Error('Settings error');
+    render(<SettingsError error={error} reset={mockReset} />);
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(error);
+  });
+
   it('logs error to console', () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const error = new Error('Settings error');
 
     render(<SettingsError error={error} reset={mockReset} />);

@@ -1,7 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { TransactionStorage } from '@/lib/transaction-storage';
 import { withIdempotency } from '@/lib/idempotency';
 import { ErrorHandler } from '@/lib/error-handler';
+import { validateBody } from '@/lib/validation/validate-request';
+import {
+  transitionCompensation,
+  InvalidCompensationTransitionError,
+  type CompensationStatus,
+} from '@/lib/compensation-state-machine';
+
+const createReversalSchema = z.object({
+  transactionId: z.string().min(1),
+  amount: z.string().min(1),
+  reason: z.string().min(1),
+});
+
+const reviewReversalSchema = z.object({
+  requestId: z.string().min(1),
+  action: z.enum(['approve', 'reject']),
+  notes: z.string().optional(),
+});
+
+const reversalActionSchema = z.object({
+  action: z.string().min(1),
+});
 
 const REVERSAL_FEE_RATE = 0.01;
 const REVERSAL_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -12,7 +35,7 @@ export interface ReversalRequest {
   amount: string;
   fee: string;
   reason: string;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  status: CompensationStatus;
   requestedAt: number;
   approvedAt?: number;
   completedAt?: number;
@@ -45,7 +68,7 @@ export async function GET(req: NextRequest) {
     if (requestId) {
       const request = reversalRequests.get(requestId);
       if (!request) {
-        return ErrorHandler.notFound("Reversal request");
+        return ErrorHandler.notFound('Reversal request');
       }
       return NextResponse.json({ request });
     }
@@ -56,7 +79,7 @@ export async function GET(req: NextRequest) {
 
     const tx = TransactionStorage.getById(transactionId);
     if (!tx) {
-      return ErrorHandler.notFound("Transaction");
+      return ErrorHandler.notFound('Transaction');
     }
 
     const eligible = TransactionStorage.isReversalEligible(tx);
@@ -70,8 +93,8 @@ export async function GET(req: NextRequest) {
       reason: !eligible
         ? 'Transaction already reversed or not completed'
         : !withinWindow
-        ? 'Outside 24-hour reversal window'
-        : null,
+          ? 'Outside 24-hour reversal window'
+          : null,
       reversalFee: fee,
       maxReversalAmount: amount,
       netAmount: parseFloat((amount - fee).toFixed(6)),
@@ -83,112 +106,121 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  return withIdempotency(req, async () => {
-    try {
-      const { transactionId, amount, reason } = await req.json();
+  return withIdempotency(
+    req,
+    async () => {
+      try {
+        const validation = await validateBody(req, createReversalSchema);
+        if (!validation.success) return validation.response;
+        const { transactionId, amount, reason } = validation.data;
 
-      if (!transactionId || !amount || !reason) {
-        return ErrorHandler.validation('Missing required fields: transactionId, amount, reason');
+        const tx = TransactionStorage.getById(transactionId);
+        if (!tx) {
+          return ErrorHandler.notFound('Transaction');
+        }
+
+        if (!TransactionStorage.isReversalEligible(tx)) {
+          return ErrorHandler.validation('Transaction is not eligible for reversal');
+        }
+
+        if (!isWithinReversalWindow(tx)) {
+          return ErrorHandler.validation('Outside 24-hour reversal window');
+        }
+
+        const reversalAmount = parseFloat(amount);
+        const txAmount = parseFloat(tx.amount);
+        if (reversalAmount <= 0 || reversalAmount > txAmount) {
+          return ErrorHandler.validation('Invalid reversal amount');
+        }
+
+        const fee = calculateReversalFee(reversalAmount);
+        const requestId = `REV-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+
+        const request: ReversalRequest = {
+          transactionId,
+          requestId,
+          amount,
+          fee: fee.toFixed(6),
+          reason,
+          status: 'pending',
+          requestedAt: Date.now(),
+        };
+        reversalRequests.set(requestId, request);
+
+        TransactionStorage.reverse(transactionId, amount, reason);
+
+        return NextResponse.json({
+          success: true,
+          message: 'Reversal request submitted',
+          requestId,
+          reversalFee: fee,
+          netAmount: parseFloat((reversalAmount - fee).toFixed(6)),
+          transaction: TransactionStorage.getById(transactionId),
+        });
+      } catch (error) {
+        return ErrorHandler.serverError(error);
       }
-
-      const tx = TransactionStorage.getById(transactionId);
-      if (!tx) {
-        return ErrorHandler.notFound("Transaction");
-      }
-
-      if (!TransactionStorage.isReversalEligible(tx)) {
-        return ErrorHandler.validation('Transaction is not eligible for reversal');
-      }
-
-      if (!isWithinReversalWindow(tx)) {
-        return ErrorHandler.validation('Outside 24-hour reversal window');
-      }
-
-      const reversalAmount = parseFloat(amount);
-      const txAmount = parseFloat(tx.amount);
-      if (reversalAmount <= 0 || reversalAmount > txAmount) {
-        return ErrorHandler.validation('Invalid reversal amount');
-      }
-
-      const fee = calculateReversalFee(reversalAmount);
-      const requestId = `REV-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-
-      const request: ReversalRequest = {
-        transactionId,
-        requestId,
-        amount,
-        fee: fee.toFixed(6),
-        reason,
-        status: 'pending',
-        requestedAt: Date.now(),
-      };
-      reversalRequests.set(requestId, request);
-
-      TransactionStorage.reverse(transactionId, amount, reason);
-
-      return NextResponse.json({
-        success: true,
-        message: 'Reversal request submitted',
-        requestId,
-        reversalFee: fee,
-        netAmount: parseFloat((reversalAmount - fee).toFixed(6)),
-        transaction: TransactionStorage.getById(transactionId),
-      });
-    } catch (error) {
-      return ErrorHandler.serverError(error);
-    }
-  }, { required: true });
+    },
+    { required: true },
+  );
 }
 
 export async function PATCH(req: NextRequest) {
-  return withIdempotency(req, async () => {
-    try {
-      const { requestId, action, notes } = await req.json();
+  return withIdempotency(
+    req,
+    async () => {
+      try {
+        const validation = await validateBody(req, reviewReversalSchema);
+        if (!validation.success) return validation.response;
+        const { requestId, action, notes } = validation.data;
 
-      if (!requestId || !action) {
-        return ErrorHandler.validation('Missing required fields: requestId, action');
+        const request = reversalRequests.get(requestId);
+        if (!request) {
+          return ErrorHandler.notFound('Reversal request');
+        }
+
+        if (request.status !== 'pending') {
+          return ErrorHandler.validation(`Reversal is already ${request.status}`);
+        }
+
+        if (action === 'approve') {
+          transitionCompensation('reversal', requestId, request.status, 'approved');
+          request.status = 'approved';
+          request.approvedAt = Date.now();
+
+          transitionCompensation('reversal', requestId, request.status, 'completed');
+          TransactionStorage.updateReversalStatus(request.transactionId, 'completed');
+          request.status = 'completed';
+          request.completedAt = Date.now();
+        } else {
+          transitionCompensation('reversal', requestId, request.status, 'rejected');
+          request.status = 'rejected';
+          TransactionStorage.updateReversalStatus(request.transactionId, 'failed');
+        }
+
+        reversalRequests.set(requestId, request);
+
+        return NextResponse.json({
+          success: true,
+          request,
+          notes: notes || null,
+        });
+      } catch (error) {
+        if (error instanceof InvalidCompensationTransitionError) {
+          return ErrorHandler.validation(error.message);
+        }
+        return ErrorHandler.serverError(error);
       }
-
-      if (!['approve', 'reject'].includes(action)) {
-        return ErrorHandler.validation('action must be "approve" or "reject"');
-      }
-
-      const request = reversalRequests.get(requestId);
-      if (!request) {
-        return ErrorHandler.notFound("Reversal request");
-      }
-
-      if (request.status !== 'pending') {
-        return ErrorHandler.validation(`Reversal is already ${request.status}`);
-      }
-
-      if (action === 'approve') {
-        request.status = 'approved';
-        request.approvedAt = Date.now();
-        TransactionStorage.updateReversalStatus(request.transactionId, 'completed');
-        request.status = 'completed';
-        request.completedAt = Date.now();
-      } else {
-        request.status = 'rejected';
-        TransactionStorage.updateReversalStatus(request.transactionId, 'failed');
-      }
-
-      reversalRequests.set(requestId, request);
-
-      return NextResponse.json({
-        success: true,
-        request,
-        notes: notes || null,
-      });
-    } catch (error) {
-      return ErrorHandler.serverError(error);
-    }
-  }, { required: true });
+    },
+    { required: true },
+  );
 }
 
 export async function PUT(req: NextRequest) {
   try {
-    const { action } = await req.json();
+    const validation = await validateBody(req, reversalActionSchema);
+    if (!validation.success) return validation.response;
+    const { action } = validation.data;
 
     if (action === 'analytics') {
       const requests = Array.from(reversalRequests.values());
@@ -200,10 +232,10 @@ export async function PUT(req: NextRequest) {
         totalReversalAmount: completed.reduce((s, r) => s + parseFloat(r.amount), 0),
         totalFeesCollected: completed.reduce((s, r) => s + parseFloat(r.fee), 0),
         approvalRate: requests.length ? approved.length / requests.length : 0,
-        averageProcessingTimeMs:
-          completed.length
-            ? completed.reduce((s, r) => s + ((r.completedAt ?? r.requestedAt) - r.requestedAt), 0) / completed.length
-            : 0,
+        averageProcessingTimeMs: completed.length
+          ? completed.reduce((s, r) => s + ((r.completedAt ?? r.requestedAt) - r.requestedAt), 0) /
+            completed.length
+          : 0,
         reversalsByReason: requests.reduce<Record<string, number>>((acc, r) => {
           acc[r.reason] = (acc[r.reason] || 0) + 1;
           return acc;

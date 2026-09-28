@@ -53,11 +53,11 @@ export class BridgeProviderRegistry {
 
   getEligibleBridges(corridor: string): string[] {
     const routeProviders = this.routes
-      .filter(r => r.corridor === corridor)
+      .filter((r) => r.corridor === corridor)
       .sort((a, b) => a.priority - b.priority)
-      .map(r => r.bridgeProvider);
+      .map((r) => r.bridgeProvider);
 
-    const healthy = routeProviders.filter(p => {
+    const healthy = routeProviders.filter((p) => {
       const health = this.healthCache.get(p);
       return !health || health.ok;
     });
@@ -67,12 +67,12 @@ export class BridgeProviderRegistry {
 
   getEligiblePayouts(currency: string): string[] {
     const routeProviders = this.routes
-      .filter(r => r.fiatCurrency === currency)
+      .filter((r) => r.fiatCurrency === currency)
       .sort((a, b) => a.priority - b.priority)
-      .map(r => r.payoutProvider)
+      .map((r) => r.payoutProvider)
       .filter(Boolean) as string[];
 
-    const healthy = routeProviders.filter(p => {
+    const healthy = routeProviders.filter((p) => {
       const health = this.healthCache.get(p);
       return !health || health.ok;
     });
@@ -96,7 +96,7 @@ export class BridgeProviderRegistry {
 
     const start = Date.now();
     try {
-      const status = await adapter.getTransferStatus('test-id');
+      await adapter.getTransferStatus('test-id');
       const latency = Date.now() - start;
       const health: ProviderHealth = { ok: true, latencyMs: latency, lastChecked: Date.now() };
       this.healthCache.set(name, health);
@@ -167,7 +167,7 @@ export class BridgeProviderRegistry {
   }
 
   getRoutesForCorridor(corridor: string): PerCorridorRoute[] {
-    return this.routes.filter(r => r.corridor === corridor);
+    return this.routes.filter((r) => r.corridor === corridor);
   }
 }
 

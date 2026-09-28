@@ -1,0 +1,101 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Alert snapshots > renders error variant with title 1`] = `"<div class="p-4 rounded bg-red-50 border-l-4 border-red-500 text-red-700"><h3 class="font-semibold mb-1">Error</h3><div>Transaction failed.</div></div>"`;
+
+exports[`Alert snapshots > renders info variant with title and children 1`] = `"<div class="p-4 rounded bg-blue-50 border-l-4 border-blue-500 text-blue-700"><h3 class="font-semibold mb-1">Information</h3><div>Your transaction is being processed.</div></div>"`;
+
+exports[`Alert snapshots > renders success variant with title 1`] = `"<div class="p-4 rounded bg-green-50 border-l-4 border-green-500 text-green-700"><h3 class="font-semibold mb-1">Success</h3><div>Transfer complete!</div></div>"`;
+
+exports[`Alert snapshots > renders warning variant with title 1`] = `"<div class="p-4 rounded bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700"><h3 class="font-semibold mb-1">Warning</h3><div>Insufficient balance.</div></div>"`;
+
+exports[`Alert snapshots > renders without a title (children only) 1`] = `"<div class="p-4 rounded bg-blue-50 border-l-4 border-blue-500 text-blue-700"><div>Simple message without title.</div></div>"`;
+
+exports[`Badge snapshots > renders default variant correctly 1`] = `"<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">default</span>"`;
+
+exports[`Badge snapshots > renders error variant correctly 1`] = `"<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">error</span>"`;
+
+exports[`Badge snapshots > renders info variant correctly 1`] = `"<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">info</span>"`;
+
+exports[`Badge snapshots > renders success variant correctly 1`] = `"<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">success</span>"`;
+
+exports[`Badge snapshots > renders warning variant correctly 1`] = `"<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">warning</span>"`;
+
+exports[`Button snapshots > renders danger variant correctly 1`] = `"<button class="font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 px-4 py-2 text-base">Delete</button>"`;
+
+exports[`Button snapshots > renders disabled state correctly 1`] = `"<button disabled="" class="font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2 text-base">Disabled</button>"`;
+
+exports[`Button snapshots > renders ghost variant correctly 1`] = `"<button class="font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-400 px-4 py-2 text-base">Skip</button>"`;
+
+exports[`Button snapshots > renders large size correctly 1`] = `"<button class="font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-6 py-3 text-lg">Large</button>"`;
+
+exports[`Button snapshots > renders loading state correctly 1`] = `"<button disabled="" class="font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2 text-base">...</button>"`;
+
+exports[`Button snapshots > renders primary/md (default) correctly 1`] = `"<button class="font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-4 py-2 text-base">Pay now</button>"`;
+
+exports[`Button snapshots > renders secondary variant correctly 1`] = `"<button class="font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500 px-4 py-2 text-base">Cancel</button>"`;
+
+exports[`Button snapshots > renders small size correctly 1`] = `"<button class="font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-3 py-1.5 text-sm">Small</button>"`;
+
+exports[`Card snapshots > renders Card with header, content, and footer 1`] = `"<div class="rounded-lg p-6 bg-white border border-gray-200"><div class="mb-4 pb-4 border-b border-gray-200">Transaction Details</div><div class="">Amount: 100 USDC</div><div class="mt-4 pt-4 border-t border-gray-200">Estimated arrival: 5 minutes</div></div>"`;
+
+exports[`Card snapshots > renders CardContent standalone correctly 1`] = `"<div class="">My Content</div>"`;
+
+exports[`Card snapshots > renders CardFooter standalone correctly 1`] = `"<div class="mt-4 pt-4 border-t border-gray-200">My Footer</div>"`;
+
+exports[`Card snapshots > renders CardHeader standalone correctly 1`] = `"<div class="mb-4 pb-4 border-b border-gray-200">My Header</div>"`;
+
+exports[`Card snapshots > renders default Card correctly 1`] = `"<div class="rounded-lg p-6 bg-white border border-gray-200">Card content</div>"`;
+
+exports[`Card snapshots > renders elevated Card correctly 1`] = `"<div class="rounded-lg p-6 bg-white shadow-lg">Elevated</div>"`;
+
+exports[`Card snapshots > renders outlined Card correctly 1`] = `"<div class="rounded-lg p-6 bg-transparent border-2 border-gray-300">Outlined</div>"`;
+
+exports[`CollapsibleSection snapshots > renders collapsed by default 1`] = `"<div class="border border-[#333333] bg-[#0a0a0a]"><button class="w-full px-4 py-3 flex items-center justify-between hover:bg-[#1a1a1a] transition-colors duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#c9a962]" aria-expanded="false" aria-controls="test-section-content"><div class="flex flex-col items-start gap-1"><h3 class="text-sm font-semibold text-white">Fee Breakdown</h3></div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[#c9a962] transition-transform duration-200 flex-shrink-0 ml-2" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button></div>"`;
+
+exports[`CollapsibleSection snapshots > renders open by default 1`] = `"<div class="border border-[#333333] bg-[#0a0a0a]"><button class="w-full px-4 py-3 flex items-center justify-between hover:bg-[#1a1a1a] transition-colors duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#c9a962]" aria-expanded="true" aria-controls="open-section-content"><div class="flex flex-col items-start gap-1"><h3 class="text-sm font-semibold text-white">Open Section</h3></div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[#c9a962] transition-transform duration-200 flex-shrink-0 ml-2 rotate-180" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button><div id="open-section-content" class="border-t border-[#333333] px-4 py-3 animate-in fade-in slide-in-from-top-2 duration-200"><p>Visible content</p></div></div>"`;
+
+exports[`CollapsibleSection snapshots > renders with description 1`] = `"<div class="border border-[#333333] bg-[#0a0a0a]"><button class="w-full px-4 py-3 flex items-center justify-between hover:bg-[#1a1a1a] transition-colors duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#c9a962]" aria-expanded="false" aria-controls="desc-section-content"><div class="flex flex-col items-start gap-1"><h3 class="text-sm font-semibold text-white">Transaction Details</h3><p class="text-xs text-[#777777]">View the full breakdown</p></div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[#c9a962] transition-transform duration-200 flex-shrink-0 ml-2" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button></div>"`;
+
+exports[`Hero snapshots > renders Hero correctly 1`] = `"<section class="animate-scale-in rounded-[2rem] border border-line/70 bg-panel/80 p-8 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur md:p-10"><div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"><div class="max-w-2xl space-y-4"><p class="font-space-grotesk text-sm font-medium uppercase tracking-[0.35em] text-accent">Stellar Off-Ramp</p><div class="space-y-3"><h1 class="font-space-grotesk text-4xl font-semibold tracking-tight sm:text-5xl">Stellar-Spend</h1><p class="max-w-xl text-sm leading-7 text-muted sm:text-base">Convert your Stellar stablecoins (USDC, USDT) to fiat currencies seamlessly through Allbridge and Paycrest integrations.</p></div></div><div class="flex items-center gap-3 rounded-full border border-line bg-bg/60 px-4 py-3 text-sm text-muted"><span class="inline-flex h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_18px_rgba(201,169,98,0.85)]"></span>Production Ready</div></div></section>"`;
+
+exports[`Input snapshots > renders default variant correctly 1`] = `"<input class="w-full rounded-lg border bg-white text-gray-900 placeholder:text-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed border-gray-300 focus:border-blue-500 focus:ring-blue-500 px-3 py-2 text-base" placeholder="Enter amount">"`;
+
+exports[`Input snapshots > renders disabled state correctly 1`] = `"<input class="w-full rounded-lg border bg-white text-gray-900 placeholder:text-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed border-gray-300 focus:border-blue-500 focus:ring-blue-500 px-3 py-2 text-base" disabled="" placeholder="Cannot edit">"`;
+
+exports[`Input snapshots > renders error variant correctly 1`] = `"<input aria-invalid="true" class="w-full rounded-lg border bg-white text-gray-900 placeholder:text-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed border-red-500 focus:border-red-500 focus:ring-red-500 px-3 py-2 text-base" placeholder="Invalid">"`;
+
+exports[`Input snapshots > renders large size correctly 1`] = `"<input class="w-full rounded-lg border bg-white text-gray-900 placeholder:text-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed border-gray-300 focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-lg" placeholder="Large">"`;
+
+exports[`Input snapshots > renders small size correctly 1`] = `"<input class="w-full rounded-lg border bg-white text-gray-900 placeholder:text-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed border-gray-300 focus:border-blue-500 focus:ring-blue-500 px-2.5 py-1.5 text-sm" placeholder="Small">"`;
+
+exports[`OfflineBanner snapshots > renders nothing when online (default browser state) 1`] = `""`;
+
+exports[`SkeletonBase snapshots > renders with additional className 1`] = `"<span class="skeleton rounded-full" style="width: 40px; height: 40px;" role="status" aria-label="Loading…" aria-busy="true"></span>"`;
+
+exports[`SkeletonBase snapshots > renders with custom aria-label 1`] = `"<span class="skeleton" role="status" aria-label="Loading balance" aria-busy="true"></span>"`;
+
+exports[`SkeletonBase snapshots > renders with no explicit dimensions 1`] = `"<span class="skeleton" role="status" aria-label="Loading…" aria-busy="true"></span>"`;
+
+exports[`SkeletonBase snapshots > renders with numeric width and height 1`] = `"<span class="skeleton" style="width: 200px; height: 20px;" role="status" aria-label="Loading…" aria-busy="true"></span>"`;
+
+exports[`SkeletonBase snapshots > renders with string dimensions 1`] = `"<span class="skeleton" style="width: 100%; height: 1rem;" role="status" aria-label="Loading…" aria-busy="true"></span>"`;
+
+exports[`StatusBadge snapshots > renders COMPLETE status correctly 1`] = `"<span class="relative inline-flex items-center"><span role="status" aria-label="Transaction status: Complete" title="Transaction completed successfully." tabindex="0" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] tracking-widest uppercase font-semibold cursor-default select-none rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-[#c9a962] bg-green-500/10 border border-green-500/40 text-green-400"><span aria-hidden="true" class="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0 bg-green-500"></span>Complete</span></span>"`;
+
+exports[`StatusBadge snapshots > renders SETTLING status correctly 1`] = `"<span class="relative inline-flex items-center"><span role="status" aria-label="Transaction status: Settling" title="Funds are being transferred to your bank account." tabindex="0" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] tracking-widest uppercase font-semibold cursor-default select-none rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-[#c9a962] bg-[#c9a962]/15 border border-[#c9a962]/60 text-[#c9a962]"><span aria-hidden="true" class="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0 bg-[#c9a962] animate-pulse"></span>Settling</span></span>"`;
+
+exports[`StatusBadge snapshots > renders completed status correctly 1`] = `"<span class="relative inline-flex items-center"><span role="status" aria-label="Transaction status: Completed" title="Transaction completed successfully." tabindex="0" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] tracking-widest uppercase font-semibold cursor-default select-none rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-[#c9a962] bg-green-500/10 border border-green-500/40 text-green-400"><span aria-hidden="true" class="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0 bg-green-500"></span>Completed</span></span>"`;
+
+exports[`StatusBadge snapshots > renders error status correctly 1`] = `"<span class="relative inline-flex items-center"><span role="status" aria-label="Transaction status: Failed" title="Transaction failed. Please try again." tabindex="0" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] tracking-widest uppercase font-semibold cursor-default select-none rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-[#c9a962] bg-red-500/10 border border-red-500/40 text-red-400"><span aria-hidden="true" class="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0 bg-red-500"></span>Failed</span></span>"`;
+
+exports[`StatusBadge snapshots > renders failed status correctly 1`] = `"<span class="relative inline-flex items-center"><span role="status" aria-label="Transaction status: Failed" title="Transaction failed." tabindex="0" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] tracking-widest uppercase font-semibold cursor-default select-none rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-[#c9a962] bg-red-500/10 border border-red-500/40 text-red-400"><span aria-hidden="true" class="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0 bg-red-500"></span>Failed</span></span>"`;
+
+exports[`StatusBadge snapshots > renders pending status correctly 1`] = `"<span class="relative inline-flex items-center"><span role="status" aria-label="Transaction status: Pending" title="Transaction is pending." tabindex="0" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] tracking-widest uppercase font-semibold cursor-default select-none rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-[#c9a962] bg-yellow-500/10 border border-yellow-500/40 text-yellow-400"><span aria-hidden="true" class="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0 bg-yellow-400 animate-pulse"></span>Pending</span></span>"`;
+
+exports[`StatusBadge snapshots > renders processing status correctly 1`] = `"<span class="relative inline-flex items-center"><span role="status" aria-label="Transaction status: Processing" title="Waiting for on-chain confirmation." tabindex="0" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] tracking-widest uppercase font-semibold cursor-default select-none rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-[#c9a962] bg-[#c9a962]/15 border border-[#c9a962]/60 text-[#c9a962]"><span aria-hidden="true" class="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0 bg-[#c9a962] animate-pulse"></span>Processing</span></span>"`;
+
+exports[`StatusBadge snapshots > renders settling status correctly 1`] = `"<span class="relative inline-flex items-center"><span role="status" aria-label="Transaction status: Settling" title="Transferring funds to your bank account." tabindex="0" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] tracking-widest uppercase font-semibold cursor-default select-none rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-[#c9a962] bg-[#c9a962]/15 border border-[#c9a962]/60 text-[#c9a962]"><span aria-hidden="true" class="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0 bg-[#c9a962] animate-pulse"></span>Settling</span></span>"`;
+
+exports[`StatusBadge snapshots > renders success status correctly 1`] = `"<span class="relative inline-flex items-center"><span role="status" aria-label="Transaction status: Success" title="Transaction completed successfully." tabindex="0" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] tracking-widest uppercase font-semibold cursor-default select-none rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-[#c9a962] bg-green-500/10 border border-green-500/40 text-green-400"><span aria-hidden="true" class="inline-block h-1.5 w-1.5 rounded-full flex-shrink-0 bg-green-500"></span>Success</span></span>"`;
+
+exports[`StatusBadge snapshots > renders without icon 1`] = `"<span class="relative inline-flex items-center"><span role="status" aria-label="Transaction status: Completed" title="Transaction completed successfully." tabindex="0" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] tracking-widest uppercase font-semibold cursor-default select-none rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-[#c9a962] bg-green-500/10 border border-green-500/40 text-green-400">Completed</span></span>"`;

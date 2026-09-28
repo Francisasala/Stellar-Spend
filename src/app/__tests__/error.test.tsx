@@ -1,12 +1,17 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import * as Sentry from '@sentry/nextjs';
 import Error from '../error';
 
+vi.mock('@sentry/nextjs', () => ({
+  captureException: vi.fn(),
+}));
+
 describe('Root Error Boundary', () => {
-  const mockReset = jest.fn();
+  const mockReset = vi.fn();
 
   beforeEach(() => {
-    mockReset.mockClear();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('displays error page with title', () => {
@@ -24,7 +29,7 @@ describe('Root Error Boundary', () => {
   });
 
   it('displays error digest when available', () => {
-    const error = new Error('Test error');
+    const error = new Error('Test error') as Error & { digest?: string };
     error.digest = 'abc123digest';
     render(<Error error={error} reset={mockReset} />);
 
@@ -49,8 +54,15 @@ describe('Root Error Boundary', () => {
     expect(homeButton).toBeInTheDocument();
   });
 
+  it('reports the error to Sentry', () => {
+    const error = new Error('Test error');
+    render(<Error error={error} reset={mockReset} />);
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(error);
+  });
+
   it('logs error to console', () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const error = new Error('Test error');
 
     render(<Error error={error} reset={mockReset} />);

@@ -1,8 +1,8 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { env } from '@/lib/env';
-import { ErrorHandler } from '@/lib/error-handler';
-import { withPaycrestTimeout } from '@/lib/offramp/utils/timeout';
+import { ErrorHandler, ApiError } from '@/lib/error-handler';
+import { withPaycrestTimeout } from '@/lib/offramp';
 import { getActiveCurrencies, isSupportedCurrency, validateCurrencyAmount } from '@/lib/currencies';
 import { getCurrencyFlag } from '@/lib/currency-flags';
 import { paycrestBreaker } from '@/lib/circuit-breaker';
@@ -35,27 +35,27 @@ class PaycrestAdapter {
             'API-Key': this.apiKey,
           },
         }),
-        'get_currencies'
-      )
+        'get_currencies',
+      ),
     );
 
     if (!response.ok) {
       throw new Error(`Failed to fetch currencies: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as
+      | Array<Record<string, unknown>>
+      | { currencies?: Array<Record<string, unknown>> };
+
+    const mapCurrency = (c: Record<string, unknown>) => ({
+      code: (c.code as string) || (c.currency as string) || '',
+      name: (c.name as string) || '',
+      symbol: (c.symbol as string) || '',
+    });
 
     const currencies = Array.isArray(data)
-      ? data.map((c: any) => ({
-        code: c.code || c.currency || '',
-        name: c.name || '',
-        symbol: c.symbol || '',
-      }))
-      : data.currencies?.map((c: any) => ({
-        code: c.code || c.currency || '',
-        name: c.name || '',
-        symbol: c.symbol || '',
-      })) || [];
+      ? data.map(mapCurrency)
+      : (data.currencies?.map(mapCurrency) ?? []);
 
     return currencies;
   }
@@ -123,12 +123,12 @@ export async function GET(request: Request) {
   if (validateCode) {
     const amountStr = searchParams.get('amount');
     if (!isSupportedCurrency(validateCode)) {
-      return NextResponse.json({ valid: false, error: `Unsupported currency: ${validateCode}` });
+      return ErrorHandler.validation(`Unsupported currency: ${validateCode}`);
     }
     if (amountStr) {
       const amount = parseFloat(amountStr);
       const error = validateCurrencyAmount(validateCode, amount);
-      if (error) return NextResponse.json({ valid: false, error });
+      if (error) return ErrorHandler.validation(error);
     }
     return NextResponse.json({ valid: true });
   }
@@ -138,7 +138,7 @@ export async function GET(request: Request) {
     if (cachedCurrencies && now - cacheTimestamp < CACHE_DURATION) {
       return NextResponse.json(
         { data: cachedCurrencies },
-        { headers: { 'Cache-Control': CACHE_CONTROL_HEADER } }
+        { headers: { 'Cache-Control': CACHE_CONTROL_HEADER } },
       );
     }
 
@@ -163,7 +163,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(
       { data: currencies },
-      { headers: { 'Cache-Control': CACHE_CONTROL_HEADER } }
+      { headers: { 'Cache-Control': CACHE_CONTROL_HEADER } },
     );
   } catch (error) {
     logger.error('offramp.currencies.error', {}, error);

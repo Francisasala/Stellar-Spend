@@ -3,10 +3,16 @@ import AxeBuilder from '@axe-core/playwright';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
 
+interface FreighterMock {
+  isConnected: () => Promise<boolean>;
+  getPublicKey: () => Promise<string>;
+  signTransaction: (xdr: string) => Promise<string>;
+}
+
 test.describe('Critical Journeys', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      (window as any).freighter = {
+      (window as unknown as { freighter: FreighterMock }).freighter = {
         isConnected: async () => true,
         getPublicKey: async () => 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5',
         signTransaction: async (xdr: string) => xdr,
@@ -64,10 +70,12 @@ test.describe('Critical Journeys', () => {
   test.describe('failure scenarios', () => {
     test('handles rejected wallet sign', async ({ page }) => {
       await page.addInitScript(() => {
-        (window as any).freighter = {
+        (window as unknown as { freighter: FreighterMock }).freighter = {
           isConnected: async () => true,
           getPublicKey: async () => 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5',
-          signTransaction: async () => { throw new Error('User rejected signing'); },
+          signTransaction: async () => {
+            throw new Error('User rejected signing');
+          },
         };
       });
 
@@ -145,11 +153,9 @@ test.describe('Critical Journeys', () => {
       await page.getByRole('button', { name: /connect wallet/i }).click();
       await page.waitForTimeout(500);
 
-      const results = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa'])
-        .analyze();
+      const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
       const criticalViolations = results.violations.filter(
-        v => v.impact === 'critical' || v.impact === 'serious'
+        (v) => v.impact === 'critical' || v.impact === 'serious',
       );
       expect(criticalViolations).toHaveLength(0);
     });

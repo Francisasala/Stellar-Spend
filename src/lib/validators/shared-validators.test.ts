@@ -139,7 +139,7 @@ describe('Shared Form Validators', () => {
 
   describe('nameValidator', () => {
     it('should validate person names', () => {
-      const validNames = ['John Doe', 'Alice Smith', 'Chen Wei', 'María García', 'O\\'Brien'];
+      const validNames = ['John Doe', 'Alice Smith', 'Chen Wei', 'María García', "O'Brien"];
 
       validNames.forEach((name) => {
         const result = nameValidator.safeParse(name);

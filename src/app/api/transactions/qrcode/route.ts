@@ -1,15 +1,14 @@
 import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { globalContainer } from '@/lib/di';
-import { SERVICE_KEYS } from '@/lib/di/registry';
-import { QRCodeData } from '@/types/qrcode';
+import { SERVICE_KEYS } from '@/lib/di';
+import { QRCodeData } from '@stellar-spend/shared';
 import { ErrorHandler } from '@/lib/error-handler';
 import { ApiError, ErrorType } from '@/lib/error-types';
 
 export async function POST(req: NextRequest) {
   try {
-    const { transactionId, data }: { transactionId: string; data: QRCodeData } =
-      await req.json();
+    const { transactionId, data }: { transactionId: string; data: QRCodeData } = await req.json();
 
     if (!transactionId || !data) {
       return ErrorHandler.validation('Transaction ID and data are required');
@@ -38,7 +37,7 @@ export async function GET(req: NextRequest) {
     const qrCode = await svc.getQRCode(transactionId);
 
     if (!qrCode) {
-      return ErrorHandler.notFound("QR code");
+      return ErrorHandler.notFound('QR code');
     }
 
     // If requesting SVG format, return as SVG

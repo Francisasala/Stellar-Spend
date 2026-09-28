@@ -1,18 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { graphql, parse, validate } from 'graphql';
-import { schema } from '@/lib/graphql/schema';
-import { resolvers, subscriptions } from '@/lib/graphql/resolvers';
-import { buildContext } from '@/lib/graphql/context';
-
-function createContext(overrides?: Partial<ReturnType<typeof buildContext>>) {
-  return {
-    userId: 'test_user',
-    isPremium: false,
-    isAuthenticated: true,
-    role: 'user' as const,
-    ...overrides,
-  };
-}
+import { describe, it, expect } from 'vitest';
+import { graphql, parse, validate, GraphQLObjectType } from 'graphql';
+import { schema } from '@/lib/graphql';
+import { resolvers, subscriptions } from '@/lib/graphql';
 
 describe('GraphQL Schema', () => {
   it('builds without error', () => {
@@ -78,7 +67,7 @@ describe('Auth guards', () => {
 
 describe('Type definitions', () => {
   it('Transaction type has all expected fields', () => {
-    const txType = schema.getType('Transaction') as any;
+    const txType = schema.getType('Transaction') as GraphQLObjectType | undefined;
     expect(txType).toBeDefined();
     const fields = txType.getFields();
     expect(fields).toHaveProperty('id');
@@ -96,7 +85,7 @@ describe('Type definitions', () => {
   });
 
   it('Dispute type has all expected fields', () => {
-    const disputeType = schema.getType('Dispute') as any;
+    const disputeType = schema.getType('Dispute') as GraphQLObjectType | undefined;
     expect(disputeType).toBeDefined();
     const fields = disputeType.getFields();
     expect(fields).toHaveProperty('id');
@@ -108,7 +97,7 @@ describe('Type definitions', () => {
   });
 
   it('AnalyticsSummary type has all expected fields', () => {
-    const analyticsType = schema.getType('AnalyticsSummary') as any;
+    const analyticsType = schema.getType('AnalyticsSummary') as GraphQLObjectType | undefined;
     expect(analyticsType).toBeDefined();
     const fields = analyticsType.getFields();
     expect(fields).toHaveProperty('totalTransactions');
@@ -118,7 +107,7 @@ describe('Type definitions', () => {
   });
 
   it('ScreeningResult type has all expected fields', () => {
-    const screeningType = schema.getType('ScreeningResult') as any;
+    const screeningType = schema.getType('ScreeningResult') as GraphQLObjectType | undefined;
     expect(screeningType).toBeDefined();
     const fields = screeningType.getFields();
     expect(fields).toHaveProperty('verdict');

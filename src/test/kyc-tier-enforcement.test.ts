@@ -1,16 +1,31 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { KYCLimitService, type LimitTier } from '@/lib/kyc-limits';
-import { SandboxKycProvider, VERIFICATION_LEVEL_MAP, getRequiredVerificationLevel, type VerificationLevel } from '@/lib/kyc-provider';
+import { KYCLimitService } from '@/lib/kyc-limits';
+import {
+  SandboxKycProvider,
+  VERIFICATION_LEVEL_MAP,
+  getRequiredVerificationLevel,
+} from '@/lib/kyc-provider';
 
 function createLocalStorageMock() {
   let store: Record<string, string> = {};
   return {
     getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => { store[key] = value; },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { store = {}; },
-    get length() { return Object.keys(store).length; },
-    key: (index: number) => { const keys = Object.keys(store); return keys[index] || null; },
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: (index: number) => {
+      const keys = Object.keys(store);
+      return keys[index] || null;
+    },
   };
 }
 
@@ -19,8 +34,12 @@ describe('KYC Tier Enforcement', () => {
 
   beforeEach(() => {
     if (typeof globalThis !== 'undefined') {
-      (globalThis as any).window = {};
-      (globalThis as any).localStorage = createLocalStorageMock();
+      const g = globalThis as unknown as {
+        window: Record<string, unknown>;
+        localStorage: ReturnType<typeof createLocalStorageMock>;
+      };
+      g.window = {};
+      g.localStorage = createLocalStorageMock();
     }
     // Start fresh
     KYCLimitService.initializeUserLimits(userId, 'tier1');
@@ -101,7 +120,7 @@ describe('KYC Tier Enforcement', () => {
 
       KYCLimitService.approveLimitIncrease(userId, request.id);
       const approveEvent = KYCLimitService.getAuditTrail(userId).find(
-        (e) => e.eventType === 'limit_increase_approved'
+        (e) => e.eventType === 'limit_increase_approved',
       );
       expect(approveEvent).toBeDefined();
     });

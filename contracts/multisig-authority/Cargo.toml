@@ -9,6 +9,9 @@ stellar-spend-shared = { workspace = true }
 
 [dev-dependencies]
 multisig-authority = { path = ".", features = ["testutils"] }
+treasury = { path = "../treasury", features = ["testutils"] }
+escrow = { path = "../escrow", features = ["testutils"] }
+stellar-spend-shared = { workspace = true }
 soroban-sdk = { workspace = true, features = ["testutils"] }
 
 [features]

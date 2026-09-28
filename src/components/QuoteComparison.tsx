@@ -1,6 +1,8 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
+import { cn } from '@/lib/cn';
+import { formatNumber } from '@/lib/format';
 
 export interface ProviderQuote {
   id: string;
@@ -13,7 +15,7 @@ export interface ProviderQuote {
   destinationAmount: string;
   currency: string;
   rating: number; // 1-5
-  badge?: "Best Rate" | "Fastest" | "Lowest Fee";
+  badge?: 'Best Rate' | 'Fastest' | 'Lowest Fee';
 }
 
 interface QuoteComparisonProps {
@@ -25,15 +27,9 @@ interface QuoteComparisonProps {
 
 function StarRating({ rating }: { rating: number }) {
   return (
-    <span style={{ display: "inline-flex", gap: 2 }} aria-label={`${rating} out of 5 stars`}>
+    <span className="inline-flex gap-0.5" aria-label={`${rating} out of 5 stars`}>
       {[1, 2, 3, 4, 5].map((s) => (
-        <span
-          key={s}
-          style={{
-            fontSize: 10,
-            color: s <= rating ? "var(--accent)" : "var(--line)",
-          }}
-        >
+        <span key={s} className={cn('text-[10px]', s <= rating ? 'text-accent' : 'text-line')}>
           ★
         </span>
       ))}
@@ -48,23 +44,19 @@ function formatTime(seconds: number): string {
 }
 
 export function QuoteComparison({ quotes, selectedId, onSelect, isLoading }: QuoteComparisonProps) {
-  const [sortBy, setSortBy] = useState<"rate" | "fee" | "time">("rate");
+  const [sortBy, setSortBy] = useState<'rate' | 'fee' | 'time'>('rate');
 
   const sorted = [...quotes].sort((a, b) => {
-    if (sortBy === "rate") return b.rate - a.rate;
-    if (sortBy === "fee") return parseFloat(a.totalFee) - parseFloat(b.totalFee);
+    if (sortBy === 'rate') return b.rate - a.rate;
+    if (sortBy === 'fee') return parseFloat(a.totalFee) - parseFloat(b.totalFee);
     return a.estimatedTime - b.estimatedTime;
   });
 
   if (isLoading) {
     return (
-      <div style={{ padding: "16px 0" }}>
+      <div className="py-4">
         {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="skeleton"
-            style={{ height: 72, marginBottom: 8, borderRadius: 4 }}
-          />
+          <div key={i} className="skeleton h-[72px] mb-2 rounded" />
         ))}
       </div>
     );
@@ -73,44 +65,26 @@ export function QuoteComparison({ quotes, selectedId, onSelect, isLoading }: Quo
   if (!quotes.length) return null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div className="flex flex-col gap-2">
       {/* Sort controls */}
-      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-        <span style={{ fontSize: 11, color: "var(--muted)" }}>Sort by:</span>
-        {(["rate", "fee", "time"] as const).map((opt) => (
+      <div className="flex gap-1.5 items-center">
+        <span className="text-[11px] text-muted">Sort by:</span>
+        {(['rate', 'fee', 'time'] as const).map((opt) => (
           <button
             key={opt}
             onClick={() => setSortBy(opt)}
-            style={{
-              fontSize: 11,
-              padding: "3px 8px",
-              border: "1px solid",
-              borderColor: sortBy === opt ? "var(--accent)" : "var(--line)",
-              color: sortBy === opt ? "var(--accent)" : "var(--muted)",
-              background: "none",
-              cursor: "pointer",
-              textTransform: "capitalize",
-            }}
+            className={cn(
+              'text-[11px] px-2 py-[3px] border bg-transparent cursor-pointer capitalize',
+              sortBy === opt ? 'border-accent text-accent' : 'border-line text-muted',
+            )}
           >
-            {opt === "rate" ? "Best Rate" : opt === "fee" ? "Lowest Fee" : "Fastest"}
+            {opt === 'rate' ? 'Best Rate' : opt === 'fee' ? 'Lowest Fee' : 'Fastest'}
           </button>
         ))}
       </div>
 
       {/* Table header */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 80px 80px 70px 60px 32px",
-          gap: 8,
-          padding: "6px 12px",
-          fontSize: 10,
-          color: "var(--muted)",
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-          borderBottom: "1px solid var(--line)",
-        }}
-      >
+      <div className="grid grid-cols-[1fr_80px_80px_70px_60px_32px] gap-2 px-3 py-1.5 text-[10px] text-muted tracking-[0.06em] uppercase border-b border-line">
         <span>Provider</span>
         <span>You Receive</span>
         <span>Total Fee</span>
@@ -127,85 +101,53 @@ export function QuoteComparison({ quotes, selectedId, onSelect, isLoading }: Quo
             key={q.id}
             onClick={() => onSelect(q.id)}
             aria-pressed={isSelected}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 80px 80px 70px 60px 32px",
-              gap: 8,
-              padding: "10px 12px",
-              border: "1px solid",
-              borderColor: isSelected ? "var(--accent)" : "var(--line)",
-              background: isSelected ? "color-mix(in srgb, var(--accent) 8%, var(--panel))" : "var(--panel)",
-              cursor: "pointer",
-              textAlign: "left",
-              alignItems: "center",
-              transition: "border-color 0.15s, background 0.15s",
-            }}
+            className={cn(
+              'grid grid-cols-[1fr_80px_80px_70px_60px_32px] gap-2 px-3 py-2.5 border cursor-pointer text-left items-center transition-[border-color,background-color] duration-150',
+              isSelected
+                ? 'border-accent bg-[color-mix(in_srgb,var(--accent)_8%,var(--panel))]'
+                : 'border-line bg-panel',
+            )}
           >
             {/* Provider name + badge */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 500 }}>
-                {q.provider}
-              </span>
+            <div className="flex flex-col gap-[3px]">
+              <span className="text-[13px] text-text font-medium">{q.provider}</span>
               {q.badge && (
-                <span
-                  style={{
-                    fontSize: 9,
-                    padding: "1px 5px",
-                    background: "var(--accent)",
-                    color: "#000",
-                    borderRadius: 2,
-                    width: "fit-content",
-                    letterSpacing: "0.05em",
-                    textTransform: "uppercase",
-                  }}
-                >
+                <span className="text-[9px] px-[5px] py-px bg-accent text-black rounded-[2px] w-fit tracking-[0.05em] uppercase">
                   {q.badge}
                 </span>
               )}
             </div>
 
             {/* Destination amount */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={{ fontSize: 13, color: "var(--text)" }}>
-                {parseFloat(q.destinationAmount).toLocaleString()}
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[13px] text-text">
+                {formatNumber(parseFloat(q.destinationAmount))}
               </span>
-              <span style={{ fontSize: 10, color: "var(--muted)" }}>{q.currency}</span>
+              <span className="text-[10px] text-muted">{q.currency}</span>
             </div>
 
             {/* Fees breakdown */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={{ fontSize: 13, color: "var(--text)" }}>{q.totalFee} USDC</span>
-              <span style={{ fontSize: 10, color: "var(--muted)" }}>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[13px] text-text">{q.totalFee} USDC</span>
+              <span className="text-[10px] text-muted">
                 Bridge: {q.bridgeFee} · Payout: {q.payoutFee}
               </span>
             </div>
 
             {/* Estimated time */}
-            <span style={{ fontSize: 13, color: "var(--text)" }}>
-              {formatTime(q.estimatedTime)}
-            </span>
+            <span className="text-[13px] text-text">{formatTime(q.estimatedTime)}</span>
 
             {/* Rating */}
             <StarRating rating={q.rating} />
 
             {/* Selection indicator */}
             <div
-              style={{
-                width: 16,
-                height: 16,
-                borderRadius: "50%",
-                border: "2px solid",
-                borderColor: isSelected ? "var(--accent)" : "var(--line)",
-                background: isSelected ? "var(--accent)" : "transparent",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              {isSelected && (
-                <span style={{ fontSize: 8, color: "#000", lineHeight: 1 }}>✓</span>
+              className={cn(
+                'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0',
+                isSelected ? 'border-accent bg-accent' : 'border-line bg-transparent',
               )}
+            >
+              {isSelected && <span className="text-[8px] text-black leading-none">✓</span>}
             </div>
           </button>
         );

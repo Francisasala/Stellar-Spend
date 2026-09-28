@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TransactionStorage } from '@/lib/transaction-storage';
-import { TransactionSearchService } from '@/lib/transaction-search';
+import { TransactionSearchService } from '@/lib/transactions';
 import { ErrorHandler } from '@/lib/error-handler';
 
 export async function GET(req: NextRequest) {
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     const suggestions = TransactionSearchService.getSearchSuggestions(
       userTransactions,
       query,
-      limit
+      limit,
     );
 
     return NextResponse.json({ suggestions });

@@ -1,80 +1,65 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { dal, DatabaseError } from '@/lib/db/dal';
+import { z } from 'zod';
+import { dal, DatabaseError } from '@/lib/db';
 import { ErrorHandler } from '@/lib/error-handler';
 import type { Transaction } from '@/lib/transaction-storage';
 import { withIdempotency } from '@/lib/idempotency';
+import { validateBody } from '@/lib/validation/validate-request';
 
-const REQUIRED_FIELDS: (keyof Transaction)[] = [
-    'id',
-    'timestamp',
-    'userAddress',
-    'amount',
-    'currency',
-    'beneficiary',
-    'status',
-];
-
-const REQUIRED_BENEFICIARY_FIELDS = [
-    'institution',
-    'accountIdentifier',
-    'accountName',
-    'currency',
-] as const;
+const createTransactionSchema = z
+  .object({
+    id: z.string().min(1),
+    timestamp: z.number(),
+    userAddress: z.string().min(1),
+    amount: z.string().min(1),
+    currency: z.string().min(1),
+    beneficiary: z.object({
+      institution: z.string().min(1),
+      accountIdentifier: z.string().min(1),
+      accountName: z.string().min(1),
+      currency: z.string().min(1),
+    }),
+    status: z.string().min(1),
+  })
+  .passthrough();
 
 export async function GET(request: NextRequest) {
-    const wallet = request.nextUrl.searchParams.get('wallet');
+  const wallet = request.nextUrl.searchParams.get('wallet');
 
-    if (!wallet) {
-        return ErrorHandler.validation('wallet address is required');
-    }
+  if (!wallet) {
+    return ErrorHandler.validation('wallet address is required');
+  }
 
-    try {
-        const transactions = await dal.getByUser(wallet);
-        return NextResponse.json(transactions, { status: 200 });
-    } catch (err) {
-        if (err instanceof DatabaseError) {
-            return ErrorHandler.serverError(err);
-        }
-        return ErrorHandler.serverError(err);
+  try {
+    const transactions = await dal.getByUser(wallet);
+    return NextResponse.json(transactions, { status: 200 });
+  } catch (err) {
+    if (err instanceof DatabaseError) {
+      return ErrorHandler.serverError(err);
     }
+    return ErrorHandler.serverError(err);
+  }
 }
 
 export async function POST(request: NextRequest) {
-    return withIdempotency(request, async () => {
-        let body: Record<string, unknown>;
-        try {
-            body = await request.json();
-        } catch {
-            return ErrorHandler.validation('Invalid JSON body');
-        }
+  return withIdempotency(
+    request,
+    async () => {
+      const validation = await validateBody(request, createTransactionSchema);
+      if (!validation.success) return validation.response;
 
-        for (const field of REQUIRED_FIELDS) {
-            if (body[field] === undefined || body[field] === null) {
-                return ErrorHandler.validation(`Missing required field: ${field}`);
-            }
-        }
+      const transaction = validation.data as unknown as Transaction;
 
-        const beneficiary = body.beneficiary as Record<string, unknown> | undefined;
-        if (!beneficiary || typeof beneficiary !== 'object') {
-            return ErrorHandler.validation('Missing required field: beneficiary');
+      try {
+        await dal.save(transaction);
+        return NextResponse.json(transaction, { status: 201 });
+      } catch (err) {
+        if (err instanceof DatabaseError) {
+          return ErrorHandler.serverError(err);
         }
-
-        for (const field of REQUIRED_BENEFICIARY_FIELDS) {
-            if (!beneficiary[field]) {
-                return ErrorHandler.validation(`Missing required beneficiary field: ${field}`);
-            }
-        }
-
-        const transaction = body as unknown as Transaction;
-
-        try {
-            await dal.save(transaction);
-            return NextResponse.json(transaction, { status: 201 });
-        } catch (err) {
-            if (err instanceof DatabaseError) {
-                return ErrorHandler.serverError(err);
-            }
-            return ErrorHandler.serverError(err);
-        }
-    }, { required: true });
+        return ErrorHandler.serverError(err);
+      }
+    },
+    { required: true },
+  );
 }

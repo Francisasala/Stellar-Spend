@@ -1,3 +1,8 @@
+/**
+ * Compliance screening rules and override behavior documented in
+ * docs/kyc-compliance-decision-boundaries.md (Compliance Screening & Overrides section)
+ */
+
 export type ScreeningVerdict = 'allow' | 'deny' | 'review';
 
 export interface ScreeningResult {
@@ -206,7 +211,7 @@ export async function screenAddress(
     const result = await activeProvider.screen(request);
     cacheResult(request.address, result);
     return result;
-  } catch (error) {
+  } catch (_error) {
     const failClosed = options?.failClosed ?? isHighValue(request.amount);
     if (failClosed) {
       const now = Date.now();

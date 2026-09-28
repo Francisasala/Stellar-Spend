@@ -24,6 +24,18 @@
         "ALTER TABLE.*ALTER COLUMN.*TYPE"
       ]
     },
+    "destructive_change_detection": {
+      "enabled": true,
+      "description": "Irreversible/destructive operations are blocked unless explicitly acknowledged",
+      "disallowed": [
+        "DROP TABLE",
+        "ALTER TABLE.*DROP COLUMN",
+        "TRUNCATE TABLE",
+        "ALTER TABLE.*RENAME COLUMN"
+      ],
+      "override_comment": "-- lint:allow-destructive",
+      "override_description": "Add this comment to the migration file to explicitly allow a destructive operation to pass linting"
+    },
     "dry_run_check": {
       "enabled": true,
       "description": "Verify dry run before applying"

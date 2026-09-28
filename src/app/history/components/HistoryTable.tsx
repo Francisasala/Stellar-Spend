@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import type { Transaction } from "@/lib/transaction-storage";
-import type { SortDir, SortField } from "../filters";
-import { HistoryRow } from "./HistoryRow";
+import { useCallback, useRef, useState } from 'react';
+import type { Transaction } from '@/lib/transaction-storage';
+import type { SortDir, SortField } from '../filters';
+import { HistoryRow } from './HistoryRow';
 
 interface HistoryTableProps {
   rows: Transaction[];
@@ -14,9 +15,16 @@ interface HistoryTableProps {
 }
 
 const headerClass =
-  "px-5 py-2.5 text-left text-[10px] tracking-[0.18em] font-semibold text-[#0a0a0a] uppercase whitespace-nowrap";
+  'px-5 py-2.5 text-left text-[10px] tracking-[0.18em] font-semibold text-[#0a0a0a] uppercase whitespace-nowrap';
 
-/** Presentational, sortable transaction history table. */
+/**
+ * Presentational, sortable transaction history table.
+ *
+ * Rows use the roving tabindex pattern (see ACCESSIBILITY.md): only the
+ * active row is in the natural Tab sequence, ArrowUp/ArrowDown move that
+ * focus between rows, and Tab moves into/out of the focused row's own
+ * controls (links, note editor, claim button) as normal.
+ */
 export function HistoryTable({
   rows,
   sortField,
@@ -25,19 +33,44 @@ export function HistoryTable({
   onSaveNote,
   onFileClaim,
 }: HistoryTableProps) {
+  const [rovingIndex, setRovingIndex] = useState(0);
+  const rowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map());
+
+  const registerRowRef = useCallback((el: HTMLTableRowElement | null, index: number) => {
+    if (el) rowRefs.current.set(index, el);
+    else rowRefs.current.delete(index);
+  }, []);
+
+  const handleRowKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTableRowElement>, index: number) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = Math.min(index + 1, rows.length - 1);
+        setRovingIndex(next);
+        rowRefs.current.get(next)?.focus();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = Math.max(index - 1, 0);
+        setRovingIndex(prev);
+        rowRefs.current.get(prev)?.focus();
+      }
+    },
+    [rows.length],
+  );
+
   const SortableHeader = ({ field, label }: { field: SortField; label: string }) => (
     <th
+      scope="col"
       className={`${headerClass} cursor-pointer select-none`}
       onClick={() => onToggleSort(field)}
-      aria-sort={
-        sortField === field ? (sortDir === "asc" ? "ascending" : "descending") : "none"
-      }
+      data-testid={`sort-${field}`}
+      aria-sort={sortField === field ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
     >
       {label}
       {sortField !== field ? (
         <span className="ml-1 opacity-30">↕</span>
       ) : (
-        <span className="ml-1">{sortDir === "asc" ? "↑" : "↓"}</span>
+        <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
       )}
     </th>
   );
@@ -48,13 +81,23 @@ export function HistoryTable({
         <thead>
           <tr className="bg-[#c9a962]">
             <SortableHeader field="timestamp" label="DATE" />
-            <th className={headerClass}>TX HASH</th>
+            <th scope="col" className={headerClass}>
+              TX HASH
+            </th>
             <SortableHeader field="amount" label="AMOUNT" />
-            <th className={headerClass}>CURRENCY</th>
-            <th className={headerClass}>BANK</th>
+            <th scope="col" className={headerClass}>
+              CURRENCY
+            </th>
+            <th scope="col" className={headerClass}>
+              BANK
+            </th>
             <SortableHeader field="status" label="STATUS" />
-            <th className={headerClass}>NOTE</th>
-            <th className={headerClass}>INSURANCE</th>
+            <th scope="col" className={headerClass}>
+              NOTE
+            </th>
+            <th scope="col" className={headerClass}>
+              INSURANCE
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -63,6 +106,10 @@ export function HistoryTable({
               key={tx.id}
               tx={tx}
               index={i}
+              isFocused={i === rovingIndex}
+              rowRef={(el) => registerRowRef(el, i)}
+              onRowFocus={() => setRovingIndex(i)}
+              onRowKeyDown={(e) => handleRowKeyDown(e, i)}
               onSaveNote={onSaveNote}
               onFileClaim={onFileClaim}
             />

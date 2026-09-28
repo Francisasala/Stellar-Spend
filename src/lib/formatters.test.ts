@@ -1,5 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { DateFormatter, formatTransaction, formatTransactionDate, defaultFormatter } from './formatters';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
+import {
+  DateFormatter,
+  formatTransaction,
+  formatTransactionDate,
+  defaultFormatter,
+} from './formatters';
 import * as datetimeModule from './datetime';
 
 vi.mock('./datetime', async (importOriginal) => {
@@ -12,9 +17,9 @@ vi.mock('./datetime', async (importOriginal) => {
   };
 });
 
-const mockFormatUtc = datetimeModule.formatUtc as any;
-const mockFormatDate = datetimeModule.formatDate as any;
-const mockParseUtc = datetimeModule.parseUtc as any;
+const mockFormatUtc = datetimeModule.formatUtc as unknown as Mock;
+const mockFormatDate = datetimeModule.formatDate as unknown as Mock;
+const mockParseUtc = datetimeModule.parseUtc as unknown as Mock;
 
 describe('formatters.ts', () => {
   beforeEach(() => {
@@ -192,11 +197,7 @@ describe('formatters.ts', () => {
 
         formatTransaction(iso, 'America/New_York');
 
-        expect(mockFormatUtc).toHaveBeenCalledWith(
-          iso,
-          'en-US',
-          'America/New_York'
-        );
+        expect(mockFormatUtc).toHaveBeenCalledWith(iso, 'en-US', 'America/New_York');
       });
     });
 
@@ -214,11 +215,7 @@ describe('formatters.ts', () => {
 
         formatTransactionDate(iso, 'Europe/London');
 
-        expect(mockFormatDate).toHaveBeenCalledWith(
-          iso,
-          'en-US',
-          'Europe/London'
-        );
+        expect(mockFormatDate).toHaveBeenCalledWith(iso, 'en-US', 'Europe/London');
       });
     });
   });

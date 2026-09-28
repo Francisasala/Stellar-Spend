@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { ToastProvider } from './ToastContext';
+import { NotificationProvider } from './NotificationProvider';
 import { ThemeProvider } from './ThemeContext';
 import { I18nProvider } from '@/lib/i18n/provider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -16,7 +16,7 @@ interface AppProvidersProps {
  * 1. I18nProvider - must be outermost (affects all descendants)
  * 2. ErrorBoundary - catches errors across all descendants
  * 3. ThemeProvider - sets up theme context
- * 4. ToastProvider - notification system
+ * 4. NotificationProvider - unified toast + notification-center system (#1042)
  *
  * Changing this order can cause hydration mismatches or context errors.
  */
@@ -25,9 +25,7 @@ export function AppProviders({ children }: AppProvidersProps) {
     <I18nProvider>
       <ErrorBoundary>
         <ThemeProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
+          <NotificationProvider>{children}</NotificationProvider>
         </ThemeProvider>
       </ErrorBoundary>
     </I18nProvider>

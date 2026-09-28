@@ -1,6 +1,6 @@
 # Contributing to Stellar-Spend
 
-Thank you for your interest in contributing! This document covers everything you need to know: environment setup, branch and commit conventions, the pull request process, the definition of done, and review SLAs.
+## Scratch Files
 
 > **New here?** Start with the [Developer Onboarding Guide](./docs/onboarding.md) — it takes you from clone to a running local environment and explains the architecture in detail.
 
@@ -16,13 +16,17 @@ Thank you for your interest in contributing! This document covers everything you
 6. [Review Process & SLAs](#review-process--slas)
 7. [Code Style Guidelines](#code-style-guidelines)
 8. [Project Structure](#project-structure)
-9. [Security & Audits](#security--audits)
-10. [Getting Help](#getting-help)
-11. [Code of Conduct](#code-of-conduct)
+9. [Type Coverage](#type-coverage)
+10. [Dependency License Compliance](#dependency-license-compliance)
+11. [Security & Audits](#security--audits)
+12. [Getting Help](#getting-help)
+13. [Code of Conduct](#code-of-conduct)
 
 ---
 
 ## Development Environment Setup
+
+> 📘 **Comprehensive Local Setup Guide**: For a consolidated guide covering Rust, Soroban CLI, database setup, and troubleshooting RPC errors, see **[`docs/local-dev-setup.md`](./docs/local-dev-setup.md)**.
 
 ### Prerequisites
 
@@ -51,11 +55,14 @@ npm run dev
 
 ### Run checks before committing
 
+### Creating Scratch Files
 ```bash
-npm run lint          # ESLint
-npm run format:check  # Prettier
-npx tsc --noEmit      # TypeScript
-npm test              # Unit + integration tests
+npm run lint             # ESLint
+npm run format:check     # Prettier
+npx tsc --noEmit         # TypeScript (zero errors required)
+npm test                 # Unit + integration tests
+npm run type:coverage    # Type coverage ≥ 95% (see § Type Coverage below)
+npm run license:check    # Dependency-license compliance (see § Licenses below)
 ```
 
 ### Contract development (Soroban smart contracts)
@@ -63,6 +70,7 @@ npm test              # Unit + integration tests
 If you modify files in the `contracts/` directory, you must:
 
 1. **Fix Clippy warnings** – ensure no linting issues:
+
 ```bash
 cd contracts
 cargo clippy --workspace -- -D warnings
@@ -80,22 +88,71 @@ cargo audit --deny warnings
 ```
 
 **Prerequisites for contract development:**
+
 - Rust toolchain (install from https://rustup.rs/)
 - `cargo-clippy` (included with rustup)
 - `cargo-audit` for vulnerability scanning (install with `cargo install cargo-audit`)
 
 **Set up local pre-commit hooks (optional but recommended):**
+
+The project supports two pre-commit hook systems. Either one will enforce lint, TypeScript type-check, and formatting checks before each commit.
+
+**Option A — pre-commit framework (Python):**
+
 ```bash
 pip install pre-commit
 pre-commit install
-# Now cargo audit will run automatically before commits that touch Cargo.toml files
 ```
 
+**Option B — Husky (native Git hooks):**
+
+```bash
+npm install
+npx husky install
+npx husky add .husky/pre-commit "npm run lint && npm run type:check && npm run format:check"
+```
+
+The pre-commit hooks run:
+1. `npm run lint` — ESLint checks
+2. `npm run type:check` — TypeScript type-checking (`tsc --noEmit`)
+3. `npm run format:check` — Prettier formatting check
+
+**Bypassing pre-commit hooks:**
+
+To skip hooks for a specific commit (e.g., emergency fix, WIP commit), use the `--no-verify` flag:
+
+```bash
+git commit --no-verify -m "WIP: temporary change"
+```
+
+> **Warning**: `--no-verify` bypasses all pre-commit checks. CI will still enforce lint, type-check, and format on every push. Use this flag sparingly and never for code that will be merged without review.
+
 **Common workflows before pushing contract changes:**
+
+- **Format code**: `cargo fmt --workspace` (auto-fix) — style is enforced by CI
+- **Check formatting**: `cargo fmt --workspace --check` (read-only, matches CI check)
 - Run clippy: `cargo clippy --workspace -- -D warnings`
 - Audit for vulnerabilities: `./scripts/audit-contracts.sh`
 - Check for RUSTSEC advisories: `cargo audit --json` (for CI/CD integration)
 - Update vulnerable dependencies: `cargo update`
+
+### Rust code style (`rustfmt`)
+
+All Soroban contract code is formatted with **rustfmt** using the rules in
+[`contracts/rustfmt.toml`](./contracts/rustfmt.toml). Key settings:
+
+| Rule            | Value                   |
+| --------------- | ----------------------- |
+| Edition         | 2021                    |
+| Max line width  | 100                     |
+| Indent          | 4 spaces (no hard tabs) |
+| Import grouping | `StdExternalCrate`      |
+| Trailing commas | Vertical (multi-line)   |
+| Newline style   | Unix                    |
+
+CI runs `cargo fmt --workspace --check` on every push that touches `contracts/`.
+**A formatting diff will fail the build.** Run `cargo fmt --workspace` locally
+before pushing to keep the check green.
 
 ### Component development
 
@@ -106,6 +163,7 @@ npm run storybook
 ```
 
 When creating or updating a UI component, add a `.stories.tsx` file covering:
+
 - Different variants and states (loading, disabled, error)
 - Edge cases for input data
 - Accessibility checks via the integrated `axe` addon
@@ -116,19 +174,20 @@ When creating or updating a UI component, add a `.stories.tsx` file covering:
 
 Use descriptive branch names with these prefixes:
 
-| Prefix | Purpose |
-|--------|---------|
-| `feat/` | New features |
-| `fix/` | Bug fixes |
-| `docs/` | Documentation updates |
-| `style/` | Formatting / whitespace only |
+| Prefix      | Purpose                             |
+| ----------- | ----------------------------------- |
+| `feat/`     | New features                        |
+| `fix/`      | Bug fixes                           |
+| `docs/`     | Documentation updates               |
+| `style/`    | Formatting / whitespace only        |
 | `refactor/` | Refactoring without behavior change |
-| `test/` | Adding or updating tests |
-| `chore/` | Maintenance, dependency updates |
-| `ci/` | CI/CD changes |
-| `contract/` | Soroban smart contract changes |
+| `test/`     | Adding or updating tests            |
+| `chore/`    | Maintenance, dependency updates     |
+| `ci/`       | CI/CD changes                       |
+| `contract/` | Soroban smart contract changes      |
 
 **Examples:**
+
 - `feat/add-kes-corridor`
 - `fix/paycrest-webhook-hmac`
 - `docs/update-adr-escrow`
@@ -152,18 +211,18 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 
 ### Types
 
-| Type | When to use |
-|------|-------------|
-| `feat` | New feature |
-| `fix` | Bug fix |
-| `docs` | Documentation only |
-| `style` | Formatting, whitespace |
+| Type       | When to use                            |
+| ---------- | -------------------------------------- |
+| `feat`     | New feature                            |
+| `fix`      | Bug fix                                |
+| `docs`     | Documentation only                     |
+| `style`    | Formatting, whitespace                 |
 | `refactor` | Code restructuring, no behavior change |
-| `test` | Adding or updating tests |
-| `chore` | Maintenance, dependency bumps |
-| `ci` | CI/CD configuration |
-| `perf` | Performance improvement |
-| `contract` | Soroban contract change |
+| `test`     | Adding or updating tests               |
+| `chore`    | Maintenance, dependency bumps          |
+| `ci`       | CI/CD configuration                    |
+| `perf`     | Performance improvement                |
+| `contract` | Soroban contract change                |
 
 ### Scope (optional)
 
@@ -198,12 +257,14 @@ BREAKING CHANGE: The old endpoint path is removed. Update all clients.
 ### Before opening a PR
 
 1. Make sure your branch is up to date with `main`:
+
    ```bash
    git fetch origin
    git rebase origin/main
    ```
 
 2. Run the full check suite:
+
    ```bash
    npm run lint && npm run format:check && npx tsc --noEmit && npm test
    ```
@@ -236,6 +297,7 @@ PRs are merged by a maintainer using **squash and merge** once all checks pass a
 A contribution is **done** when **all** of the following are true:
 
 ### Code
+
 - [ ] Implements the acceptance criteria from the linked issue
 - [ ] No regressions introduced (all existing tests still pass)
 - [ ] No TypeScript errors: `npx tsc --noEmit` exits 0
@@ -245,6 +307,7 @@ A contribution is **done** when **all** of the following are true:
 - [ ] No secrets, PII, or credentials in the diff
 
 ### Tests
+
 - [ ] New logic has unit tests covering the happy path and primary error paths
 - [ ] Changed API routes have integration tests
 - [ ] UI changes have component tests (render states + key interactions)
@@ -252,19 +315,22 @@ A contribution is **done** when **all** of the following are true:
 - [ ] All CI test jobs pass (lint, type-check, unit, build, E2E)
 
 ### Accessibility (UI changes)
+
 - [ ] New interactive elements have accessible names
 - [ ] Focus management is correct (modals trap focus, focus restores on close)
 - [ ] Keyboard navigation works without a mouse
 - [ ] Color contrast ≥ 4.5:1 for text (WCAG AA)
 
 ### Documentation
+
 - [ ] `docs/` updated if architecture, API behavior, or configuration changed
 - [ ] If the architecture changed (new service, new external dependency, data-flow change): update `docs/diagrams/` source files and run the diagram check (`bash scripts/check-diagrams.sh`)
 - [ ] New environment variables are added to `.env.example` with descriptions
-- [ ] New ADRs created for significant architectural decisions (see `docs/adr/`)
+- [ ] New ADRs created for significant architectural decisions (see `docs/adr/`, e.g. [ADR-013](./docs/adr/ADR-013-state-management-architecture.md))
 - [ ] In-code comments are accurate and not stale
 
 ### Security
+
 - [ ] No `NEXT_PUBLIC_` prefix on server-side secrets
 - [ ] All user input is validated and sanitized
 - [ ] New dependencies are from well-known, actively maintained packages
@@ -281,12 +347,12 @@ A contribution is **done** when **all** of the following are true:
 
 ### Review SLAs
 
-| PR size | First review | Follow-up response |
-|---------|-------------|-------------------|
-| Small (< 100 lines changed) | 2 business days | 1 business day |
-| Medium (100–500 lines) | 3 business days | 2 business days |
-| Large (> 500 lines) | 5 business days | 2 business days |
-| Security fix / hotfix | Same day (tag `urgent`) | 4 hours |
+| PR size                     | First review            | Follow-up response |
+| --------------------------- | ----------------------- | ------------------ |
+| Small (< 100 lines changed) | 2 business days         | 1 business day     |
+| Medium (100–500 lines)      | 3 business days         | 2 business days    |
+| Large (> 500 lines)         | 5 business days         | 2 business days    |
+| Security fix / hotfix       | Same day (tag `urgent`) | 4 hours            |
 
 SLAs are for the first substantive review. Trivial approvals (docs typo) may be faster.
 
@@ -325,6 +391,7 @@ SLAs are for the first substantive review. Trivial approvals (docs typo) may be 
 ### React / Next.js
 
 - Functional components with hooks only
+- Follow the state management architecture defined in [ADR-013 (State Management Architecture)](./docs/adr/ADR-013-state-management-architecture.md): use React Context strictly for low-frequency global UI state (`src/contexts/`), custom hooks for domain workflows (`src/hooks/`), and local state for component-level UI interactions
 - Use `'use client'` directive only where client-side state/effects are needed
 - Implement error boundaries around complex component trees
 - Always provide loading and error states for async operations
@@ -386,6 +453,122 @@ docs/
   ├── ISSUE_TEMPLATE/   # Bug, feature, and contract issue templates
   └── PULL_REQUEST_TEMPLATE.md
 ```
+
+---
+
+## Type Coverage
+
+TypeScript type coverage is measured with [type-coverage](https://github.com/plantain-00/type-coverage)
+and must stay at or above **95%**.
+
+```bash
+npm run type:coverage         # check (matches CI)
+npm run type:coverage:detail  # show all uncovered identifiers
+```
+
+Configuration lives in `.type-coverage` at the project root.
+
+### What the threshold means
+
+| Score | Meaning                                                     |
+| ----- | ----------------------------------------------------------- |
+| ≥ 95% | ✅ Green — CI passes                                        |
+| < 95% | ❌ Red — CI fails; you must improve coverage before merging |
+
+### Justifying an `any` exception
+
+If you genuinely cannot type something (e.g., a third-party response with no TS
+definitions), add a comment directly above the line:
+
+```ts
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- no types available for XYZ SDK response
+const result = sdk.call() as any;
+```
+
+The comment must name **why** `any` is unavoidable. Unexplained `any` usages
+will be flagged in code review.
+
+---
+
+## Version Pinning
+
+Stellar-Spend uses a two-tier dependency versioning strategy to balance security with automation.
+
+### Hard-pinned (exact versions)
+
+The following packages **must** use exact version strings (no `^` or `~`) in `package.json`:
+
+| Package | Reason |
+|---|---|
+| `react` | Major/minor bumps require coordinated changes; silent upgrades cause hydration mismatches |
+| `react-dom` | Must always match `react` exactly |
+| `typescript` | Compiler version is a build contract — drift between developer and CI compiler versions causes false-positive type errors |
+
+If you need to update a hard-pinned dependency, open a dedicated PR with a changelog entry explaining the reason and test coverage for any API changes.
+
+### Range-versioned (Renovate-managed)
+
+All other dependencies may use caret ranges (`^`). Renovate automatically opens pull requests for each version bump. The PR must pass CI before merging.
+
+The Renovate configuration lives at `.github/renovate.json`. If you add a new dependency category that needs special handling (e.g. pinned major version), add a `packageRules` entry there.
+
+### Checking the current state
+
+```bash
+# List all range-versioned dependencies
+node -e "
+  const p = require('./package.json');
+  const all = {...p.dependencies, ...p.devDependencies};
+  Object.entries(all)
+    .filter(([,v]) => v.startsWith('^') || v.startsWith('~'))
+    .forEach(([k,v]) => console.log(k, v));
+"
+```
+
+---
+
+## Dependency License Compliance
+
+All npm dependencies must carry a license from the **approved list** below.
+Run the compliance check before opening a PR:
+
+```bash
+npm run license:check   # exits 0 if all clear, 1 on violation
+npm run license:report  # same but also prints every approved package
+```
+
+### Approved licenses
+
+| License                    | Notes                                                       |
+| -------------------------- | ----------------------------------------------------------- |
+| MIT, MIT-0                 | Permissive                                                  |
+| ISC                        | Permissive                                                  |
+| Apache-2.0                 | Permissive                                                  |
+| BSD-2-Clause, BSD-3-Clause | Permissive                                                  |
+| CC0-1.0, 0BSD              | Effectively public domain                                   |
+| BlueOak-1.0.0              | Permissive                                                  |
+| MPL-2.0                    | Weak copyleft — changes to MPL _files_ must be open-sourced |
+| Unlicense, Public Domain   | Permissive                                                  |
+
+### LGPL and GPL packages (currently accepted with rationale)
+
+Several transitive dependencies (via `@allbridge/bridge-core-sdk`) carry
+LGPL-3.0 or GPL-3.0 licenses. These are documented with a written rationale in
+`scripts/check-licenses.js` under `ACCEPTED_EXCEPTIONS`. The key point: these
+packages are **used as libraries** with no source modification — the LGPL
+dynamic-linking exemption applies and the MIT application code is not infected.
+
+Review these exceptions every time the affected packages are upgraded.
+
+### Adding a new dependency with an unapproved license
+
+1. Check whether a compatible alternative exists — prefer it.
+2. If unavoidable, add an entry to `ACCEPTED_EXCEPTIONS` in
+   `scripts/check-licenses.js` with:
+   - The exact `package@version` key
+   - A one-sentence rationale (why it is safe, what the linking model is)
+3. Re-run `npm run license:check` to confirm the check still passes.
+4. Note the exception in your PR description.
 
 ---
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { detectUnusedCssClasses, analyzeCssUsage, generateCoverageReport } from './css-coverage';
+import { detectUnusedCssClasses, analyzeCssUsage, generateCoverageReport, findUnusedInPages } from './css-coverage';
 
 describe('CSS Coverage Analysis', () => {
   let sampleHtml: string;
@@ -210,6 +210,116 @@ describe('CSS Coverage Analysis', () => {
 
       expect(analysis1.unusedClasses).toBeGreaterThan(0);
       expect(analysis2.unusedClasses).toBeGreaterThan(0);
+    });
+
+    it('should find classes unused across all pages', () => {
+      const page1Html = '<div class="used-in-page1">Page 1</div>';
+      const page2Html = '<div class="used-in-page2">Page 2</div>';
+      const css = `
+        .used-in-page1 { }
+        .used-in-page2 { }
+        .unused-everywhere { }
+        .dead-code { }
+      `;
+
+      const result = findUnusedInPages([page1Html, page2Html], css);
+      const completelyUnused = result.get('completely_unused') || [];
+
+      expect(completelyUnused).toContain('unused-everywhere');
+      expect(completelyUnused).toContain('dead-code');
+    });
+  });
+
+  describe('Dead CSS removal validation', () => {
+    it('should verify coverage increases after removing dead CSS', () => {
+      const html = '<div class="container used-class">Content</div>';
+      const cssWithDead = `
+        .container { }
+        .used-class { }
+        .dead-class-1 { }
+        .dead-class-2 { }
+        .dead-class-3 { }
+      `;
+      const cssWithoutDead = `
+        .container { }
+        .used-class { }
+      `;
+
+      const analysisBefore = analyzeCssUsage(html, cssWithDead);
+      const analysisAfter = analyzeCssUsage(html, cssWithoutDead);
+
+      expect(analysisBefore.coveragePercentage).toBeLessThan(analysisAfter.coveragePercentage);
+      expect(analysisAfter.unusedClasses).toBe(0);
+      expect(analysisBefore.unusedClasses).toBeGreaterThan(analysisAfter.unusedClasses);
+    });
+
+    it('should identify components with high unused class ratios', () => {
+      const html = '<div class="btn">Button</div>';
+      const css = `
+        .btn { padding: 1rem; }
+        .btn-lg { padding: 2rem; }
+        .btn-sm { padding: 0.5rem; }
+        .btn-disabled { opacity: 0.5; }
+        .btn-loading { cursor: wait; }
+        .btn-primary { background: blue; }
+      `;
+
+      const analysis = analyzeCssUsage(html, css);
+      const unusedRatio = analysis.unusedClasses / analysis.totalClasses;
+
+      expect(unusedRatio).toBeGreaterThan(0.5);
+    });
+
+    it('should provide actionable removal recommendations', () => {
+      const html = '<div class="card">Content</div>';
+      const css = `
+        .card { padding: 1rem; }
+        .card-shadow { box-shadow: 0 1px 3px; }
+        .card-rounded { border-radius: 8px; }
+      `;
+
+      const unused = detectUnusedCssClasses(html, css);
+      const report = generateCoverageReport(html, css);
+
+      expect(unused.length).toBeGreaterThan(0);
+      expect(report).toContain('Recommendations');
+      expect(report).toContain('Remove unused classes');
+    });
+
+    it('should track CSS reduction metrics', () => {
+      const html = '<div class="page">
+        <header class="header">Header</header>
+        <main class="main">Main</main>
+        <footer class="footer">Footer</footer>
+      </div>';
+
+      const largeCSS = `
+        .page { }
+        .header { }
+        .main { }
+        .footer { }
+        ${Array.from({ length: 20 }, (_, i) => `.unused-${i} { }`).join('\n')}
+      `;
+
+      const analysis = analyzeCssUsage(html, largeCSS);
+
+      expect(analysis.totalClasses).toBe(24);
+      expect(analysis.usedClasses).toBe(4);
+      expect(analysis.unusedClasses).toBe(20);
+      expect(analysis.coveragePercentage).toBeCloseTo(16.67, 1);
+    });
+
+    it('should validate no critical classes are removed', () => {
+      const criticalClasses = ['sr-only', 'skip-to-content', 'visually-hidden'];
+      const html = '<div class="sr-only">Screen reader only</div>';
+      const css = criticalClasses.map((cls) => `.${cls} { display: none; }`).join('\n');
+
+      const unused = detectUnusedCssClasses(html, css);
+
+      // sr-only is used, so shouldn't be in unused list
+      expect(unused).not.toContain('sr-only');
+      expect(unused).toContain('skip-to-content');
+      expect(unused).toContain('visually-hidden');
     });
   });
 });

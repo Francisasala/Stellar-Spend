@@ -1,6 +1,7 @@
 import { calculateBackoff, hasRemainingAttempts } from './webhook/retry-scheduler';
 import type { DeliveryRecord } from './webhook/types';
 import { logger } from './logger';
+import { assertWithinBackpressureLimits, evaluateBackpressure } from './queue-backpressure';
 
 export enum TransactionPriority {
   LOW = 1,
@@ -41,6 +42,7 @@ export interface QueueMetrics {
   queueDepth: number;
   avgWaitMs: number;
   byPriority: Record<TransactionPriority, number>;
+  inflight: number;
 }
 
 export interface DeliveryRetryState {
@@ -70,6 +72,7 @@ export class TransactionPriorityQueue {
     totalFailed: 0,
     queueDepth: 0,
     avgWaitMs: 0,
+    inflight: 0,
     byPriority: {
       [TransactionPriority.LOW]: 0,
       [TransactionPriority.NORMAL]: 0,
@@ -78,6 +81,7 @@ export class TransactionPriorityQueue {
     },
   };
   private waitTimes: number[] = [];
+  private inflight = 0;
 
   remove(id: string): boolean {
     const idx = this.heap.findIndex((t) => t.id === id);
@@ -104,12 +108,17 @@ export class TransactionPriorityQueue {
   }
 
   getAll(): ReadonlyArray<QueuedTransaction> {
-    return [...this.heap].sort((a, b) =>
-      this.compare(a, b) ? -1 : this.compare(b, a) ? 1 : 0,
-    );
+    return [...this.heap].sort((a, b) => (this.compare(a, b) ? -1 : this.compare(b, a) ? 1 : 0));
   }
 
+  /**
+   * Enqueue a transaction. Throws QueueBackpressureError when the queue
+   * depth or in-flight count is already at its configured limit, so
+   * unbounded growth is rejected at the admission point rather than
+   * silently accepted.
+   */
   enqueue(tx: Omit<QueuedTransaction, 'enqueuedAt' | 'attempts'>): void {
+    assertWithinBackpressureLimits(this.heap.length, this.inflight);
     const item: QueuedTransaction = { ...tx, enqueuedAt: Date.now(), attempts: 0 };
     this.heap.push(item);
     this.bubbleUp(this.heap.length - 1);
@@ -128,12 +137,17 @@ export class TransactionPriorityQueue {
     }
     this.metrics.totalProcessed++;
     this.metrics.queueDepth = this.heap.length;
+    this.inflight++;
     const waitMs = Date.now() - top.enqueuedAt;
     this.waitTimes.push(waitMs);
     if (this.waitTimes.length > 100) this.waitTimes.shift();
-    this.metrics.avgWaitMs =
-      this.waitTimes.reduce((a, b) => a + b, 0) / this.waitTimes.length;
+    this.metrics.avgWaitMs = this.waitTimes.reduce((a, b) => a + b, 0) / this.waitTimes.length;
     return top;
+  }
+
+  /** Marks a dequeued transaction as finished processing (success or failure). */
+  completeInflight(): void {
+    if (this.inflight > 0) this.inflight--;
   }
 
   peek(): QueuedTransaction | undefined {
@@ -144,12 +158,21 @@ export class TransactionPriorityQueue {
     return this.heap.length;
   }
 
+  inflightCount(): number {
+    return this.inflight;
+  }
+
+  getBackpressureStatus() {
+    return evaluateBackpressure(this.heap.length, this.inflight);
+  }
+
   getMetrics(): QueueMetrics {
-    return { ...this.metrics };
+    return { ...this.metrics, inflight: this.inflight };
   }
 
   recordFailure(): void {
     this.metrics.totalFailed++;
+    this.completeInflight();
   }
 
   private compare(a: QueuedTransaction, b: QueuedTransaction): boolean {
@@ -224,7 +247,10 @@ export class DeliveryRetryQueue {
   push(record: DeliveryRecord): void {
     if (!hasRemainingAttempts(record)) {
       this.metrics.totalExhausted++;
-      logger.warn('delivery_retry.exhausted', { deliveryId: record.id, destinationUrl: record.destinationUrl });
+      logger.warn('delivery_retry.exhausted', {
+        deliveryId: record.id,
+        destinationUrl: record.destinationUrl,
+      });
       return;
     }
 
@@ -237,14 +263,18 @@ export class DeliveryRetryQueue {
       attemptCount: record.attemptCount,
       maxAttempts: record.maxAttempts,
       nextAttemptAt,
-      lastError: record.attempts.length > 0 ? record.attempts[record.attempts.length - 1].errorType : undefined,
+      lastError:
+        record.attempts.length > 0
+          ? record.attempts[record.attempts.length - 1].errorType
+          : undefined,
       enqueuedAt: Date.now(),
     };
 
     this.retries.set(record.id, state);
     this.metrics.activeRetries = this.retries.size;
     this.metrics.totalRetried++;
-    this.metrics.byDestination[record.destinationUrl] = (this.metrics.byDestination[record.destinationUrl] ?? 0) + 1;
+    this.metrics.byDestination[record.destinationUrl] =
+      (this.metrics.byDestination[record.destinationUrl] ?? 0) + 1;
   }
 
   poll(): DeliveryRetryState[] {

@@ -1,4 +1,4 @@
-import { createValidationError, createValidationResult, type ValidationResult } from './types';
+import { type ValidationResult } from './types';
 import { ValidationService } from './service';
 
 export function validateAmountLegacy(amount: string): ValidationResult {
@@ -25,7 +25,11 @@ export function validateMaxAmountLegacy(amount: string, max: number): Validation
   };
 }
 
-export function validateAmountRangeLegacy(amount: string, min: number, max: number): ValidationResult {
+export function validateAmountRangeLegacy(
+  amount: string,
+  min: number,
+  max: number,
+): ValidationResult {
   const result = ValidationService.validateAmountRange(amount, min, max);
   return {
     valid: result.valid,

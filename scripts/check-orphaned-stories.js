@@ -17,12 +17,13 @@
 const fs = require('fs');
 const path = require('path');
 
+const log = (...msgs) => process.stdout.write(msgs.join(' ') + '\n');
+const error = (...msgs) => process.stderr.write(msgs.join(' ') + '\n');
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Config
 // ──────────────────────────────────────────────────────────────────────────────
-const STORIES_GLOB_DIRS = [
-  path.resolve(__dirname, '../src'),
-];
+const STORIES_GLOB_DIRS = [path.resolve(__dirname, '../src')];
 
 const STORY_EXTENSIONS = ['.stories.ts', '.stories.tsx', '.stories.js', '.stories.jsx'];
 const COMPONENT_EXTENSIONS = ['.tsx', '.ts', '.jsx', '.js'];
@@ -104,9 +105,7 @@ for (const rootDir of STORIES_GLOB_DIRS) {
     const relativeImports = extractRelativeImports(source);
 
     // Filter down to only non-type imports that resolve to missing files
-    const missingImports = relativeImports.filter(
-      (specifier) => !importExists(file, specifier),
-    );
+    const missingImports = relativeImports.filter((specifier) => !importExists(file, specifier));
 
     if (missingImports.length > 0) {
       orphans.push({ file, missingImports });
@@ -119,31 +118,31 @@ for (const rootDir of STORIES_GLOB_DIRS) {
 // ──────────────────────────────────────────────────────────────────────────────
 
 if (orphans.length === 0) {
-  console.log('✅  No orphaned Storybook stories found.');
+  log('✅  No orphaned Storybook stories found.');
   process.exit(0);
 }
 
-console.error(`\n⚠️  Found ${orphans.length} orphaned story file(s):\n`);
+error(`\n⚠️  Found ${orphans.length} orphaned story file(s):\n`);
 
 for (const { file, missingImports } of orphans) {
   const rel = path.relative(process.cwd(), file);
-  console.error(`  ${rel}`);
+  error(`  ${rel}`);
   for (const imp of missingImports) {
-    console.error(`    └─ missing import: ${imp}`);
+    error(`    └─ missing import: ${imp}`);
   }
 }
 
 if (FIX_MODE) {
-  console.log('\n🗑  Removing orphaned story files...');
+  log('\n🗑  Removing orphaned story files...');
   for (const { file } of orphans) {
     fs.unlinkSync(file);
     const rel = path.relative(process.cwd(), file);
-    console.log(`  removed: ${rel}`);
+    log(`  removed: ${rel}`);
   }
-  console.log('\n✅  Done.');
+  log('\n✅  Done.');
   process.exit(0);
 } else {
-  console.error(
+  error(
     '\nRun with --fix to remove them automatically:',
     '\n  node scripts/check-orphaned-stories.js --fix\n',
   );

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TransactionStorage } from '@/lib/transaction-storage';
-import { TransactionSearchService, type SearchFilters } from '@/lib/transaction-search';
+import { TransactionSearchService, type SearchFilters } from '@/lib/transactions';
+import type { TransactionStatus } from '@/lib/transactions';
 import { ErrorHandler } from '@/lib/error-handler';
 
 export async function GET(req: NextRequest) {
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
 
     const filters: SearchFilters = {
       query: query || undefined,
-      status: (status as any) || 'all',
+      status: (status ?? 'all') as TransactionStatus | 'all',
       dateFrom: dateFrom ? parseInt(dateFrom) : undefined,
       dateTo: dateTo ? parseInt(dateTo) : undefined,
       amountMin: amountMin ? parseFloat(amountMin) : undefined,

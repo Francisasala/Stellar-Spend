@@ -36,11 +36,11 @@ Unit tests use **Vitest** + **React Testing Library** and live alongside the cod
 
 ### File conventions
 
-| Target | Location |
-|---|---|
-| Library / utility | `src/lib/**/*.test.ts` |
-| React component | `src/test/*.test.tsx` or `src/app/__tests__/*.test.tsx` |
-| API route handler | `src/test/*.test.ts` |
+| Target            | Location                                                |
+| ----------------- | ------------------------------------------------------- |
+| Library / utility | `src/lib/**/*.test.ts`                                  |
+| React component   | `src/test/*.test.tsx` or `src/app/__tests__/*.test.tsx` |
+| API route handler | `src/test/*.test.ts`                                    |
 
 ### Setup
 
@@ -98,7 +98,9 @@ import { NextRequest } from 'next/server';
 vi.mock('@/lib/env', () => ({
   env: {
     server: { PAYCREST_API_KEY: 'test-key' /* ... */ },
-    public: { /* ... */ },
+    public: {
+      /* ... */
+    },
   },
 }));
 
@@ -124,10 +126,27 @@ E2E tests live in `./e2e/` and run against a real dev server on `http://localhos
 
 ### Configuration highlights (`playwright.config.ts`)
 
-- Browser: Chromium (Desktop Chrome)
+- Browsers: a cross-browser matrix of **Chromium (Desktop Chrome)**, **Firefox**, and **WebKit** (Issue #1016).
 - Base URL: `http://localhost:3001`
 - CI: 2 retries, 1 worker, `forbidOnly` enabled
 - Traces captured on first retry for debugging
+
+> **Runtime impact (Issue #1016):** each spec runs once per browser engine, so the
+> full E2E suite takes roughly **3×** the previous runtime. To run a single engine:
+>
+> ```bash
+> npx playwright test --project=chromium
+> npx playwright test --project=firefox
+> npx playwright test --project=webkit
+> ```
+
+### Writing cross-browser-safe E2E tests
+
+- Prefer auto-waiting assertions (`expect(...).toBeVisible()`) over
+  `page.waitForNavigation()`, which is unreliable for SPA route changes in
+  Firefox/WebKit. Wait for a concrete selector instead.
+- `toHaveScreenshot()` snapshots are stored per project
+  (`chromium/`, `firefox/`, `webkit/`), so visual regressions are tracked per engine.
 
 ### Running locally
 
@@ -137,6 +156,9 @@ npm run test:e2e
 
 # Run a specific spec file
 npx playwright test e2e/smoke.spec.ts
+
+# Run against a single browser engine
+npx playwright test --project=webkit e2e/smoke.spec.ts
 
 # Open the HTML report after a run
 npx playwright show-report
@@ -166,12 +188,12 @@ Freighter and Lobstr are browser extensions and cannot be installed in Playwrigh
 
 Coverage is not enforced by a hard threshold today, but the following targets are expected:
 
-| Layer | Target |
-|---|---|
-| `src/lib/` utilities | ≥ 80% line coverage |
-| API route handlers | All happy-path + primary error branches covered |
-| React components | Key render states and user interactions covered |
-| E2E | Critical user journey (load → connect → submit) covered |
+| Layer                | Target                                                  |
+| -------------------- | ------------------------------------------------------- |
+| `src/lib/` utilities | ≥ 80% line coverage                                     |
+| API route handlers   | All happy-path + primary error branches covered         |
+| React components     | Key render states and user interactions covered         |
+| E2E                  | Critical user journey (load → connect → submit) covered |
 
 To generate a coverage report locally:
 
@@ -315,24 +337,24 @@ This invokes `stryker run` using `stryker.conf.json`. The HTML report is written
 
 ### Mutation score targets
 
-| Threshold | Value |
-|---|---|
-| High (green) | ≥ 80 % |
-| Medium (yellow) | ≥ 70 % |
-| Low (orange) | ≥ 60 % |
+| Threshold        | Value  |
+| ---------------- | ------ |
+| High (green)     | ≥ 80 % |
+| Medium (yellow)  | ≥ 70 % |
+| Low (orange)     | ≥ 60 % |
 | Break (CI fails) | < 55 % |
 
 ### Files mutated by Stryker
 
 Stryker mutates `src/lib/**/*.ts` and `src/app/api/**/*.ts` (see `stryker.conf.json`). The following test files provide coverage that kills mutants:
 
-| Test file | Target lib modules |
-|---|---|
-| `src/test/mutation.test.ts` | `fee-calculation`, `error-types`, `paycrest-adapter`, `kyc-limits` |
-| `src/test/mutation-critical-paths.test.ts` | `http-client`, `cache/keys` |
-| `src/test/fee-calculation.test.ts` | `fee-calculation` (full coverage) |
-| `src/test/error-types.test.ts` | `error-types` |
-| `src/test/mapPaycrestStatus.test.ts` | `paycrest-adapter` |
+| Test file                                  | Target lib modules                                                 |
+| ------------------------------------------ | ------------------------------------------------------------------ |
+| `src/test/mutation.test.ts`                | `fee-calculation`, `error-types`, `paycrest-adapter`, `kyc-limits` |
+| `src/test/mutation-critical-paths.test.ts` | `http-client`, `cache/keys`                                        |
+| `src/test/fee-calculation.test.ts`         | `fee-calculation` (full coverage)                                  |
+| `src/test/error-types.test.ts`             | `error-types`                                                      |
+| `src/test/mapPaycrestStatus.test.ts`       | `paycrest-adapter`                                                 |
 
 ### Improving the mutation score
 
@@ -349,13 +371,13 @@ When Stryker reports a surviving mutant:
 
 ### Overview of E2E specs
 
-| Spec file | Issue | Coverage |
-|---|---|---|
-| `e2e/payment-flow.spec.ts` | #831 (P0) | Connect wallet → amount → quote → recipient → confirm → history |
-| `e2e/kyc-rejection-resubmission.spec.ts` | #832 | Unverified → submit → rejected → resubmit → approved lifecycle |
-| `e2e/smoke.spec.ts` | — | Production smoke: health, currencies, rate, UI load |
-| `e2e/critical-journeys.spec.ts` | — | Full offramp with axe accessibility checks |
-| `e2e/transaction-history.spec.ts` | — | History display, filter, search, export |
+| Spec file                                | Issue     | Coverage                                                        |
+| ---------------------------------------- | --------- | --------------------------------------------------------------- |
+| `e2e/payment-flow.spec.ts`               | #831 (P0) | Connect wallet → amount → quote → recipient → confirm → history |
+| `e2e/kyc-rejection-resubmission.spec.ts` | #832      | Unverified → submit → rejected → resubmit → approved lifecycle  |
+| `e2e/smoke.spec.ts`                      | —         | Production smoke: health, currencies, rate, UI load             |
+| `e2e/critical-journeys.spec.ts`          | —         | Full offramp with axe accessibility checks                      |
+| `e2e/transaction-history.spec.ts`        | —         | History display, filter, search, export                         |
 
 ### Running E2E tests locally
 
@@ -387,6 +409,7 @@ npx playwright show-report
 ### Running in CI
 
 CI sets `CI=true` which enables:
+
 - 2 retries on flaky tests
 - Single worker (serial execution)
 - `forbidOnly` (test.only fails the run)

@@ -1,12 +1,13 @@
-"use client";
+'use client';
 
-import type { Transaction } from "@/lib/transaction-storage";
-import type { UseHistoryFiltersResult } from "@/hooks/useHistoryFilters";
-import ExportControls from "@/components/ExportControls";
-import { HistoryStats } from "./HistoryStats";
-import { HistoryFilters } from "./HistoryFilters";
-import { HistoryTable } from "./HistoryTable";
-import { HistoryPagination } from "./HistoryPagination";
+import type { Transaction } from '@/lib/transaction-storage';
+import type { UseHistoryFiltersResult } from '@/hooks/useHistoryFilters';
+import ExportControls from '@/components/ExportControls';
+import { ListEmptyState } from '@/components/AsyncBoundary';
+import { HistoryStats } from './HistoryStats';
+import { HistoryFilters } from './HistoryFilters';
+import { HistoryTable } from './HistoryTable';
+import { HistoryPagination } from './HistoryPagination';
 
 interface HistoryResultsProps {
   walletAddress?: string;
@@ -60,18 +61,23 @@ export function HistoryResults({
       />
 
       {noteError && (
-        <div role="alert" className="mt-3 border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs text-red-400">
+        <div
+          role="alert"
+          className="mt-3 border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs text-red-400"
+        >
           {noteError}
         </div>
       )}
 
       {filtered.length === 0 ? (
-        <div className="border border-[#333333] bg-[#111111] p-12 text-center mt-4">
-          <p className="text-sm text-[#777777]">
-            {transactions.length === 0
-              ? "No transactions found"
-              : "No transactions match the current filters"}
-          </p>
+        <div className="border border-[#333333] bg-[#111111] mt-4">
+          <ListEmptyState
+            title={
+              transactions.length === 0
+                ? 'No transactions found'
+                : 'No transactions match the current filters'
+            }
+          />
         </div>
       ) : (
         <>

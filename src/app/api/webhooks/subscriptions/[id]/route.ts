@@ -4,14 +4,12 @@ import {
   getSubscription,
   updateSubscription,
   deleteSubscription,
-} from '@/lib/webhook/subscription-store';
+} from '@/lib/webhook';
+import type { WebhookSubscription } from '@/lib/webhook';
 import { requireApiKeyAdmin } from '@/app/api/api-keys/_utils';
-import { isSupportedSchemaVersion, SUPPORTED_SCHEMA_VERSIONS } from '@/lib/webhook/schema-versions';
+import { isSupportedSchemaVersion, SUPPORTED_SCHEMA_VERSIONS } from '@/lib/webhook';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const unauthorized = requireApiKeyAdmin(request);
   if (unauthorized) return unauthorized;
 
@@ -30,10 +28,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const unauthorized = requireApiKeyAdmin(request);
   if (unauthorized) return unauthorized;
 
@@ -54,19 +49,33 @@ export async function PUT(
     if (body.endpointUrl !== undefined) updates.endpointUrl = body.endpointUrl;
     if (body.events !== undefined) updates.events = body.events;
     if (body.status !== undefined) updates.status = body.status;
-    if (body.rateLimitMaxPerMinute !== undefined) updates.rateLimitMaxPerMinute = body.rateLimitMaxPerMinute;
+    if (body.rateLimitMaxPerMinute !== undefined)
+      updates.rateLimitMaxPerMinute = body.rateLimitMaxPerMinute;
     if (body.description !== undefined) updates.description = body.description;
     if (body.schemaVersion !== undefined) {
       const requested = String(body.schemaVersion);
       if (!isSupportedSchemaVersion(requested)) {
         return ErrorHandler.validation(
-          `Invalid schemaVersion: "${requested}". Supported: ${SUPPORTED_SCHEMA_VERSIONS.join(', ')}`
+          `Invalid schemaVersion: "${requested}". Supported: ${SUPPORTED_SCHEMA_VERSIONS.join(', ')}`,
         );
       }
       updates.schemaVersion = requested;
     }
 
-    const updated = await updateSubscription(id, updates as any);
+    const updated = await updateSubscription(
+      id,
+      updates as Partial<
+        Pick<
+          WebhookSubscription,
+          | 'endpointUrl'
+          | 'events'
+          | 'status'
+          | 'rateLimitMaxPerMinute'
+          | 'description'
+          | 'schemaVersion'
+        >
+      >,
+    );
     if (!updated) return ErrorHandler.notFound('Subscription');
 
     const { signingSecret, ...safe } = updated;
@@ -78,7 +87,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const unauthorized = requireApiKeyAdmin(request);
   if (unauthorized) return unauthorized;

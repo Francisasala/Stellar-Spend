@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { scanStalledTransactions, getTimeoutMetrics } from '@/lib/transaction-timeout';
-import { dal } from '@/lib/db/dal';
+import { dal } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { runReconciliationJob } from '@/lib/reconciliation';
 import { ErrorHandler } from '@/lib/error-handler';
 import { ApiError, ErrorType } from '@/lib/error-types';
 
@@ -16,9 +15,7 @@ export async function POST(req: NextRequest) {
     logger.info('cron.scan-stalls.start', {});
 
     const transactions = await dal.getByUser('*').catch(() => []);
-    const allTransactions = transactions.length > 0
-      ? transactions
-      : [];
+    const allTransactions = transactions.length > 0 ? transactions : [];
 
     const stallResults = await scanStalledTransactions(allTransactions);
 
