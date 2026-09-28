@@ -56,7 +56,7 @@ export class WalletManager {
   private emit(event: WalletEvent): void {
     const listeners = this.eventListeners.get(event.type);
     if (listeners) {
-      listeners.forEach(listener => {
+      listeners.forEach((listener) => {
         try {
           listener(event);
         } catch (err) {
@@ -99,11 +99,17 @@ export class WalletManager {
   private setupWalletListeners(walletType: WalletType): void {
     if (typeof window === 'undefined') return;
 
+    interface WindowWithWallets {
+      freighter?: { addEventListener?: (event: string, handler: () => void) => void };
+      lobstr?: unknown;
+      stellar?: unknown;
+    }
+
     if (walletType === 'freighter') {
-      const w = window as any;
+      const w = window as unknown as WindowWithWallets;
       if (w.freighter) {
         try {
-          w.freighter.addEventListener('publicKeyChange', () => {
+          w.freighter.addEventListener?.('publicKeyChange', () => {
             this.emit({
               type: 'accountChange',
               walletType: 'freighter',
@@ -114,7 +120,7 @@ export class WalletManager {
         }
       }
     } else if (walletType === 'lobstr') {
-      const w = window as any;
+      const w = window as unknown as WindowWithWallets;
       const provider = w.lobstr ?? w.stellar;
       if (provider) {
         try {
@@ -180,7 +186,7 @@ export class WalletManager {
    * Get all available wallets
    */
   getAvailableWallets(): WalletAdapter[] {
-    return Array.from(this.adapters.values()).filter(adapter => adapter.isAvailable);
+    return Array.from(this.adapters.values()).filter((adapter) => adapter.isAvailable);
   }
 }
 

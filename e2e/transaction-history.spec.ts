@@ -1,19 +1,25 @@
+/**
+ * #955 — Migrate from text-based selectors to data-testid for stability.
+ *
+ * All selectors previously relying on button text content, placeholder strings,
+ * or element text have been replaced with explicit data-testid attributes.
+ */
 import { test, expect } from '@playwright/test';
 
 test.describe('Transaction History', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:3001');
-    
+
     // Connect wallet
-    await page.click('button:has-text("Connect Wallet")');
+    await page.click('[data-testid="connect-wallet-button"]');
     await page.waitForSelector('[data-testid="wallet-modal"]');
-    await page.click('button:has-text("Freighter")');
-    await page.waitForNavigation();
+    await page.click('[data-testid="wallet-option-freighter"]');
+    await page.waitForSelector('[data-testid="wallet-button"]');
   });
 
   test('should display transaction history', async ({ page }) => {
     // Navigate to history
-    await page.click('a:has-text("History")');
+    await page.goto('http://localhost:3001/history');
     await page.waitForSelector('[data-testid="transaction-history"]');
 
     // Verify history is visible
@@ -23,7 +29,7 @@ test.describe('Transaction History', () => {
 
   test('should display transaction details', async ({ page }) => {
     // Navigate to history
-    await page.click('a:has-text("History")');
+    await page.goto('http://localhost:3001/history');
     await page.waitForSelector('[data-testid="transaction-history"]');
 
     // Click on first transaction
@@ -40,12 +46,11 @@ test.describe('Transaction History', () => {
 
   test('should filter transactions by status', async ({ page }) => {
     // Navigate to history
-    await page.click('a:has-text("History")');
+    await page.goto('http://localhost:3001/history');
     await page.waitForSelector('[data-testid="transaction-history"]');
 
     // Filter by completed
-    await page.click('select[name="status"]');
-    await page.selectOption('select[name="status"]', 'completed');
+    await page.selectOption('[data-testid="filter-status"]', 'completed');
 
     // Wait for filtered results
     await page.waitForTimeout(500);
@@ -53,20 +58,23 @@ test.describe('Transaction History', () => {
     // Verify only completed transactions are shown
     const entries = await page.locator('[data-testid="transaction-entry"]');
     const count = await entries.count();
-    
+
     for (let i = 0; i < count; i++) {
-      const status = await entries.nth(i).locator('[data-testid="transaction-status"]').textContent();
+      const status = await entries
+        .nth(i)
+        .locator('[data-testid="transaction-status"]')
+        .textContent();
       expect(status).toContain('Completed');
     }
   });
 
   test('should search transactions', async ({ page }) => {
     // Navigate to history
-    await page.click('a:has-text("History")');
+    await page.goto('http://localhost:3001/history');
     await page.waitForSelector('[data-testid="transaction-history"]');
 
     // Search for transaction
-    await page.fill('input[placeholder="Search transactions"]', 'NGN');
+    await page.fill('[data-testid="search-input"]', 'NGN');
 
     // Wait for search results
     await page.waitForTimeout(500);
@@ -74,7 +82,7 @@ test.describe('Transaction History', () => {
     // Verify results contain search term
     const entries = await page.locator('[data-testid="transaction-entry"]');
     const count = await entries.count();
-    
+
     if (count > 0) {
       const firstEntry = await entries.first().textContent();
       expect(firstEntry).toContain('NGN');
@@ -83,12 +91,12 @@ test.describe('Transaction History', () => {
 
   test('should sort transactions', async ({ page }) => {
     // Navigate to history
-    await page.click('a:has-text("History")');
+    await page.goto('http://localhost:3001/history');
     await page.waitForSelector('[data-testid="transaction-history"]');
 
     // Sort by date descending
-    await page.click('button:has-text("Date")');
-    await page.click('button:has-text("Descending")');
+    await page.click('[data-testid="sort-date"]');
+    await page.click('[data-testid="sort-direction-desc"]');
 
     // Wait for sorted results
     await page.waitForTimeout(500);
@@ -100,12 +108,12 @@ test.describe('Transaction History', () => {
 
   test('should export transaction history', async ({ page }) => {
     // Navigate to history
-    await page.click('a:has-text("History")');
+    await page.goto('http://localhost:3001/history');
     await page.waitForSelector('[data-testid="transaction-history"]');
 
     // Click export button
     const downloadPromise = page.waitForEvent('download');
-    await page.click('button:has-text("Export")');
+    await page.click('[data-testid="export-button"]');
     const download = await downloadPromise;
 
     // Verify download
@@ -114,7 +122,7 @@ test.describe('Transaction History', () => {
 
   test('should display transaction statistics', async ({ page }) => {
     // Navigate to history
-    await page.click('a:has-text("History")');
+    await page.goto('http://localhost:3001/history');
     await page.waitForSelector('[data-testid="transaction-history"]');
 
     // Verify statistics are displayed
@@ -128,7 +136,7 @@ test.describe('Transaction History', () => {
 
   test('should handle empty transaction history', async ({ page }) => {
     // Navigate to history
-    await page.click('a:has-text("History")');
+    await page.goto('http://localhost:3001/history');
     await page.waitForSelector('[data-testid="transaction-history"]');
 
     // Check for empty state

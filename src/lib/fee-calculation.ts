@@ -1,5 +1,5 @@
-import { env } from './env';
 import type { ResourceFeeEstimate } from './stellar/resource-fee-estimator';
+import { FEE_CONSTANTS } from '@stellar-spend/shared';
 
 export interface FeeBreakdown {
   bridgeFee: string;
@@ -21,9 +21,9 @@ export interface FeeCalculationParams {
   contractResourceEstimate?: ResourceFeeEstimate;
 }
 
-const STABLECOIN_FEE_PERCENTAGE = 0.5; // 0.5%
-const PAYCREST_FEE_PERCENTAGE = 1.0; // 1.0%
-const NETWORK_FEE_XLM = '0.00001'; // Base Stellar network fee
+const STABLECOIN_FEE_PERCENTAGE = FEE_CONSTANTS.STABLECOIN_FEE_PERCENTAGE;
+const PAYCREST_FEE_PERCENTAGE = FEE_CONSTANTS.PAYCREST_FEE_PERCENTAGE;
+const NETWORK_FEE_XLM = FEE_CONSTANTS.NETWORK_FEE_XLM;
 
 export function calculateBridgeFee(amount: string, feeMethod: 'stablecoin' | 'native'): string {
   if (feeMethod === 'native') {
@@ -61,7 +61,7 @@ export function calculateTotalFees(
   networkFee: string,
   paycrestFee: string,
   currency: string,
-  contractResourceFee?: string
+  contractResourceFee?: string,
 ): string {
   const bridge = parseFloat(bridgeFee) || 0;
   const network = parseFloat(networkFee) || 0;
@@ -90,9 +90,17 @@ export async function calculateAllFees(params: FeeCalculationParams): Promise<Fe
   const bridgeFee = calculateBridgeFee(amount, feeMethod);
   const networkFee = calculateNetworkFee(feeMethod);
   const paycrestFee = receiveAmount ? calculatePaycrestFee(receiveAmount) : '0';
-  const contractResourceFee = contractResourceEstimate ? contractResourceEstimate.estimatedFeeXLM : undefined;
+  const contractResourceFee = contractResourceEstimate
+    ? contractResourceEstimate.estimatedFeeXLM
+    : undefined;
 
-  const totalFee = calculateTotalFees(bridgeFee, networkFee, paycrestFee, currency, contractResourceFee);
+  const totalFee = calculateTotalFees(
+    bridgeFee,
+    networkFee,
+    paycrestFee,
+    currency,
+    contractResourceFee,
+  );
   const amountAfterFees = calculateAmountAfterFees(amount, bridgeFee);
 
   return {
@@ -127,7 +135,7 @@ export interface DetailedFeeBreakdown extends FeeBreakdown {
 }
 
 export async function getDetailedFeeBreakdown(
-  params: FeeCalculationParams
+  params: FeeCalculationParams,
 ): Promise<DetailedFeeBreakdown> {
   const basicFees = await calculateAllFees(params);
 

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { getRequiredScope, hasRequiredScope, SCOPE_CATALOG } from './scopes';
 import type { ApiKeyRecord } from './types';
 
@@ -8,7 +8,7 @@ function makeKey(scopes: string[]): ApiKeyRecord {
     name: 'Test Key',
     keyPrefix: 'test',
     status: 'active',
-    scopes: scopes as any,
+    scopes: scopes as ApiKeyRecord['scopes'],
     rateLimitMaxRequests: 60,
     rateLimitWindowMs: 60000,
     usageCount: 0,

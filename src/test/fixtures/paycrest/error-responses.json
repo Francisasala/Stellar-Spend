@@ -1,0 +1,30 @@
+{
+  "unauthorized": {
+    "status": 401,
+    "body": { "error": "Unauthorized", "message": "Invalid or expired API key" }
+  },
+  "invalid_amount": {
+    "status": 400,
+    "body": { "error": "ValidationError", "message": "Amount must be greater than 0" }
+  },
+  "unsupported_currency": {
+    "status": 400,
+    "body": { "error": "ValidationError", "message": "Unsupported currency: XYZ" }
+  },
+  "rate_limit": {
+    "status": 429,
+    "body": { "error": "RateLimitExceeded", "message": "Too many requests. Try again later." }
+  },
+  "server_error": {
+    "status": 500,
+    "body": { "error": "InternalServerError", "message": "An unexpected error occurred" }
+  },
+  "account_not_found": {
+    "status": 404,
+    "body": { "error": "NotFound", "message": "Account not found" }
+  },
+  "order_not_found": {
+    "status": 404,
+    "body": { "error": "NotFound", "message": "Order not found" }
+  }
+}

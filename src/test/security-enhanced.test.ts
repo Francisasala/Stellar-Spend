@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 describe('Enhanced Security Tests', () => {
   describe('SQL Injection Prevention', () => {
@@ -17,7 +17,7 @@ describe('Enhanced Security Tests', () => {
     it('should validate numeric inputs before SQL queries', () => {
       const validAmount = '100.50';
       const invalidAmount = "100'; DROP TABLE--";
-      
+
       expect(isValidSQLNumeric(validAmount)).toBe(true);
       expect(isValidSQLNumeric(invalidAmount)).toBe(false);
     });
@@ -158,8 +158,6 @@ describe('Enhanced Security Tests', () => {
     });
 
     it('should apply different limits for different endpoints', () => {
-      const apiKey = 'test-key-' + Math.random();
-
       const quoteLimit = getRateLimitForEndpoint('/api/offramp/quote');
       const healthLimit = getRateLimitForEndpoint('/api/health');
 
@@ -275,7 +273,7 @@ function isValidSQLNumeric(input: string): boolean {
   return /^\d+(\.\d{1,2})?$/.test(input);
 }
 
-function buildParameterizedQuery(sql: string, params: any[]) {
+function buildParameterizedQuery(sql: string, params: unknown[]) {
   return { sql, params };
 }
 
@@ -297,7 +295,7 @@ function completeTransaction(): void {
   // Mock implementation
 }
 
-function checkWalletConnection(wallet: any): boolean {
+function checkWalletConnection(wallet: unknown): boolean {
   return wallet !== null && wallet !== undefined;
 }
 
@@ -305,7 +303,11 @@ function validateWalletSignature(signature: string): boolean {
   return signature.length > 20;
 }
 
-function isSessionValid(session: any): boolean {
+interface MockSession {
+  timestamp: number;
+}
+
+function isSessionValid(session: MockSession): boolean {
   const maxAge = 3600000; // 1 hour
   return Date.now() - session.timestamp < maxAge;
 }
@@ -315,15 +317,17 @@ function authorizeAPIKey(key: string): boolean {
 }
 
 function checkRateLimit(apiKey: string): boolean {
+  const store = globalThis as unknown as Record<string, number>;
   const key = `ratelimit:${apiKey}`;
-  const count = (globalThis as any)[key] || 0;
-  (globalThis as any)[key] = count + 1;
+  const count = store[key] || 0;
+  store[key] = count + 1;
   return count < 100;
 }
 
 function resetRateLimit(apiKey: string): void {
+  const store = globalThis as unknown as Record<string, number>;
   const key = `ratelimit:${apiKey}`;
-  (globalThis as any)[key] = 0;
+  store[key] = 0;
 }
 
 function getRateLimitForEndpoint(endpoint: string): number {
@@ -372,7 +376,7 @@ function decryptData(encrypted: string): string {
   return Buffer.from(encrypted.replace('encrypted_', ''), 'base64').toString();
 }
 
-function maskSensitiveData(data: any): any {
+function maskSensitiveData(data: Record<string, string>): Record<string, string> {
   const masked = { ...data };
   if (masked.apiKey) {
     masked.apiKey = masked.apiKey.substring(0, 3) + '***';

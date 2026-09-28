@@ -1,15 +1,21 @@
 [package]
 name = "multisig-authority"
-version = "1.0.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-soroban-sdk = "20"
+soroban-sdk = { workspace = true }
+stellar-spend-shared = { workspace = true }
+
+[dev-dependencies]
+multisig-authority = { path = ".", features = ["testutils"] }
+treasury = { path = "../treasury", features = ["testutils"] }
+escrow = { path = "../escrow", features = ["testutils"] }
+stellar-spend-shared = { workspace = true }
+soroban-sdk = { workspace = true, features = ["testutils"] }
+
+[features]
+testutils = ["soroban-sdk/testutils"]
 
 [lib]
-crate-type = ["cdylib"]
-
-[profile.release]
-opt-level = "z"
-lto = true
-strip = true
+crate-type = ["cdylib", "rlib"]

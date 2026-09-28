@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { WalletManager } from '../manager';
-import { FreighterAdapter } from '../freighter.adapter';
-import { LobstrAdapter } from '../lobstr.adapter';
-import { WalletNotAvailableError } from '../adapter';
 
 // Mock the adapters
 vi.mock('../freighter.adapter');
@@ -32,9 +29,7 @@ describe('WalletManager', () => {
 
   describe('autoConnect', () => {
     it('should throw when no wallets are available', async () => {
-      await expect(manager.autoConnect()).rejects.toThrow(
-        'No wallet extension detected'
-      );
+      await expect(manager.autoConnect()).rejects.toThrow('No wallet extension detected');
     });
 
     it('should connect to first available wallet', async () => {
@@ -53,9 +48,7 @@ describe('WalletManager', () => {
 
   describe('connect', () => {
     it('should throw for unknown wallet type', async () => {
-      await expect(manager.connect('custom')).rejects.toThrow(
-        'Unknown wallet type'
-      );
+      await expect(manager.connect('custom')).rejects.toThrow('Unknown wallet type');
     });
 
     it('should connect to freighter wallet', async () => {
@@ -107,16 +100,14 @@ describe('WalletManager', () => {
 
   describe('getPublicKey', () => {
     it('should throw when not connected', async () => {
-      await expect(manager.getPublicKey()).rejects.toThrow(
-        'No wallet connected'
-      );
+      await expect(manager.getPublicKey()).rejects.toThrow('No wallet connected');
     });
   });
 
   describe('signTransaction', () => {
     it('should throw when not connected', async () => {
       await expect(
-        manager.signTransaction('test-xdr', { networkPassphrase: 'test' })
+        manager.signTransaction('test-xdr', { networkPassphrase: 'test' }),
       ).rejects.toThrow('No wallet connected');
     });
   });

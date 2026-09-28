@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ErrorHandler } from '@/lib/error-handler';
 import {
   calculateInsurancePremium,
   createInsurance,
@@ -8,7 +9,7 @@ import {
   rejectClaim,
   processInsurancePayout,
   getInsuranceAnalytics,
-} from '@/lib/services/insurance.service';
+} from '@/lib/services';
 import { withIdempotency } from '@/lib/idempotency';
 
 export async function GET(req: NextRequest) {
@@ -22,54 +23,71 @@ export async function GET(req: NextRequest) {
     }
 
     if (!transactionId) {
-      return NextResponse.json({ error: 'transactionId or analytics=true is required' }, { status: 400 });
+      return ErrorHandler.validation('transactionId or analytics=true is required');
     }
 
     const result = await getInsuranceStatus(transactionId);
     return NextResponse.json({ insurance: (result as { rows: unknown[] }).rows[0] || null });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
-    );
+    return ErrorHandler.serverError(error);
   }
 }
 
 export async function POST(req: NextRequest) {
-  return withIdempotency(req, async () => {
-    try {
-      const { action, transactionId, insuranceId, amount, currency, includeInsurance, reason, evidence } = await req.json();
+  return withIdempotency(
+    req,
+    async () => {
+      try {
+        const {
+          action,
+          transactionId,
+          insuranceId,
+          amount,
+          currency,
+          includeInsurance,
+          reason,
+          evidence,
+        } = await req.json();
 
-      if (action === 'claim') {
-        if (!insuranceId || !reason) {
-          return NextResponse.json({ error: 'Missing required fields: insuranceId, reason' }, { status: 400 });
+        if (action === 'claim') {
+          if (!insuranceId || !reason) {
+            return ErrorHandler.validation('Missing required fields: insuranceId, reason');
+          }
+          const result = await fileClaim(insuranceId, reason, evidence);
+          return NextResponse.json({
+            success: true,
+            claim: (result as { rows: unknown[] }).rows[0],
+          });
         }
-        const result = await fileClaim(insuranceId, reason, evidence);
-        return NextResponse.json({ success: true, claim: (result as { rows: unknown[] }).rows[0] });
+
+        if (!includeInsurance) {
+          return NextResponse.json({ insurance: null });
+        }
+
+        if (!transactionId || !amount || !currency) {
+          return ErrorHandler.validation(
+            'Missing required fields: transactionId, amount, currency',
+          );
+        }
+
+        const quote = await calculateInsurancePremium(parseFloat(amount), currency);
+        const insurance = await createInsurance(
+          transactionId,
+          quote.premium,
+          quote.coverage,
+          quote.provider,
+        );
+
+        return NextResponse.json({
+          insurance: (insurance as { rows: unknown[] }).rows[0],
+          quote,
+        });
+      } catch (error) {
+        return ErrorHandler.serverError(error);
       }
-
-      if (!includeInsurance) {
-        return NextResponse.json({ insurance: null });
-      }
-
-      if (!transactionId || !amount || !currency) {
-        return NextResponse.json({ error: 'Missing required fields: transactionId, amount, currency' }, { status: 400 });
-      }
-
-      const quote = await calculateInsurancePremium(parseFloat(amount), currency);
-      const insurance = await createInsurance(transactionId, quote.premium, quote.coverage, quote.provider);
-
-      return NextResponse.json({
-        insurance: (insurance as { rows: unknown[] }).rows[0],
-        quote,
-      });
-    } catch (error) {
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Failed to process insurance request' },
-        { status: 500 }
-      );
-    }
-  });
+    },
+    { required: true },
+  );
 }
 
 export async function PATCH(req: NextRequest) {
@@ -77,32 +95,38 @@ export async function PATCH(req: NextRequest) {
     const { action, insuranceId, rejectionReason } = await req.json();
 
     if (!action || !insuranceId) {
-      return NextResponse.json({ error: 'Missing required fields: action, insuranceId' }, { status: 400 });
+      return ErrorHandler.validation('Missing required fields: action, insuranceId');
     }
 
     if (action === 'approve') {
       const result = await approveClaim(insuranceId);
-      return NextResponse.json({ success: true, insurance: (result as { rows: unknown[] }).rows[0] });
+      return NextResponse.json({
+        success: true,
+        insurance: (result as { rows: unknown[] }).rows[0],
+      });
     }
 
     if (action === 'reject') {
       if (!rejectionReason) {
-        return NextResponse.json({ error: 'rejectionReason is required to reject a claim' }, { status: 400 });
+        return ErrorHandler.validation('rejectionReason is required to reject a claim');
       }
       const result = await rejectClaim(insuranceId, rejectionReason);
-      return NextResponse.json({ success: true, insurance: (result as { rows: unknown[] }).rows[0] });
+      return NextResponse.json({
+        success: true,
+        insurance: (result as { rows: unknown[] }).rows[0],
+      });
     }
 
     if (action === 'payout') {
       const result = await processInsurancePayout(insuranceId);
-      return NextResponse.json({ success: true, insurance: (result as { rows: unknown[] }).rows[0] });
+      return NextResponse.json({
+        success: true,
+        insurance: (result as { rows: unknown[] }).rows[0],
+      });
     }
 
-    return NextResponse.json({ error: 'action must be "approve", "reject", or "payout"' }, { status: 400 });
+    return ErrorHandler.validation('action must be "approve", "reject", or "payout"');
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
-    );
+    return ErrorHandler.serverError(error);
   }
 }

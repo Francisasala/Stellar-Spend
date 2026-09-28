@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TransactionStorage } from '@/lib/transaction-storage';
-import { TransactionSearchService, type SearchFilters } from '@/lib/transaction-search';
+import { TransactionSearchService, type SearchFilters } from '@/lib/transactions';
+import type { TransactionStatus } from '@/lib/transactions';
+import { ErrorHandler } from '@/lib/error-handler';
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,17 +17,14 @@ export async function GET(req: NextRequest) {
     const isFavorite = req.nextUrl.searchParams.get('isFavorite');
 
     if (!wallet) {
-      return NextResponse.json(
-        { error: 'Missing wallet parameter' },
-        { status: 400 }
-      );
+      return ErrorHandler.validation('Missing wallet parameter');
     }
 
     const userTransactions = TransactionStorage.getByUser(wallet);
 
     const filters: SearchFilters = {
       query: query || undefined,
-      status: (status as any) || 'all',
+      status: (status ?? 'all') as TransactionStatus | 'all',
       dateFrom: dateFrom ? parseInt(dateFrom) : undefined,
       dateTo: dateTo ? parseInt(dateTo) : undefined,
       amountMin: amountMin ? parseFloat(amountMin) : undefined,
@@ -42,9 +41,6 @@ export async function GET(req: NextRequest) {
       total: userTransactions.length,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
-    );
+    return ErrorHandler.serverError(error);
   }
 }

@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger';
-import { Account, Keypair, Networks, Operation, TransactionBuilder } from 'stellar-sdk';
+import { Account, Networks, Operation, TransactionBuilder, xdr } from 'stellar-sdk';
 
 interface ResourceFeeEstimate {
   cpuInstructions: number;
@@ -36,12 +36,7 @@ export class ResourceFeeEstimator {
     sourceAccount: Account,
   ): Promise<ResourceFeeEstimate> {
     try {
-      const simulation = await this.simulateTransaction(
-        contractId,
-        method,
-        args,
-        sourceAccount,
-      );
+      const simulation = await this.simulateTransaction(contractId, method, args, sourceAccount);
 
       return this.calculateFeeEstimate(simulation);
     } catch (error) {
@@ -56,7 +51,6 @@ export class ResourceFeeEstimator {
     args: unknown[],
     sourceAccount: Account,
   ): Promise<SimulationResult> {
-    const keypair = Keypair.random();
     const tx = new TransactionBuilder(sourceAccount, {
       fee: BASE_FEE_STROOPS,
       networkPassphrase: Networks.PUBLIC_NETWORK,
@@ -65,7 +59,7 @@ export class ResourceFeeEstimator {
         Operation.invokeContractFunction({
           contract: contractId,
           method: method,
-          parameters: args as any[],
+          parameters: args as xdr.ScVal[],
         }),
       )
       .setTimeout(30)
@@ -87,7 +81,11 @@ export class ResourceFeeEstimator {
 
       if (result.error) {
         logger.error('Simulation error:', {}, result.error);
-        return { footprint: { readBytes: 0, writeBytes: 0 }, estimatedFee: 0, error: result.error.message };
+        return {
+          footprint: { readBytes: 0, writeBytes: 0 },
+          estimatedFee: 0,
+          error: result.error.message,
+        };
       }
 
       const resultXdr = result.result.results?.[0];
@@ -110,7 +108,7 @@ export class ResourceFeeEstimator {
     const cpuInstructions = Math.max(1000, storageOps * 500);
     const estimatedFeeStroops = Math.max(
       simulation.estimatedFee,
-      cpuInstructions + (storageOps * BASE_FEE_STROOPS),
+      cpuInstructions + storageOps * BASE_FEE_STROOPS,
     );
 
     return {

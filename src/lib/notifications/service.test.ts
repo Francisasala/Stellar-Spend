@@ -12,16 +12,15 @@ vi.mock('@/lib/notifications/delivery-store', () => ({
   getNotificationDeliveriesForTransaction: vi.fn(),
 }));
 
-import { notifyTransactionStatusUpdate } from '@/lib/notifications/service';
-import type { ChannelAdapter } from '@/lib/notifications/types';
+import { notifyTransactionStatusUpdate } from '@/lib/notifications';
+import type { ChannelAdapter } from '@/lib/notifications';
 import {
   getNotificationPreferences,
-  upsertNotificationPreferences,
-} from '@/lib/notifications/preferences-store';
+} from '@/lib/notifications';
 import {
   createNotificationDelivery,
   retryNotificationDelivery,
-} from '@/lib/notifications/delivery-store';
+} from '@/lib/notifications';
 
 const getPrefsMock = vi.mocked(getNotificationPreferences);
 const createDeliveryMock = vi.mocked(createNotificationDelivery);
@@ -58,7 +57,7 @@ describe('notifyTransactionStatusUpdate', () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
-    createDeliveryMock.mockResolvedValue({ id: 'delivery-1' } as any);
+    createDeliveryMock.mockResolvedValue({ id: 'delivery-1' } as Awaited<ReturnType<typeof createNotificationDelivery>>);
     vi.mocked(retryNotificationDelivery).mockResolvedValue(undefined);
   });
 
@@ -70,14 +69,14 @@ describe('notifyTransactionStatusUpdate', () => {
 
     await notifyTransactionStatusUpdate(
       { transaction: baseTransaction, previousStatus: 'pending', source: 'webhook' },
-      [emailAdapter, smsAdapter]
+      [emailAdapter, smsAdapter],
     );
 
     expect(emailSend).toHaveBeenCalledOnce();
     expect(smsSend).not.toHaveBeenCalled();
     expect(createDeliveryMock).toHaveBeenCalledOnce();
     expect(createDeliveryMock).toHaveBeenCalledWith(
-      expect.objectContaining({ channel: 'email', status: 'sent', providerMessageId: 'email-1' })
+      expect.objectContaining({ channel: 'email', status: 'sent', providerMessageId: 'email-1' }),
     );
   });
 
@@ -94,7 +93,7 @@ describe('notifyTransactionStatusUpdate', () => {
         previousPayoutStatus: undefined,
         source: 'manual_update',
       },
-      [emailAdapter]
+      [emailAdapter],
     );
 
     expect(createDeliveryMock).not.toHaveBeenCalled();

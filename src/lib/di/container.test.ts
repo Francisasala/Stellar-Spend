@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { DIContainer, ServiceLifetime, globalContainer } from './container';
+import { DIContainer } from './container';
 import { configureServices, validateServices } from './registry';
 
 describe('DIContainer', () => {

@@ -1,0 +1,22 @@
+{
+  "id": "paycrest_order_abc123",
+  "status": "payment_order.settled",
+  "amount": "100.00",
+  "amountReceived": "99000.00",
+  "currency": "NGN",
+  "rate": 1580.5,
+  "fee": "1000.00",
+  "network": "base",
+  "sender": {
+    "walletAddress": "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+    "token": "USDC"
+  },
+  "recipient": {
+    "institution": "ACCESS",
+    "accountIdentifier": "0123456789",
+    "accountName": "John Doe"
+  },
+  "createdAt": "2025-01-15T10:30:00Z",
+  "settledAt": "2025-01-15T10:35:00Z",
+  "transactionHash": "0xabc123def456"
+}

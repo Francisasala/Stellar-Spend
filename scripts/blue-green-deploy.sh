@@ -68,31 +68,32 @@ health_check() {
 }
 
 # ── Smoke tests ───────────────────────────────────────────────────────────────
+# Runs the full Playwright smoke suite (e2e/smoke.spec.ts).
+# Budget is capped at SMOKE_BUDGET_MS (default 60 s).
+# Failures post to SLACK_WEBHOOK_URL if set.
 
 smoke_tests() {
   local port="$1"
   local base="${HEALTH_URL}:${port}"
-  local failed=0
+  local budget_ms="${SMOKE_BUDGET_MS:-60000}"
 
-  echo "==> Running smoke tests on port ${port}..."
+  echo "==> Running Playwright smoke tests on port ${port} (budget ${budget_ms}ms)..."
 
-  # Health endpoint
-  if curl -sf "${base}/api/health" | grep -q '"status":"ok"'; then
-    echo "  [PASS] GET /api/health"
+  BASE_URL="${base}" \
+  SMOKE_BUDGET_MS="${budget_ms}" \
+  SMOKE_ALERT_WEBHOOK="${SLACK_WEBHOOK_URL:-}" \
+    npx playwright test e2e/smoke.spec.ts \
+      --reporter=line \
+      --timeout="${budget_ms}" \
+      2>&1
+
+  local exit_code=$?
+  if [ "$exit_code" -eq 0 ]; then
+    echo "  [PASS] All smoke checks passed"
   else
-    echo "  [FAIL] GET /api/health" >&2
-    failed=1
+    echo "  [FAIL] Smoke suite failed (exit ${exit_code})" >&2
   fi
-
-  # Currencies endpoint
-  if curl -sf "${base}/api/offramp/currencies" -o /dev/null -w '%{http_code}' | grep -qE '^(200|204)$'; then
-    echo "  [PASS] GET /api/offramp/currencies"
-  else
-    echo "  [FAIL] GET /api/offramp/currencies" >&2
-    failed=1
-  fi
-
-  return "$failed"
+  return "$exit_code"
 }
 
 # ── Determine slots ───────────────────────────────────────────────────────────

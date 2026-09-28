@@ -50,8 +50,8 @@ vi.mock('@/lib/offramp/adapters/paycrest-adapter', () => ({
 }));
 
 import { POST } from '@/app/api/offramp/paycrest/order/route';
-import { PaycrestHttpError } from '@/lib/offramp/adapters/paycrest-adapter';
-import * as rateLimiter from '@/lib/offramp/utils/rate-limiter';
+import { PaycrestHttpError } from '@/lib/offramp';
+import * as rateLimiter from '@/lib/offramp';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -165,7 +165,10 @@ describe('POST /api/offramp/paycrest/order (integration)', () => {
   });
 
   it('returns 429 when rate limit is exceeded', async () => {
-    vi.mocked(rateLimiter.paycrestOrderLimiter.check).mockReturnValueOnce({ allowed: false, retryAfter: 30 } as any);
+    vi.mocked(rateLimiter.paycrestOrderLimiter.check).mockReturnValueOnce({
+      allowed: false,
+      retryAfter: 30,
+    } as unknown as { allowed: false; retryAfter: number });
     const res = await POST(makeReq(VALID_BODY));
     expect(res.status).toBe(429);
     expect(res.headers.get('Retry-After')).toBe('30');

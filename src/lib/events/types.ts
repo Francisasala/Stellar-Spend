@@ -9,6 +9,7 @@ export type EventType =
   | 'payout.failed'
   | 'error.occurred';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface Event<T = any> {
   type: EventType;
   timestamp: number;
@@ -16,6 +17,7 @@ export interface Event<T = any> {
   id: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EventHandler<T = any> = (event: Event<T>) => Promise<void> | void;
 
 export interface EventBusConfig {

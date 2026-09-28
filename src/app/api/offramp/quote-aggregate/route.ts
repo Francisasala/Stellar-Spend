@@ -1,8 +1,12 @@
 import { logger } from '@/lib/logger';
 import { NextResponse, type NextRequest } from 'next/server';
-import { validateAmount } from '@/lib/offramp/utils/validation';
-import { calculateBridgeAmount } from '@/lib/offramp/utils/quote-fetcher';
+import { z } from 'zod';
+import { validateAmount } from '@/lib/offramp';
+import { calculateBridgeAmount } from '@/lib/offramp';
 import { aggregateQuotes, type QuoteProvider } from '@/lib/quote-aggregator';
+import { ErrorHandler } from '@/lib/error-handler';
+import { ApiError, ErrorType } from '@/lib/error-types';
+import { validateBody } from '@/lib/validation/validate-request';
 
 export const maxDuration = 20;
 
@@ -15,28 +19,26 @@ const FEE_METHOD_MAP: Record<string, 'stablecoin' | 'native'> = {
   native: 'native',
 };
 
+const quoteAggregateSchema = z.object({
+  amount: z.union([z.string(), z.number()]),
+  currency: z.string().min(1),
+  feeMethod: z.string().min(1),
+  providers: z.array(z.string()).optional(),
+});
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { amount, currency, feeMethod, providers } = body;
+    const validation = await validateBody(request, quoteAggregateSchema);
+    if (!validation.success) return validation.response;
+    const { amount, currency, feeMethod, providers } = validation.data;
 
     if (!validateAmount(String(amount ?? ''))) {
-      return NextResponse.json(
-        { error: 'Invalid amount: must be a positive number' },
-        { status: 400 }
-      );
-    }
-
-    if (!currency || typeof currency !== 'string') {
-      return NextResponse.json({ error: 'currency is required' }, { status: 400 });
+      return ErrorHandler.validation('Invalid amount: must be a positive number');
     }
 
     const normalizedFee = FEE_METHOD_MAP[feeMethod];
     if (!normalizedFee) {
-      return NextResponse.json(
-        { error: 'feeMethod must be "USDC", "XLM", "stablecoin", or "native"' },
-        { status: 400 }
-      );
+      return ErrorHandler.validation('feeMethod must be "USDC", "XLM", "stablecoin", or "native"');
     }
 
     const bridgeAmount =
@@ -52,9 +54,8 @@ export async function POST(request: NextRequest) {
     const aggregatedQuotes = await aggregateQuotes(receiveAmount, currency, providerList);
 
     if (!aggregatedQuotes.bestQuote) {
-      return NextResponse.json(
-        { error: 'No quotes available from any provider' },
-        { status: 502 }
+      return ErrorHandler.handle(
+        new ApiError(ErrorType.EXTERNAL_SERVICE, 'No quotes available from any provider'),
       );
     }
 
@@ -63,8 +64,8 @@ export async function POST(request: NextRequest) {
     logger.error('Quote aggregation error:', {}, error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     if (message.includes('Invalid') || message.includes('less than')) {
-      return NextResponse.json({ error: message }, { status: 400 });
+      return ErrorHandler.validation(message);
     }
-    return NextResponse.json({ error: 'Failed to aggregate quotes' }, { status: 500 });
+    return ErrorHandler.handle(new ApiError(ErrorType.SERVER_ERROR, 'Failed to aggregate quotes'));
   }
 }

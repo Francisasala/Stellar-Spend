@@ -5,28 +5,37 @@ import {
   addScreeningOverride,
   removeScreeningOverride,
   getScreeningOverrides,
-  clearScreeningCache,
   isHighValue,
-  type ScreeningRequest,
 } from '@/lib/compliance-screening';
 
 function createLocalStorageMock() {
   let store: Record<string, string> = {};
   return {
     getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => { store[key] = value; },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { store = {}; },
-    get length() { return Object.keys(store).length; },
-    key: (index: number) => { const keys = Object.keys(store); return keys[index] || null; },
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: (index: number) => {
+      const keys = Object.keys(store);
+      return keys[index] || null;
+    },
   };
 }
 
 describe('Compliance Screening', () => {
   beforeEach(() => {
     if (typeof globalThis !== 'undefined') {
-      (globalThis as any).window = {};
-      (globalThis as any).localStorage = createLocalStorageMock();
+      (globalThis as unknown as { window: Record<string, unknown> }).window = {};
+      (globalThis as unknown as { localStorage: unknown }).localStorage = createLocalStorageMock();
     }
   });
 

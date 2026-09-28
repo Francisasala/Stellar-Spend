@@ -26,8 +26,8 @@ describe('Input Sanitization', () => {
     });
 
     it('should handle non-string input', () => {
-      expect(sanitizeHtml(null as any)).toBe('');
-      expect(sanitizeHtml(undefined as any)).toBe('');
+      expect(sanitizeHtml(null as unknown as string)).toBe('');
+      expect(sanitizeHtml(undefined as unknown as string)).toBe('');
     });
   });
 
@@ -55,8 +55,8 @@ describe('Input Sanitization', () => {
     });
 
     it('should recursively escape object keys', () => {
-      const input = { '$set': { 'user.name': 'value' } };
-      const result = escapeNoSql(input) as Record<string, any>;
+      const input = { $set: { 'user.name': 'value' } };
+      const result = escapeNoSql(input) as Record<string, unknown>;
       expect(Object.keys(result)[0]).toBe('\\$set');
     });
 
@@ -182,8 +182,8 @@ describe('Input Sanitization', () => {
     });
 
     it('should handle non-string input', () => {
-      expect(sanitizeJson(null as any)).toBeNull();
-      expect(sanitizeJson(undefined as any)).toBeNull();
+      expect(sanitizeJson(null as unknown as string)).toBeNull();
+      expect(sanitizeJson(undefined as unknown as string)).toBeNull();
     });
   });
 

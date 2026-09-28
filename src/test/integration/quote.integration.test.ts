@@ -61,7 +61,7 @@ vi.mock('@/lib/error-handler', () => ({
 }));
 
 import { POST } from '@/app/api/offramp/quote/route';
-import * as quoteFetcher from '@/lib/offramp/utils/quote-fetcher';
+import * as quoteFetcher from '@/lib/offramp';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -83,7 +83,10 @@ function setupSdkSuccess() {
   });
   mockGetAmountToBeReceived.mockResolvedValue('99.5');
   vi.mocked(quoteFetcher.calculateBridgeAmount).mockReturnValue('99.5');
-  vi.mocked(quoteFetcher.fetchPaycrestQuote).mockResolvedValue({ rate: 1600, destinationAmount: '159200.00' });
+  vi.mocked(quoteFetcher.fetchPaycrestQuote).mockResolvedValue({
+    rate: 1600,
+    destinationAmount: '159200.00',
+  });
   vi.mocked(quoteFetcher.buildQuote).mockReturnValue({
     destinationAmount: '159200.00',
     rate: 1600,

@@ -1,0 +1,32 @@
+[
+  {
+    "code": "ACCESS",
+    "name": "Access Bank",
+    "type": "bank",
+    "currency": "NGN"
+  },
+  {
+    "code": "GTB",
+    "name": "Guaranty Trust Bank",
+    "type": "bank",
+    "currency": "NGN"
+  },
+  {
+    "code": "ZENITH",
+    "name": "Zenith Bank",
+    "type": "bank",
+    "currency": "NGN"
+  },
+  {
+    "code": "UBA",
+    "name": "United Bank for Africa",
+    "type": "bank",
+    "currency": "NGN"
+  },
+  {
+    "code": "FIRSTBANK",
+    "name": "First Bank of Nigeria",
+    "type": "bank",
+    "currency": "NGN"
+  }
+]

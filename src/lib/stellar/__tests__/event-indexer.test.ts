@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, it, expect } from '@jest/globals';
+import { Database } from 'postgres';
 import { SorobanEventIndexer } from '../event-indexer';
 
 const mockEvents = [
@@ -38,7 +39,7 @@ describe('SorobanEventIndexer', () => {
   it('should initialize database tables', async () => {
     const mockDb = {
       raw: async () => undefined,
-    } as any;
+    } as unknown as Database;
 
     const indexer = new SorobanEventIndexer(mockDb, 'http://localhost:8000', ['CAAAAA']);
     expect(indexer).toBeDefined();
@@ -47,26 +48,20 @@ describe('SorobanEventIndexer', () => {
   it('should handle event persistence with deduplication', async () => {
     const mockDb = {
       query: async () => [{ id: 'stored-event-1' }],
-    } as any;
+    } as unknown as Database;
 
-    const indexer = new SorobanEventIndexer(
-      mockDb,
-      'http://localhost:8000',
-      ['CAAAAA', 'CBBBBB']
-    );
+    const indexer = new SorobanEventIndexer(mockDb, 'http://localhost:8000', ['CAAAAA', 'CBBBBB']);
+    expect(indexer).toBeDefined();
 
     expect(mockEvents).toHaveLength(3);
     expect(mockEvents[0].contractId).toBe('CAAAAA');
   });
 
   it('should reconcile on-chain vs off-chain status', async () => {
-    const mockDb = {} as any;
+    const mockDb = {} as unknown as Database;
 
-    const indexer = new SorobanEventIndexer(
-      mockDb,
-      'http://localhost:8000',
-      ['CAAAAA']
-    );
+    const indexer = new SorobanEventIndexer(mockDb, 'http://localhost:8000', ['CAAAAA']);
+    expect(indexer).toBeDefined();
 
     const mockGetEvents = async () => [
       {
@@ -92,7 +87,7 @@ describe('SorobanEventIndexer', () => {
     ];
 
     expect(eventVariants).toHaveLength(3);
-    expect(eventVariants.every(e => e.data)).toBe(true);
+    expect(eventVariants.every((e) => e.data)).toBe(true);
   });
 
   it('should handle reorg and missed events gracefully', () => {

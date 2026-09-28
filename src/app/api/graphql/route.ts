@@ -1,8 +1,15 @@
-import { graphql, parse, validate, visit, type DocumentNode, type ValidationRule } from "graphql";
-import { schema } from "../../../../lib/graphql/schema";
-import { resolvers } from "../../../../lib/graphql/resolvers";
-import { buildContext } from "../../../../lib/graphql/context";
-import { MAX_DEPTH, validateQueryDepth, resetNodeCount, GraphQLError } from "../../../../lib/graphql/auth-guards";
+import { graphql, parse, validate, type DocumentNode, type ValidationRule, type ASTNode } from 'graphql';
+import { schema } from '../../../../lib/graphql/schema';
+// Resolvers are now split by domain under src/lib/graphql/resolvers/
+// The re-export from resolvers.ts keeps this import path unchanged.
+import { resolvers } from '../../../../lib/graphql/resolvers';
+import { buildContext } from '../../../../lib/graphql/context';
+import {
+  MAX_DEPTH,
+  resetNodeCount,
+  GraphQLError,
+} from '../../../../lib/graphql/auth-guards';
+import { getResolverUsageReport, getUnusedResolvers } from '../../../../lib/graphql/resolver-usage';
 
 const PLAYGROUND_HTML = `<!DOCTYPE html>
 <html>
@@ -34,37 +41,36 @@ const complexityRule: ValidationRule = (ctx) => ({
     const depth = getDepth(node);
     if (depth > MAX_DEPTH) {
       ctx.reportError(
-        new (require("graphql").GraphQLError)(
-          `Query exceeds maximum depth of ${MAX_DEPTH}`,
-          { nodes: node },
-        ),
+        new (require('graphql').GraphQLError)(`Query exceeds maximum depth of ${MAX_DEPTH}`, {
+          nodes: node,
+        }),
       );
     }
   },
 });
 
-function getDepth(node: any, d = 0): number {
-  if (!node.selectionSet) return d;
-  return Math.max(
-    ...node.selectionSet.selections.map((s: any) => getDepth(s, d + 1)),
-    d,
-  );
+function getDepth(node: ASTNode, d = 0): number {
+  if (!('selectionSet' in node) || !node.selectionSet) return d;
+  return Math.max(...node.selectionSet.selections.map((s) => getDepth(s, d + 1)), d);
 }
 
 // ─── Error formatting (aligned with REST middleware) ───────────────────────────
 
-function formatError(err: any): Record<string, unknown> {
+function formatError(err: unknown): Record<string, unknown> {
   // Align with StandardErrorResponse from error-handler.middleware.ts
   const code =
     err instanceof GraphQLError
-      ? (err.extensions?.code as string) ?? "SERVER_ERROR"
-      : "SERVER_ERROR";
+      ? ((err.extensions?.code as string) ?? 'SERVER_ERROR')
+      : 'SERVER_ERROR';
+
+  const message = err instanceof Error ? err.message : 'Internal server error';
+  const stack = err instanceof Error ? err.stack : undefined;
 
   return {
     error: code,
-    message: err.message || "Internal server error",
-    ...(process.env.NODE_ENV !== "production" && err.stack
-      ? { details: { stack: err.stack } }
+    message,
+    ...(process.env.NODE_ENV !== 'production' && stack
+      ? { details: { stack } }
       : {}),
   };
 }
@@ -72,14 +78,22 @@ function formatError(err: any): Record<string, unknown> {
 // ─── Handlers ──────────────────────────────────────────────────────────────────
 
 export async function GET(request: Request) {
-  const accept = request.headers.get("accept") ?? "";
-  if (accept.includes("text/html")) {
+  const url = new URL(request.url);
+  if (url.searchParams.get('diagnostics') === 'resolver-usage') {
+    return new Response(
+      JSON.stringify({ usage: getResolverUsageReport(), unused: getUnusedResolvers() }),
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
+  const accept = request.headers.get('accept') ?? '';
+  if (accept.includes('text/html')) {
     return new Response(PLAYGROUND_HTML, {
-      headers: { "Content-Type": "text/html" },
+      headers: { 'Content-Type': 'text/html' },
     });
   }
-  return new Response(JSON.stringify({ message: "GraphQL endpoint. Use POST." }), {
-    headers: { "Content-Type": "application/json" },
+  return new Response(JSON.stringify({ message: 'GraphQL endpoint. Use POST.' }), {
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 
@@ -89,18 +103,18 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return new Response(JSON.stringify({ errors: [{ message: "Invalid JSON body" }] }), {
+    return new Response(JSON.stringify({ errors: [{ message: 'Invalid JSON body' }] }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
   const { query, variables, operationName } = body;
 
   if (!query) {
-    return new Response(JSON.stringify({ errors: [{ message: "Missing query" }] }), {
+    return new Response(JSON.stringify({ errors: [{ message: 'Missing query' }] }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -111,7 +125,7 @@ export async function POST(request: Request) {
   } catch (err) {
     return new Response(
       JSON.stringify({ errors: [{ message: `Parse error: ${(err as Error).message}` }] }),
-      { status: 400, headers: { "Content-Type": "application/json" } },
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -119,12 +133,12 @@ export async function POST(request: Request) {
   const validationErrors = validate(schema, document, [complexityRule]);
   if (validationErrors.length > 0) {
     const formatted = validationErrors.map((e) => ({
-      error: "VALIDATION_ERROR",
+      error: 'VALIDATION_ERROR',
       message: e.message,
     }));
     return new Response(JSON.stringify({ errors: formatted }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -146,18 +160,18 @@ export async function POST(request: Request) {
       const formatted = result.errors.map(formatError);
       return new Response(JSON.stringify({ ...result, errors: formatted }), {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
     return new Response(JSON.stringify(result), {
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
     const formatted = formatError(err);
     return new Response(JSON.stringify({ errors: [formatted] }), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 }

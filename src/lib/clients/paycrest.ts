@@ -52,7 +52,13 @@ export class PaycrestClient {
 
   async verifyAccount(institution: string, accountIdentifier: string): Promise<string> {
     try {
-      const response: any = await this.http.post('/sender/verify-account', { institution, accountIdentifier });
+      const response = await this.http.post<{ accountName?: string; data?: string }>(
+        '/sender/verify-account',
+        {
+          institution,
+          accountIdentifier,
+        },
+      );
       return response?.accountName || response?.data || '';
     } catch {
       return '';
@@ -63,15 +69,15 @@ export class PaycrestClient {
     token: string,
     amount: string,
     currency: string,
-    options?: { network?: string; providerId?: string }
+    options?: { network?: string; providerId?: string },
   ): Promise<number> {
     const queryParams = new URLSearchParams();
     if (options?.network) queryParams.set('network', options.network);
     if (options?.providerId) queryParams.set('provider_id', options.providerId);
 
     const qs = queryParams.toString();
-    const response: any = await this.http.get(
-      `/rates/${encodeURIComponent(token)}/${encodeURIComponent(amount)}/${encodeURIComponent(currency)}${qs ? `?${qs}` : ''}`
+    const response = await this.http.get<{ data?: unknown }>(
+      `/rates/${encodeURIComponent(token)}/${encodeURIComponent(amount)}/${encodeURIComponent(currency)}${qs ? `?${qs}` : ''}`,
     );
 
     const rate = parseFloat(String(response?.data ?? response));

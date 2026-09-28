@@ -1,19 +1,19 @@
 [package]
 name = "escrow"
-version = "1.0.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-soroban-sdk = "20"
+soroban-sdk = { workspace = true }
+stellar-spend-shared = { workspace = true }
+
+[dev-dependencies]
+# Self-dependency with `testutils` on, so `tests/` can reach `escrow::test_utils`.
+escrow = { path = ".", features = ["testutils"] }
+soroban-sdk = { workspace = true, features = ["testutils"] }
+
+[features]
+testutils = ["soroban-sdk/testutils"]
 
 [lib]
-crate-type = ["cdylib"]
-
-[[test]]
-name = "integration"
-path = "tests/integration.rs"
-
-[profile.release]
-opt-level = "z"
-lto = true
-strip = true
+crate-type = ["cdylib", "rlib"]

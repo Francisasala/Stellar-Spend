@@ -1,9 +1,14 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { env } from '@/lib/env';
-import { getCorridorInstitutions, getCorridorConfig } from '@/lib/corridor-config';
+import { getCorridorConfig } from '@/lib/corridor-config';
+import { ErrorHandler } from '@/lib/error-handler';
+import { ApiError, ErrorType } from '@/lib/error-types';
 
 export const maxDuration = 10;
+
+// Edge / CDN cache: 1 hour fresh + 24 hours stale-while-revalidate
+const CACHE_CONTROL_HEADER = 'public, max-age=3600, stale-while-revalidate=86400';
 
 interface PaycrestHttpError extends Error {
   status: number;
@@ -18,21 +23,18 @@ class PaycrestAdapter {
   }
 
   async getInstitutions(currency: string) {
-    const response = await fetch(
-      `${this.apiUrl}/institutions/${encodeURIComponent(currency)}`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'API-Key': this.apiKey,
-        },
-      }
-    );
+    const response = await fetch(`${this.apiUrl}/institutions/${encodeURIComponent(currency)}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'API-Key': this.apiKey,
+      },
+    });
 
     const data = await response.json();
 
     if (!response.ok) {
       const error = new Error(
-        data?.message ?? `Failed to fetch institutions: ${response.status}`
+        data?.message ?? `Failed to fetch institutions: ${response.status}`,
       ) as PaycrestHttpError;
       error.status = response.status;
       throw error;
@@ -49,7 +51,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ currenc
     const paycrest = new PaycrestAdapter(env.server.PAYCREST_API_KEY);
     const institutions = await paycrest.getInstitutions(currency);
 
-    return NextResponse.json(institutions);
+    return NextResponse.json(institutions, {
+      headers: { 'Cache-Control': CACHE_CONTROL_HEADER },
+    });
   } catch (err: unknown) {
     logger.error('Error fetching institutions from Paycrest:', {}, err);
 
@@ -62,20 +66,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ currenc
         code: inst.code,
         type: inst.type,
       }));
-      return NextResponse.json(fallback);
+      return NextResponse.json(fallback, {
+        headers: { 'Cache-Control': CACHE_CONTROL_HEADER },
+      });
     }
 
     if (err instanceof Error && 'status' in err) {
       const httpError = err as PaycrestHttpError;
       if (httpError.status === 400 || httpError.status === 404) {
-        return NextResponse.json(
-          { error: `Unsupported currency: ${currency}` },
-          { status: 400 }
-        );
+        return ErrorHandler.validation(`Unsupported currency: ${currency}`);
       }
-      return NextResponse.json({ error: err.message }, { status: httpError.status });
+      return ErrorHandler.handle(err, httpError.status);
     }
 
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return ErrorHandler.handle(new ApiError(ErrorType.SERVER_ERROR, 'Internal server error'));
   }
 }

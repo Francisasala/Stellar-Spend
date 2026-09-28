@@ -2,6 +2,8 @@
  * Timeout utilities for external service calls
  */
 
+import { logger } from '@/lib/logger';
+
 /**
  * Custom error class for timeout scenarios
  */
@@ -9,7 +11,7 @@ export class TimeoutError extends Error {
   constructor(
     public serviceName: string,
     public duration: number,
-    public operation?: string
+    public operation?: string,
   ) {
     super(`${serviceName} timeout after ${duration / 1000}s${operation ? ` (${operation})` : ''}`);
     this.name = 'TimeoutError';
@@ -41,16 +43,16 @@ export interface TimeoutResult<T> {
 export const TIMEOUT_CONFIG = {
   ALLBRIDGE_SDK: {
     duration: 30000, // 30 seconds
-    serviceName: 'Bridge service'
+    serviceName: 'Bridge service',
   },
   PAYCREST_API: {
-    duration: 15000, // 15 seconds  
-    serviceName: 'Payment service'
+    duration: 15000, // 15 seconds
+    serviceName: 'Payment service',
   },
   SOROBAN_RPC: {
     duration: 15000, // 15 seconds
-    serviceName: 'Blockchain service'
-  }
+    serviceName: 'Blockchain service',
+  },
 } as const;
 
 /**
@@ -91,7 +93,7 @@ export function createAbortablePromise<T>(
   executor: (signal: AbortSignal) => Promise<T>,
   timeoutMs: number,
   serviceName: string,
-  operation?: string
+  operation?: string,
 ): AbortablePromise<T> {
   const controller = new AbortController();
   let timeoutId: NodeJS.Timeout;
@@ -103,7 +105,7 @@ export function createAbortablePromise<T>(
       controller.abort();
       const duration = Date.now() - startTime;
       const error = new TimeoutError(serviceName, timeoutMs, operation);
-      
+
       // Log timeout event
       logTimeoutEvent({
         timestamp: new Date().toISOString(),
@@ -111,9 +113,9 @@ export function createAbortablePromise<T>(
         operation,
         duration,
         status: 'timeout',
-        error: error.message
+        error: error.message,
       });
-      
+
       reject(error);
     }, timeoutMs);
 
@@ -121,21 +123,21 @@ export function createAbortablePromise<T>(
     executor(controller.signal)
       .then((result) => {
         const duration = Date.now() - startTime;
-        
+
         // Log successful completion
         logTimeoutEvent({
           timestamp: new Date().toISOString(),
           service: serviceName,
           operation,
           duration,
-          status: duration > timeoutMs * 0.8 ? 'near_timeout' : 'success'
+          status: duration > timeoutMs * 0.8 ? 'near_timeout' : 'success',
         });
-        
+
         resolve(result);
       })
       .catch((error) => {
         const duration = Date.now() - startTime;
-        
+
         // Only log if it's not a timeout (timeout already logged above)
         if (error.name !== 'TimeoutError') {
           logTimeoutEvent({
@@ -144,10 +146,10 @@ export function createAbortablePromise<T>(
             operation,
             duration,
             status: 'success', // Operation completed, even with error
-            error: error.message
+            error: error.message,
           });
         }
-        
+
         reject(error);
       })
       .finally(() => {
@@ -168,10 +170,18 @@ export function createAbortablePromise<T>(
  * Logs timeout events for monitoring
  */
 function logTimeoutEvent(entry: TimeoutLogEntry): void {
-  const logLevel = entry.status === 'timeout' ? 'error' : 
-                   entry.status === 'near_timeout' ? 'warn' : 'info';
-  
-  console[logLevel]('Timeout event:', entry);
+  const logLevel =
+    entry.status === 'timeout' ? 'error' : entry.status === 'near_timeout' ? 'warn' : 'info';
+
+  const eventData = { status: entry.status, service: entry.service, operation: entry.operation };
+
+  if (logLevel === 'error') {
+    logger.error('timeout.event', eventData);
+  } else if (logLevel === 'warn') {
+    logger.warn('timeout.event', eventData);
+  } else {
+    logger.info('timeout.event', eventData);
+  }
 }
 
 /**
@@ -181,7 +191,7 @@ function logTimeoutEvent(entry: TimeoutLogEntry): void {
 export async function withTimeout<T>(
   promise: Promise<T>,
   configOrDuration: TimeoutConfig | number,
-  operation?: string
+  operation?: string,
 ): Promise<T> {
   const config: TimeoutConfig =
     typeof configOrDuration === 'number'
@@ -192,7 +202,7 @@ export async function withTimeout<T>(
     async (_signal) => promise,
     config.duration,
     config.serviceName,
-    config.operation
+    config.operation,
   );
 }
 
@@ -203,53 +213,44 @@ export async function withTimeout<T>(
 /**
  * Wraps Allbridge SDK operations with 30-second timeout
  */
-export async function withAllbridgeTimeout<T>(
-  promise: Promise<T>,
-  operation?: string
-): Promise<T> {
+export async function withAllbridgeTimeout<T>(promise: Promise<T>, operation?: string): Promise<T> {
   return createAbortablePromise(
-    async (signal) => {
+    async (_signal) => {
       // For promises that don't natively support AbortSignal,
       // we race the promise with the timeout
       return promise;
     },
     TIMEOUT_CONFIG.ALLBRIDGE_SDK.duration,
     TIMEOUT_CONFIG.ALLBRIDGE_SDK.serviceName,
-    operation
+    operation,
   );
 }
 
 /**
  * Wraps Paycrest API calls with 15-second timeout
  */
-export async function withPaycrestTimeout<T>(
-  promise: Promise<T>,
-  operation?: string
-): Promise<T> {
+export async function withPaycrestTimeout<T>(promise: Promise<T>, operation?: string): Promise<T> {
   return createAbortablePromise(
-    async (signal) => {
+    async (_signal) => {
       return promise;
     },
     TIMEOUT_CONFIG.PAYCREST_API.duration,
     TIMEOUT_CONFIG.PAYCREST_API.serviceName,
-    operation
+    operation,
   );
 }
 
 /**
  * Wraps Soroban RPC calls with 15-second timeout
  */
-export async function withSorobanTimeout<T>(
-  promise: Promise<T>,
-  operation?: string
-): Promise<T> {
+export async function withSorobanTimeout<T>(promise: Promise<T>, operation?: string): Promise<T> {
   return createAbortablePromise(
-    async (signal) => {
+    async (_signal) => {
       return promise;
     },
     TIMEOUT_CONFIG.SOROBAN_RPC.duration,
     TIMEOUT_CONFIG.SOROBAN_RPC.serviceName,
-    operation
+    operation,
   );
 }
 
@@ -258,19 +259,19 @@ export async function withSorobanTimeout<T>(
  */
 export async function fetchWithTimeout(
   url: string,
-  options: RequestInit & { timeout?: number; serviceName?: string; operation?: string } = {}
+  options: RequestInit & { timeout?: number; serviceName?: string; operation?: string } = {},
 ): Promise<Response> {
   const { timeout = 15000, serviceName = 'External service', operation, ...fetchOptions } = options;
-  
+
   return createAbortablePromise(
     async (signal) => {
       return fetch(url, {
         ...fetchOptions,
-        signal
+        signal,
       });
     },
     timeout,
     serviceName,
-    operation
+    operation,
   );
 }

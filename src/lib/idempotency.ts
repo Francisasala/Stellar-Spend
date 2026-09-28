@@ -2,7 +2,7 @@ import { logger } from '@/lib/logger';
 import { createHash } from 'crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import type { PoolClient } from 'pg';
-import { pool } from '@/lib/db/client';
+import { pool } from '@/lib/db';
 
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_LOCK_TTL_MS = 5 * 60 * 1000;
@@ -33,6 +33,15 @@ interface BeginIdempotencyResult {
 export interface IdempotencyOptions {
   ttlMs?: number;
   lockTtlMs?: number;
+  /** When true, requests missing the Idempotency-Key header are rejected with 400 instead of bypassing idempotency checks. */
+  required?: boolean;
+}
+
+function buildMissingKeyResponse(): NextResponse {
+  return NextResponse.json(
+    { error: `${IDEMPOTENCY_KEY_HEADER} header is required for this request` },
+    { status: 400 },
+  );
 }
 
 function getConfig() {
@@ -54,7 +63,9 @@ function canonicalize(value: unknown): string {
     return `[${value.map((item) => canonicalize(item)).join(',')}]`;
   }
 
-  const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b));
+  const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+    a.localeCompare(b),
+  );
   return `{${entries.map(([key, val]) => `${JSON.stringify(key)}:${canonicalize(val)}`).join(',')}}`;
 }
 
@@ -94,7 +105,7 @@ async function readResponseBody(response: NextResponse): Promise<unknown> {
 function toNextResponse(
   body: unknown,
   status: number,
-  headers?: Record<string, string> | null
+  headers?: Record<string, string> | null,
 ): NextResponse {
   const response =
     typeof body === 'string'
@@ -113,7 +124,7 @@ async function fetchRecordForUpdate(
   client: PoolClient,
   idempotencyKey: string,
   method: string,
-  path: string
+  path: string,
 ): Promise<StoredIdempotencyRecord | null> {
   const result = await client.query<StoredIdempotencyRecord>(
     `
@@ -124,7 +135,7 @@ async function fetchRecordForUpdate(
         AND path = $3
       FOR UPDATE
     `,
-    [idempotencyKey, method, path]
+    [idempotencyKey, method, path],
   );
 
   return result.rows[0] ?? null;
@@ -136,7 +147,7 @@ async function beginIdempotency(
   path: string,
   requestHash: string,
   ttlMs: number,
-  lockTtlMs: number
+  lockTtlMs: number,
 ): Promise<BeginIdempotencyResult> {
   const now = Date.now();
   const client = await pool.connect();
@@ -155,7 +166,7 @@ async function beginIdempotency(
             locked_until, created_at, updated_at, expires_at
           ) VALUES ($1, $2, $3, $4, 'processing', $5, $6, $6, $7)
         `,
-        [idempotencyKey, method, path, requestHash, now + lockTtlMs, now, now + ttlMs]
+        [idempotencyKey, method, path, requestHash, now + lockTtlMs, now, now + ttlMs],
       );
       await client.query('COMMIT');
       return { kind: 'started' };
@@ -171,7 +182,7 @@ async function beginIdempotency(
       const replayResponse = toNextResponse(
         existing.response_body,
         existing.status_code,
-        existing.response_headers
+        existing.response_headers,
       );
       replayResponse.headers.set(IDEMPOTENCY_STATUS_HEADER, 'replayed');
       replayResponse.headers.set(IDEMPOTENCY_KEY_HEADER, idempotencyKey);
@@ -198,7 +209,7 @@ async function beginIdempotency(
           AND method = $2
           AND path = $3
       `,
-      [idempotencyKey, method, path, requestHash, now + lockTtlMs, now, now + ttlMs]
+      [idempotencyKey, method, path, requestHash, now + lockTtlMs, now, now + ttlMs],
     );
 
     await client.query('COMMIT');
@@ -216,7 +227,7 @@ async function persistCompletedResponse(
   method: string,
   path: string,
   response: NextResponse,
-  ttlMs: number
+  ttlMs: number,
 ): Promise<void> {
   if (response.status >= 500) {
     await pool.query(
@@ -226,7 +237,7 @@ async function persistCompletedResponse(
           AND method = $2
           AND path = $3
       `,
-      [idempotencyKey, method, path]
+      [idempotencyKey, method, path],
     );
     return;
   }
@@ -249,14 +260,23 @@ async function persistCompletedResponse(
         AND method = $2
         AND path = $3
     `,
-    [idempotencyKey, method, path, response.status, JSON.stringify(body), JSON.stringify(headers), now, now + ttlMs]
+    [
+      idempotencyKey,
+      method,
+      path,
+      response.status,
+      JSON.stringify(body),
+      JSON.stringify(headers),
+      now,
+      now + ttlMs,
+    ],
   );
 }
 
 async function clearIdempotencyRecord(
   idempotencyKey: string,
   method: string,
-  path: string
+  path: string,
 ): Promise<void> {
   await pool.query(
     `
@@ -265,7 +285,7 @@ async function clearIdempotencyRecord(
         AND method = $2
         AND path = $3
     `,
-    [idempotencyKey, method, path]
+    [idempotencyKey, method, path],
   );
 }
 
@@ -279,10 +299,13 @@ function buildConflictResponse(message: string, idempotencyKey: string): NextRes
 export async function withIdempotency(
   request: NextRequest,
   handler: () => Promise<NextResponse>,
-  options?: IdempotencyOptions
+  options?: IdempotencyOptions,
 ): Promise<NextResponse> {
   const idempotencyKey = request.headers.get(IDEMPOTENCY_KEY_HEADER);
   if (!idempotencyKey) {
+    if (options?.required) {
+      return buildMissingKeyResponse();
+    }
     return handler();
   }
 
@@ -298,7 +321,7 @@ export async function withIdempotency(
     request.nextUrl.pathname,
     requestHash,
     ttlMs,
-    lockTtlMs
+    lockTtlMs,
   );
 
   if (beginResult.kind === 'replay' && beginResult.replayResponse) {
@@ -308,14 +331,14 @@ export async function withIdempotency(
   if (beginResult.kind === 'conflict') {
     return buildConflictResponse(
       'Idempotency key has already been used with a different request payload',
-      idempotencyKey
+      idempotencyKey,
     );
   }
 
   if (beginResult.kind === 'in_progress') {
     return buildConflictResponse(
       'A request with this idempotency key is already being processed',
-      idempotencyKey
+      idempotencyKey,
     );
   }
 
@@ -329,7 +352,7 @@ export async function withIdempotency(
       request.method.toUpperCase(),
       request.nextUrl.pathname,
       response,
-      ttlMs
+      ttlMs,
     );
   } catch (error) {
     logger.error('Failed to persist idempotency result:', {}, error);
@@ -337,7 +360,7 @@ export async function withIdempotency(
       await clearIdempotencyRecord(
         idempotencyKey,
         request.method.toUpperCase(),
-        request.nextUrl.pathname
+        request.nextUrl.pathname,
       );
     } catch (cleanupError) {
       logger.error('Failed to clear idempotency record after persistence error:', {}, cleanupError);

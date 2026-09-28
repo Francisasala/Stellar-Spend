@@ -13,12 +13,10 @@ test.describe('Wallet Connection Flow', () => {
     // Select Freighter
     await page.click('button:has-text("Freighter")');
 
-    // Wait for wallet connection
-    await page.waitForNavigation();
-
-    // Verify connected state
+    // Verify connected state (auto-waiting assertion; waitForNavigation is
+    // unreliable across Firefox/WebKit for SPA route changes)
     const walletButton = await page.locator('[data-testid="wallet-button"]');
-    expect(walletButton).toContainText('Connected');
+    await expect(walletButton).toContainText('Connected');
   });
 
   test('should connect with Lobstr wallet', async ({ page }) => {
@@ -29,12 +27,9 @@ test.describe('Wallet Connection Flow', () => {
     // Select Lobstr
     await page.click('button:has-text("Lobstr")');
 
-    // Wait for wallet connection
-    await page.waitForNavigation();
-
     // Verify connected state
     const walletButton = await page.locator('[data-testid="wallet-button"]');
-    expect(walletButton).toContainText('Connected');
+    await expect(walletButton).toContainText('Connected');
   });
 
   test('should auto-detect wallet', async ({ page }) => {
@@ -50,9 +45,8 @@ test.describe('Wallet Connection Flow', () => {
     await page.click('button:has-text("Auto-detect")');
 
     // Should connect to available wallet
-    await page.waitForNavigation();
     const walletButton = await page.locator('[data-testid="wallet-button"]');
-    expect(walletButton).toContainText('Connected');
+    await expect(walletButton).toContainText('Connected');
   });
 
   test('should display wallet address', async ({ page }) => {
@@ -60,7 +54,6 @@ test.describe('Wallet Connection Flow', () => {
     await page.click('button:has-text("Connect Wallet")');
     await page.waitForSelector('[data-testid="wallet-modal"]');
     await page.click('button:has-text("Freighter")');
-    await page.waitForNavigation();
 
     // Click wallet button to show details
     await page.click('[data-testid="wallet-button"]');
@@ -76,7 +69,6 @@ test.describe('Wallet Connection Flow', () => {
     await page.click('button:has-text("Connect Wallet")');
     await page.waitForSelector('[data-testid="wallet-modal"]');
     await page.click('button:has-text("Freighter")');
-    await page.waitForNavigation();
 
     // Click wallet button to show details
     await page.click('[data-testid="wallet-button"]');
@@ -108,11 +100,10 @@ test.describe('Wallet Connection Flow', () => {
     await page.click('button:has-text("Connect Wallet")');
     await page.waitForSelector('[data-testid="wallet-modal"]');
     await page.click('button:has-text("Freighter")');
-    await page.waitForNavigation();
 
     // Verify connected
     let walletButton = await page.locator('[data-testid="wallet-button"]');
-    expect(walletButton).toContainText('Connected');
+    await expect(walletButton).toContainText('Connected');
 
     // Disconnect
     await page.click('[data-testid="wallet-button"]');
@@ -122,10 +113,9 @@ test.describe('Wallet Connection Flow', () => {
     await page.click('button:has-text("Connect Wallet")');
     await page.waitForSelector('[data-testid="wallet-modal"]');
     await page.click('button:has-text("Lobstr")');
-    await page.waitForNavigation();
 
     // Verify connected with new wallet
     walletButton = await page.locator('[data-testid="wallet-button"]');
-    expect(walletButton).toContainText('Connected');
+    await expect(walletButton).toContainText('Connected');
   });
 });

@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { scanStalledTransactions, getTimeoutMetrics } from '@/lib/transaction-timeout';
-import { dal } from '@/lib/db/dal';
+import { dal } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { runReconciliationJob } from '@/lib/reconciliation';
+import { ErrorHandler } from '@/lib/error-handler';
+import { ApiError, ErrorType } from '@/lib/error-types';
 
 export async function POST(req: NextRequest) {
   try {
     const secret = req.headers.get('x-cron-secret');
     if (secret !== process.env.CRON_SECRET) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return ErrorHandler.unauthorized('Unauthorized');
     }
 
     logger.info('cron.scan-stalls.start', {});
 
     const transactions = await dal.getByUser('*').catch(() => []);
-    const allTransactions = transactions.length > 0
-      ? transactions
-      : [];
+    const allTransactions = transactions.length > 0 ? transactions : [];
 
     const stallResults = await scanStalledTransactions(allTransactions);
 
@@ -40,6 +39,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     logger.error('cron.scan-stalls.failed', {}, err);
-    return NextResponse.json({ error: 'Stall scan failed' }, { status: 500 });
+    return ErrorHandler.handle(new ApiError(ErrorType.SERVER_ERROR, 'Stall scan failed'));
   }
 }

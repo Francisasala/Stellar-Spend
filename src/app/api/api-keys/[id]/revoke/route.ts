@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ErrorHandler } from '@/lib/error-handler';
-import { revokeApiKey } from '@/lib/api-keys/service';
+import { revokeApiKey } from '@/lib/api-keys';
 import { requireApiKeyAdmin } from '@/app/api/api-keys/_utils';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const unauthorized = requireApiKeyAdmin(request);
   if (unauthorized) return unauthorized;
 
@@ -22,7 +19,7 @@ export async function POST(
   try {
     const revoked = await revokeApiKey(
       id,
-      typeof body.reason === 'string' ? body.reason : undefined
+      typeof body.reason === 'string' ? body.reason : undefined,
     );
     if (!revoked) {
       return ErrorHandler.notFound('api key');

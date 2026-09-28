@@ -1,8 +1,9 @@
-import { dal } from '@/lib/db/dal';
+import { dal } from '@/lib/db';
 import type { Transaction } from '@/lib/transaction-storage';
-import { processRefund } from '@/lib/refund/refund-service';
-import { notifyTransactionStatusUpdate } from '@/lib/notifications/service';
+import { processRefund } from '@/lib/refund';
+import { notifyTransactionStatusUpdate } from '@/lib/notifications';
 import { logger } from '@/lib/logger';
+import type { CompensationStatus } from '@/lib/compensation-state-machine';
 
 export const TRANSACTION_TIMEOUT_MS = 30 * 60 * 1000;
 export const BRIDGE_TIMEOUT_MS = 60 * 60 * 1000;
@@ -21,8 +22,18 @@ export const STAGE_TIMEOUTS = {
 
 export type StallStage = keyof typeof STAGE_TIMEOUTS;
 
-export const SAFE_STAGES: Set<StallStage> = new Set(['draft', 'quoted', 'source_tx_submitted', 'bridge_pending']);
-export const UNSAFE_STAGES: Set<StallStage> = new Set(['bridge_completed', 'payout_order_created', 'destination_tx_submitted', 'payout_pending']);
+export const SAFE_STAGES: Set<StallStage> = new Set([
+  'draft',
+  'quoted',
+  'source_tx_submitted',
+  'bridge_pending',
+]);
+export const UNSAFE_STAGES: Set<StallStage> = new Set([
+  'bridge_completed',
+  'payout_order_created',
+  'destination_tx_submitted',
+  'payout_pending',
+]);
 
 export interface TimeoutCheckResult {
   transactionId: string;
@@ -30,6 +41,12 @@ export interface TimeoutCheckResult {
   ageMs: number;
   cancelled: boolean;
   refundTriggered: boolean;
+  /**
+   * Outcome of the refund this timeout triggered, on the shared compensation
+   * state machine (see `@/lib/compensation-state-machine`). Absent when the
+   * transaction wasn't timed out, so no compensation was attempted.
+   */
+  status?: CompensationStatus;
   error?: string;
 }
 
@@ -108,7 +125,8 @@ export function getTransactionTimeoutType(tx: Transaction): 'bridge' | 'paycrest
 
 function inferStage(tx: Transaction): StallStage | 'unknown' {
   if (tx.bridgeStatus === 'pending' || tx.bridgeStatus === 'processing') return 'bridge_pending';
-  if (tx.bridgeStatus === 'completed' && tx.payoutOrderId && tx.payoutStatus === undefined) return 'payout_order_created';
+  if (tx.bridgeStatus === 'completed' && tx.payoutOrderId && tx.payoutStatus === undefined)
+    return 'payout_order_created';
   if (tx.payoutStatus === 'pending') return 'payout_pending';
   if (tx.bridgeStatus === 'completed') return 'bridge_completed';
   return 'unknown';
@@ -147,7 +165,10 @@ export async function handleStall(tx: Transaction): Promise<StallCheckResult> {
 
   if (SAFE_STAGES.has(check.stage as StallStage)) {
     try {
-      await dal.update(tx.id, { status: 'pending', error: `auto-retry after stall at ${check.stage}` });
+      await dal.update(tx.id, {
+        status: 'pending',
+        error: `auto-retry after stall at ${check.stage}`,
+      });
       _metrics.autoRetried++;
       check.autoRetried = true;
       logger.info('stall.auto_retried', { transactionId: tx.id, stage: check.stage });
@@ -164,7 +185,11 @@ export async function handleStall(tx: Transaction): Promise<StallCheckResult> {
   } else if (UNSAFE_STAGES.has(check.stage as StallStage)) {
     _metrics.flaggedManual++;
     check.flaggedManual = true;
-    logger.warn('stall.flagged_manual', { transactionId: tx.id, stage: check.stage, ageMs: check.stageAgeMs });
+    logger.warn('stall.flagged_manual', {
+      transactionId: tx.id,
+      stage: check.stage,
+      ageMs: check.stageAgeMs,
+    });
     await notifyTransactionStatusUpdate({
       transaction: tx,
       previousStatus: tx.status,
@@ -176,18 +201,34 @@ export async function handleStall(tx: Transaction): Promise<StallCheckResult> {
   return check;
 }
 
-export async function cancelTimedOutTransaction(transactionId: string): Promise<TimeoutCheckResult> {
+export async function cancelTimedOutTransaction(
+  transactionId: string,
+): Promise<TimeoutCheckResult> {
   const now = Date.now();
   let tx: Transaction | null;
 
   try {
     tx = await dal.getById(transactionId);
   } catch (err) {
-    return { transactionId, timedOut: false, ageMs: 0, cancelled: false, refundTriggered: false, error: String(err) };
+    return {
+      transactionId,
+      timedOut: false,
+      ageMs: 0,
+      cancelled: false,
+      refundTriggered: false,
+      error: String(err),
+    };
   }
 
   if (!tx) {
-    return { transactionId, timedOut: false, ageMs: 0, cancelled: false, refundTriggered: false, error: 'Transaction not found' };
+    return {
+      transactionId,
+      timedOut: false,
+      ageMs: 0,
+      cancelled: false,
+      refundTriggered: false,
+      error: 'Transaction not found',
+    };
   }
 
   const ageMs = now - tx.timestamp;
@@ -197,7 +238,12 @@ export async function cancelTimedOutTransaction(transactionId: string): Promise<
   }
 
   const timeoutType = getTransactionTimeoutType(tx);
-  logger.warn('transaction.timeout', { transactionId, userAddress: tx.userAddress, ageMs, timeoutType });
+  logger.warn('transaction.timeout', {
+    transactionId,
+    userAddress: tx.userAddress,
+    ageMs,
+    timeoutType,
+  });
 
   _metrics.timedOut++;
   if (timeoutType === 'bridge') _metrics.bridgeTimeouts++;
@@ -216,7 +262,14 @@ export async function cancelTimedOutTransaction(transactionId: string): Promise<
     }
   } catch (err) {
     _metrics.errors++;
-    return { transactionId, timedOut: true, ageMs, cancelled: false, refundTriggered: false, error: String(err) };
+    return {
+      transactionId,
+      timedOut: true,
+      ageMs,
+      cancelled: false,
+      refundTriggered: false,
+      error: String(err),
+    };
   }
 
   const refundResult = await processRefund(transactionId, 'timeout');
@@ -233,11 +286,14 @@ export async function cancelTimedOutTransaction(transactionId: string): Promise<
     ageMs,
     cancelled: true,
     refundTriggered: refundResult.success,
+    status: refundResult.status,
     error: refundResult.success ? undefined : refundResult.error,
   };
 }
 
-export async function checkAndCancelTimedOutTransactions(userAddress: string): Promise<TimeoutCheckResult[]> {
+export async function checkAndCancelTimedOutTransactions(
+  userAddress: string,
+): Promise<TimeoutCheckResult[]> {
   let transactions: Transaction[];
   try {
     transactions = await dal.getByUser(userAddress);
@@ -247,31 +303,31 @@ export async function checkAndCancelTimedOutTransactions(userAddress: string): P
 
   const pending = transactions.filter((tx) => tx.status === 'pending');
   _metrics.totalChecked += pending.length;
-  const results = await Promise.all(
-    pending.map((tx) => cancelTimedOutTransaction(tx.id)),
-  );
+  const results = await Promise.all(pending.map((tx) => cancelTimedOutTransaction(tx.id)));
   return results.filter((r) => r.timedOut);
 }
 
-export async function scanAndCancelTimedOutTransactions(transactions: Transaction[]): Promise<TimeoutCheckResult[]> {
+export async function scanAndCancelTimedOutTransactions(
+  transactions: Transaction[],
+): Promise<TimeoutCheckResult[]> {
   const pending = transactions.filter((tx) => tx.status === 'pending');
   _metrics.totalChecked += pending.length;
-  const results = await Promise.all(
-    pending.map((tx) => cancelTimedOutTransaction(tx.id)),
-  );
+  const results = await Promise.all(pending.map((tx) => cancelTimedOutTransaction(tx.id)));
   return results.filter((r) => r.timedOut);
 }
 
-export async function scanStalledTransactions(transactions: Transaction[]): Promise<StallCheckResult[]> {
+export async function scanStalledTransactions(
+  transactions: Transaction[],
+): Promise<StallCheckResult[]> {
   const pending = transactions.filter((tx) => tx.status === 'pending');
   _metrics.totalChecked += pending.length;
-  const results = await Promise.all(
-    pending.map((tx) => handleStall(tx)),
-  );
+  const results = await Promise.all(pending.map((tx) => handleStall(tx)));
   return results.filter((r) => r.stalled);
 }
 
-export async function attemptTimeoutRecovery(transactionId: string): Promise<{ recovered: boolean; reason: string }> {
+export async function attemptTimeoutRecovery(
+  transactionId: string,
+): Promise<{ recovered: boolean; reason: string }> {
   let tx: Transaction | null;
   try {
     tx = await dal.getById(transactionId);
@@ -280,8 +336,10 @@ export async function attemptTimeoutRecovery(transactionId: string): Promise<{ r
   }
 
   if (!tx) return { recovered: false, reason: 'Transaction not found' };
-  if (tx.status !== 'failed') return { recovered: false, reason: 'Transaction is not in failed state' };
-  if (!tx.error?.includes('timed out')) return { recovered: false, reason: 'Transaction did not fail due to timeout' };
+  if (tx.status !== 'failed')
+    return { recovered: false, reason: 'Transaction is not in failed state' };
+  if (!tx.error?.includes('timed out'))
+    return { recovered: false, reason: 'Transaction did not fail due to timeout' };
 
   if (getTransactionTimeoutType(tx) !== 'bridge') {
     return { recovered: false, reason: 'Only bridge transactions support timeout recovery' };
@@ -289,7 +347,7 @@ export async function attemptTimeoutRecovery(transactionId: string): Promise<{ r
 
   try {
     await dal.update(transactionId, { status: 'pending', error: undefined });
-    logger.info('transaction.timeout_recovery', { transactionId, userAddress: tx.userAddress });
+    logger.debug('transaction.timeout_recovery', { transactionId });
     return { recovered: true, reason: 'Transaction re-queued for bridge processing' };
   } catch (err) {
     return { recovered: false, reason: String(err) };

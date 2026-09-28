@@ -19,14 +19,34 @@ export interface ReconciliationHistoryEntry {
   alerts: ReconciliationAlert[];
 }
 
+export interface StellarTxData {
+  successful?: boolean;
+  [key: string]: unknown;
+}
+
+export interface PaycrestOrderData {
+  status?: string;
+  amount?: unknown;
+  senderAmount?: unknown;
+  [key: string]: unknown;
+}
+
+export type BaseTxData = Record<string, unknown>;
+
 export interface ReconciliationDiscrepancy {
   transactionId: string;
-  type: 'missing_stellar' | 'missing_base' | 'missing_paycrest' | 'amount_mismatch' | 'status_mismatch' | 'unsettled_order';
+  type:
+    | 'missing_stellar'
+    | 'missing_base'
+    | 'missing_paycrest'
+    | 'amount_mismatch'
+    | 'status_mismatch'
+    | 'unsettled_order';
   description: string;
   severity: 'low' | 'medium' | 'high';
-  stellarData?: any;
-  baseData?: any;
-  paycrestData?: any;
+  stellarData?: StellarTxData;
+  baseData?: BaseTxData;
+  paycrestData?: PaycrestOrderData;
 }
 
 export interface ReconciliationReport {
@@ -73,7 +93,7 @@ export interface DailySettlementReport {
   downloadUrl?: string;
 }
 
-async function fetchStellarTransaction(txHash: string): Promise<any> {
+async function fetchStellarTransaction(txHash: string): Promise<StellarTxData | null> {
   try {
     const response = await fetch(`${env.server.STELLAR_HORIZON_URL}/transactions/${txHash}`, {
       signal: AbortSignal.timeout(5000),
@@ -85,7 +105,7 @@ async function fetchStellarTransaction(txHash: string): Promise<any> {
   }
 }
 
-async function fetchBaseTransaction(txHash: string): Promise<any> {
+async function fetchBaseTransaction(txHash: string): Promise<BaseTxData | null> {
   try {
     const response = await fetch(env.server.BASE_RPC_URL, {
       method: 'POST',
@@ -106,7 +126,7 @@ async function fetchBaseTransaction(txHash: string): Promise<any> {
   }
 }
 
-async function fetchPaycrestOrder(orderId: string): Promise<any> {
+async function fetchPaycrestOrder(orderId: string): Promise<PaycrestOrderData | null> {
   try {
     const response = await fetch(`https://api.paycrest.io/aggregator/orders/${orderId}`, {
       headers: { 'x-api-key': env.server.PAYCREST_API_KEY },
@@ -120,7 +140,9 @@ async function fetchPaycrestOrder(orderId: string): Promise<any> {
   }
 }
 
-export async function reconcileTransaction(record: ReconciliationRecord): Promise<ReconciliationDiscrepancy[]> {
+export async function reconcileTransaction(
+  record: ReconciliationRecord,
+): Promise<ReconciliationDiscrepancy[]> {
   const discrepancies: ReconciliationDiscrepancy[] = [];
 
   const [stellarData, baseData, paycrestData] = await Promise.all([
@@ -197,7 +219,9 @@ export async function reconcileTransaction(record: ReconciliationRecord): Promis
   return discrepancies;
 }
 
-export async function generateReconciliationReport(records: ReconciliationRecord[]): Promise<ReconciliationReport> {
+export async function generateReconciliationReport(
+  records: ReconciliationRecord[],
+): Promise<ReconciliationReport> {
   const allDiscrepancies: ReconciliationDiscrepancy[] = [];
 
   const batchSize = 10;
@@ -280,14 +304,18 @@ export function buildSettlementCsv(report: ReconciliationReport): string {
   return [header, ...rows].join('\n');
 }
 
-export async function buildDailySettlementReport(records: ReconciliationRecord[]): Promise<DailySettlementReport> {
+export async function buildDailySettlementReport(
+  records: ReconciliationRecord[],
+): Promise<DailySettlementReport> {
   const report = await generateReconciliationReport(records);
   const discrepancies = report.discrepancies;
 
   const stellarVolume = records.filter((r) => r.stellarTxHash).length.toString();
   const baseVolume = records.filter((r) => r.baseTxHash).length.toString();
   const paycrestVolume = records.filter((r) => r.paycrestOrderId).length.toString();
-  const unsettled = discrepancies.filter((d) => d.type === 'unsettled_order').map((d) => d.transactionId);
+  const unsettled = discrepancies
+    .filter((d) => d.type === 'unsettled_order')
+    .map((d) => d.transactionId);
 
   return {
     date: report.date,
@@ -303,7 +331,9 @@ export async function buildDailySettlementReport(records: ReconciliationRecord[]
   };
 }
 
-export async function performManualReconciliation(action: ManualReconciliationAction): Promise<{ success: boolean; message: string }> {
+export async function performManualReconciliation(
+  action: ManualReconciliationAction,
+): Promise<{ success: boolean; message: string }> {
   logger.info('reconciliation.manual_action', {
     transactionId: action.transactionId,
     action: action.action,
@@ -311,10 +341,10 @@ export async function performManualReconciliation(action: ManualReconciliationAc
     resolvedBy: action.resolvedBy,
   });
 
-  if (action.action === 'retry') {
-    const { default: txModule } = await import('./transaction-timeout');
+   if (action.action === 'retry') {
+    const txModule = await import('./transaction-timeout');
     try {
-      await (txModule as any).attemptTimeoutRecovery(action.transactionId);
+      await txModule.attemptTimeoutRecovery(action.transactionId);
       return {
         success: true,
         message: `Manual retry initiated for transaction ${action.transactionId}`,
@@ -377,8 +407,7 @@ async function cleanOldHistory(): Promise<void> {
   const sql = `DELETE FROM reconciliation_history WHERE run_at < NOW() - INTERVAL '90 days'`;
   try {
     await pool.query(sql);
-  } catch {
-  }
+  } catch {}
 }
 
 export async function getReconciliationHistory(): Promise<ReconciliationHistoryEntry[]> {
@@ -386,18 +415,22 @@ export async function getReconciliationHistory(): Promise<ReconciliationHistoryE
   const sql = 'SELECT * FROM reconciliation_history ORDER BY run_at DESC LIMIT 30';
   try {
     const result = await pool.query(sql);
-    return result.rows.map((row: any) => ({
-      id: row.id,
-      runAt: row.run_at.toISOString(),
-      report: row.report,
-      alerts: row.alerts,
-    }));
+    return result.rows.map(
+      (row: { id: string; run_at: string | Date; report: ReconciliationReport; alerts: ReconciliationAlert[] }) => ({
+        id: row.id,
+        runAt: new Date(row.run_at).toISOString(),
+        report: row.report,
+        alerts: row.alerts,
+      }),
+    );
   } catch {
     return [];
   }
 }
 
-export async function runReconciliationJob(records: ReconciliationRecord[]): Promise<ReconciliationHistoryEntry> {
+export async function runReconciliationJob(
+  records: ReconciliationRecord[],
+): Promise<ReconciliationHistoryEntry> {
   const report = await generateReconciliationReport(records);
   const alerts = generateAlerts(report);
   const entry: ReconciliationHistoryEntry = {

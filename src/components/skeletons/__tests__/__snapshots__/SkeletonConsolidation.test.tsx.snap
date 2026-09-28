@@ -1,0 +1,242 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Skeleton Consolidation - Shared Primitive Pattern > Animation Consistency Across Variants > each skeleton variant maintains visual stability via snapshot 1`] = `
+<section
+  aria-busy="true"
+  aria-label="Loading offramp form"
+  class="bg-panel border border-line p-6 flex flex-col gap-6"
+>
+  <div
+    class="flex flex-col gap-1.5"
+  >
+    <span
+      aria-busy="true"
+      aria-label="Loading label…"
+      class="skeleton"
+      role="status"
+      style="width: 80px; height: 10px;"
+    />
+    <span
+      aria-busy="true"
+      aria-label="Loading amount input…"
+      class="skeleton"
+      role="status"
+      style="width: 100%; height: 42px;"
+    />
+  </div>
+  <div
+    class="flex flex-col gap-1.5"
+  >
+    <span
+      aria-busy="true"
+      aria-label="Loading label…"
+      class="skeleton"
+      role="status"
+      style="width: 100px; height: 10px;"
+    />
+    <div
+      class="flex gap-2"
+    >
+      <span
+        aria-busy="true"
+        aria-label="Loading fee option…"
+        class="skeleton"
+        role="status"
+        style="width: 50%; height: 44px;"
+      />
+      <span
+        aria-busy="true"
+        aria-label="Loading fee option…"
+        class="skeleton"
+        role="status"
+        style="width: 50%; height: 44px;"
+      />
+    </div>
+  </div>
+  <div
+    class="grid grid-cols-1 md:grid-cols-2 gap-4"
+  >
+    <div
+      class="flex flex-col gap-1.5"
+    >
+      <span
+        aria-busy="true"
+        aria-label="Loading label…"
+        class="skeleton"
+        role="status"
+        style="width: 60px; height: 10px;"
+      />
+      <span
+        aria-busy="true"
+        aria-label="Loading currency select…"
+        class="skeleton"
+        role="status"
+        style="width: 100%; height: 42px;"
+      />
+    </div>
+    <div
+      class="flex flex-col gap-1.5"
+    >
+      <span
+        aria-busy="true"
+        aria-label="Loading label…"
+        class="skeleton"
+        role="status"
+        style="width: 120px; height: 10px;"
+      />
+      <span
+        aria-busy="true"
+        aria-label="Loading bank select…"
+        class="skeleton"
+        role="status"
+        style="width: 100%; height: 42px;"
+      />
+    </div>
+  </div>
+  <div
+    class="flex flex-col gap-1.5"
+  >
+    <span
+      aria-busy="true"
+      aria-label="Loading label…"
+      class="skeleton"
+      role="status"
+      style="width: 110px; height: 10px;"
+    />
+    <span
+      aria-busy="true"
+      aria-label="Loading account number input…"
+      class="skeleton"
+      role="status"
+      style="width: 100%; height: 42px;"
+    />
+  </div>
+  <div
+    class="flex flex-col gap-1.5"
+  >
+    <span
+      aria-busy="true"
+      aria-label="Loading label…"
+      class="skeleton"
+      role="status"
+      style="width: 90px; height: 10px;"
+    />
+    <span
+      aria-busy="true"
+      aria-label="Loading account name…"
+      class="skeleton"
+      role="status"
+      style="width: 100%; height: 42px;"
+    />
+  </div>
+  <span
+    aria-busy="true"
+    aria-label="Loading submit button…"
+    class="skeleton"
+    role="status"
+    style="width: 100%; height: 52px;"
+  />
+</section>
+`;
+
+exports[`Skeleton Consolidation - Shared Primitive Pattern > Animation Consistency Across Variants > each skeleton variant maintains visual stability via snapshot 2`] = `
+<div
+  aria-busy="true"
+  aria-label="Loading quote"
+  class="flex flex-col gap-4 w-full"
+>
+  <div
+    class="border border-[#333333] bg-[#111111] p-5 flex flex-col gap-4"
+  >
+    <span
+      aria-busy="true"
+      aria-label="Loading label…"
+      class="skeleton"
+      role="status"
+      style="width: 120px; height: 10px;"
+    />
+    <span
+      aria-busy="true"
+      aria-label="Loading payout amount…"
+      class="skeleton"
+      role="status"
+      style="width: 70%; height: 38px;"
+    />
+    <span
+      aria-busy="true"
+      aria-label="Loading meta…"
+      class="skeleton"
+      role="status"
+      style="width: 180px; height: 11px;"
+    />
+  </div>
+  <div
+    class="border border-[#333333] bg-[#111111] p-5 flex flex-col gap-3"
+  >
+    <span
+      aria-busy="true"
+      aria-label="Loading section title…"
+      class="skeleton"
+      role="status"
+      style="width: 160px; height: 10px;"
+    />
+    <div
+      class="flex items-center justify-between gap-4"
+    >
+      <span
+        aria-busy="true"
+        aria-label="Loading fee label…"
+        class="skeleton"
+        role="status"
+        style="width: 90px; height: 12px;"
+      />
+      <span
+        aria-busy="true"
+        aria-label="Loading fee value…"
+        class="skeleton"
+        role="status"
+        style="width: 80px; height: 12px;"
+      />
+    </div>
+    <div
+      class="flex items-center justify-between gap-4"
+    >
+      <span
+        aria-busy="true"
+        aria-label="Loading fee label…"
+        class="skeleton"
+        role="status"
+        style="width: 90px; height: 12px;"
+      />
+      <span
+        aria-busy="true"
+        aria-label="Loading fee value…"
+        class="skeleton"
+        role="status"
+        style="width: 80px; height: 12px;"
+      />
+    </div>
+    <div
+      class="border-t border-[#333333] my-1"
+    />
+    <div
+      class="flex items-end justify-between gap-4"
+    >
+      <span
+        aria-busy="true"
+        aria-label="Loading total label…"
+        class="skeleton"
+        role="status"
+        style="width: 80px; height: 12px;"
+      />
+      <span
+        aria-busy="true"
+        aria-label="Loading payout total…"
+        class="skeleton"
+        role="status"
+        style="width: 120px; height: 24px;"
+      />
+    </div>
+  </div>
+</div>
+`;

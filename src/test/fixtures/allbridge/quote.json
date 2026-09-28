@@ -1,0 +1,16 @@
+{
+  "sourceAmount": "100.0000000",
+  "receiveAmount": "99.500000",
+  "fee": "0.500000",
+  "estimatedTime": 300,
+  "sourceToken": {
+    "symbol": "USDC",
+    "decimals": 7,
+    "contract": "GBUQWP3BOUZX34ULNQG23RQ6F4YUSXHTQSXUSMIQ75XABZEYYWRB6HP"
+  },
+  "destinationToken": {
+    "symbol": "USDC",
+    "decimals": 6,
+    "contract": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+  }
+}

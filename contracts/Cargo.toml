@@ -1,7 +1,22 @@
 [workspace]
-members = ["escrow", "fee-manager", "multisig-authority"]
+members = ["shared", "escrow", "fee-manager", "multisig-authority", "treasury"]
 resolver = "2"
 
+[workspace.package]
+version = "1.0.0"
+edition = "2021"
+
+[workspace.dependencies]
+soroban-sdk = "22"
+stellar-spend-shared = { path = "shared" }
+proptest = "1.5"
+
+# Cargo only honours [profile.*] at the workspace root — per-member copies are
+# silently ignored (and warned about).
 [profile.release]
 opt-level = "z"
+codegen-units = 1
 lto = true
+panic = "abort"
+strip = true
+overflow-checks = true

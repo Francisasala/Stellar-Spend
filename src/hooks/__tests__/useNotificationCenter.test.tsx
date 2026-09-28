@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useNotificationCenter, type NotificationCenterEvent } from '../useNotificationCenter';
 
 describe('useNotificationCenter', () => {
@@ -129,7 +129,7 @@ describe('useNotificationCenter', () => {
       ];
 
       act(() => {
-        events.forEach(e => result.current.addEvent(e));
+        events.forEach((e) => result.current.addEvent(e));
       });
 
       expect(result.current.unreadCount).toBe(2);
@@ -139,7 +139,7 @@ describe('useNotificationCenter', () => {
       });
 
       expect(result.current.unreadCount).toBe(0);
-      expect(result.current.events.every(e => e.read)).toBe(true);
+      expect(result.current.events.every((e) => e.read)).toBe(true);
     });
 
     it('should remove event', () => {
@@ -333,7 +333,7 @@ describe('useNotificationCenter', () => {
       });
 
       expect(result.current.events).toHaveLength(100);
-      
+
       const stored = JSON.parse(localStorage.getItem('stellar_spend_notification_center')!);
       expect(stored).toHaveLength(100);
     });
