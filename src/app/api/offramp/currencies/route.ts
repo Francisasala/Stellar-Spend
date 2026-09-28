@@ -1,7 +1,7 @@
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 import { env } from '@/lib/env';
-import { ErrorHandler } from '@/lib/error-handler';
+import { ErrorHandler, ApiError } from '@/lib/error-handler';
 import { withPaycrestTimeout } from '@/lib/offramp';
 import { getActiveCurrencies, isSupportedCurrency, validateCurrencyAmount } from '@/lib/currencies';
 import { getCurrencyFlag } from '@/lib/currency-flags';
@@ -123,12 +123,12 @@ export async function GET(request: Request) {
   if (validateCode) {
     const amountStr = searchParams.get('amount');
     if (!isSupportedCurrency(validateCode)) {
-      return NextResponse.json({ valid: false, error: `Unsupported currency: ${validateCode}` });
+      return ErrorHandler.validation(`Unsupported currency: ${validateCode}`);
     }
     if (amountStr) {
       const amount = parseFloat(amountStr);
       const error = validateCurrencyAmount(validateCode, amount);
-      if (error) return NextResponse.json({ valid: false, error });
+      if (error) return ErrorHandler.validation(error);
     }
     return NextResponse.json({ valid: true });
   }
