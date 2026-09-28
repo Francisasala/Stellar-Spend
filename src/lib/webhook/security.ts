@@ -1,6 +1,6 @@
-import { randomUUID } from 'crypto';
 import { pool } from '../db/client';
 import { logger } from '../logger';
+import { signAsync, verifyAsync } from '@/lib/crypto/signature';
 
 const NONCE_TTL_MS = 5 * 60 * 1000;
 const MAX_TIMESTAMP_SKEW_MS = 5 * 60 * 1000;
@@ -81,26 +81,8 @@ export async function verifyWebhookSignature(
     return { valid: false, reason: 'Missing signature' };
   }
 
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-  const mac = await crypto.subtle.sign('HMAC', key, encoder.encode(rawBody));
-  const computed = Buffer.from(mac).toString('hex');
-
-  if (computed.length !== signature.length) {
-    logVerificationFailure('signature_mismatch', { timestampHeader, nonceHeader });
-    return { valid: false, reason: 'Invalid signature' };
-  }
-  let diff = 0;
-  for (let i = 0; i < computed.length; i++) {
-    diff |= computed.charCodeAt(i) ^ signature.charCodeAt(i);
-  }
-  if (diff !== 0) {
+  const ok = await verifyAsync(rawBody, signature, secret, 'sha256', 'hex');
+  if (!ok) {
     logVerificationFailure('signature_mismatch', { timestampHeader, nonceHeader });
     return { valid: false, reason: 'Invalid signature' };
   }
@@ -120,8 +102,7 @@ export async function verifyWebhookSignature(
 
   await pruneExpiredNonces();
   const replayKey = nonceHeader ?? `${timestampHeader}:${signature.slice(0, 16)}`;
-  const alreadySeen = await isReplay(replayKey);
-  if (alreadySeen) {
+  if (await isReplay(replayKey)) {
     logVerificationFailure('replay_detected', { timestampHeader, nonceHeader });
     return { valid: false, reason: 'Replay attack detected' };
   }
@@ -143,16 +124,7 @@ export async function generateOutgoingSignature(
   payload: string,
   secret: string,
 ): Promise<string> {
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-  const mac = await crypto.subtle.sign('HMAC', key, encoder.encode(payload));
-  return Buffer.from(mac).toString('hex');
+  return signAsync(payload, secret, 'sha256', 'hex');
 }
 
 export async function buildSignedWebhookHeaders(
