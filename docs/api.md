@@ -2,6 +2,23 @@
 
 Base URL: `http://localhost:3001` (development)
 
+> **Interactive API explorer:** Visit **[/api/docs](/api/docs)** for the Swagger UI — try any endpoint directly from the browser.
+> The complete OpenAPI 3.0 specification is available for external consumers in both formats:
+> - Raw YAML: **[`/openapi.yaml`](/openapi.yaml)**
+> - Raw JSON: **[`/openapi.json`](/openapi.json)**
+> - Root Spec File: [`openapi.yaml`](../openapi.yaml)
+
+---
+
+## API Changelog
+
+| Version   | Date       | Summary                                                                                                                                   |
+| --------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **1.1.0** | 2026-06-29 | Added `X-RateLimit-*` response headers; expanded auth/scope/idempotency docs; interactive Swagger UI at `/api/docs`; integrator SDK guide |
+| **1.0.0** | 2026-01-01 | Initial public release; versioned `/api/v1/` routes; API key auth; idempotency; webhook HMAC verification                                 |
+
+---
+
 ## Authentication
 
 All `/api/offramp/*` endpoints are **server-side only** and use environment-configured secrets. Clients call these routes directly — no client-side API key is required or exposed.
@@ -12,6 +29,72 @@ Versioned programmatic endpoints under `/api/v1/*` require an API key via either
 
 - `X-API-Key: <key>`
 - `Authorization: Bearer <key>`
+
+---
+
+## API Key Scopes
+
+API keys are issued with one or more scopes that restrict which endpoints they can access:
+
+| Scope           | Endpoints                                                |
+| --------------- | -------------------------------------------------------- |
+| `offramp:read`  | GET currencies, institutions, rate, bridge status, quote |
+| `offramp:write` | POST quote, build-tx, submit-soroban, paycrest order     |
+| `webhook:read`  | Receive and replay webhook events                        |
+
+Scopes are assigned at key creation and shown via `GET /api/api-keys/{id}/scopes`.
+
+---
+
+## Rate Limits
+
+All `/api/v1/*` endpoints enforce per-key rate limits. The following headers are included on every authenticated response:
+
+| Header                  | Description                                    |
+| ----------------------- | ---------------------------------------------- |
+| `X-RateLimit-Limit`     | Maximum requests allowed in the current window |
+| `X-RateLimit-Remaining` | Requests remaining in the current window       |
+| `X-RateLimit-Reset`     | Unix timestamp when the window resets          |
+| `Retry-After`           | Seconds to wait (only on `429` responses)      |
+
+Default limit: **120 requests per 60 seconds** per key (configurable at key creation).
+
+When the limit is exceeded:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 12
+X-RateLimit-Limit: 120
+X-RateLimit-Reset: 1751234567
+
+{ "error": "Rate limit exceeded" }
+```
+
+---
+
+## Idempotency
+
+Mutating endpoints support the `Idempotency-Key` request header to allow safe retries without creating duplicate resources.
+
+**How it works:**
+
+1. Send any string as `Idempotency-Key` (a UUID per request is recommended).
+2. The server caches the response keyed by `hash(method + path + body + key)`.
+3. On retry with the same key and same body: the cached response is returned with `Idempotency-Status: replayed`.
+4. Same key but different body: `409 Conflict` with `Idempotency-Status: conflict`.
+5. Keys expire after 24 hours (`IDEMPOTENCY_TTL_MS`).
+
+```http
+POST /api/v1/offramp/paycrest/order
+Idempotency-Key: order-abc123-attempt-1
+```
+
+Response headers:
+
+```
+Idempotency-Key: order-abc123-attempt-1
+Idempotency-Status: created    # or: replayed | conflict
+```
 
 ---
 
@@ -32,6 +115,7 @@ Authorization: Bearer <API_KEY_ADMIN_TOKEN>
 Creates a new API key and returns the plaintext secret once.
 
 **Request Body**
+
 ```json
 {
   "name": "Production Partner",
@@ -41,6 +125,7 @@ Creates a new API key and returns the plaintext secret once.
 ```
 
 **Response `201`**
+
 ```json
 {
   "data": {
@@ -66,6 +151,7 @@ Creates a replacement key, marks the prior key as `rotated`, and returns the new
 Revokes a key immediately.
 
 **Request Body**
+
 ```json
 {
   "reason": "Key leaked during credential rotation"
@@ -90,11 +176,11 @@ Returns the most recent usage events for the key.
 
 Two endpoints enforce per-IP rate limits:
 
-| Endpoint | Limit |
-|---|---|
-| `POST /api/offramp/bridge/build-tx` | See `buildTxLimiter` config |
-| `POST /api/offramp/paycrest/order` | See `paycrestOrderLimiter` config |
-| `/api/v1/*` with API keys | Per-key limit from the stored API key record |
+| Endpoint                            | Limit                                        |
+| ----------------------------------- | -------------------------------------------- |
+| `POST /api/offramp/bridge/build-tx` | See `buildTxLimiter` config                  |
+| `POST /api/offramp/paycrest/order`  | See `paycrestOrderLimiter` config            |
+| `/api/v1/*` with API keys           | Per-key limit from the stored API key record |
 
 Rate-limited responses return `429` with a `Retry-After` header (seconds) and `X-Request-Id`.
 
@@ -106,20 +192,20 @@ All **mutating** endpoints that change money or state **require** an `Idempotenc
 
 ### Enforced Endpoints
 
-| Endpoint | Method | Reason |
-|---|---|---|
-| `POST /api/offramp/paycrest/order` | POST | Creates Paycrest payout order — replays original response |
-| `POST /api/offramp/execute-payout` | POST | Saves transaction record — replays original creation |
-| `POST /api/offramp/bridge/submit-soroban` | POST | Submits on-chain Soroban transaction — prevents double-submit |
-| `POST /api/offramp/reverse` | POST | Initiates a reversal — prevents duplicate reversal requests |
-| `PATCH /api/offramp/reverse` | PATCH | Approves/rejects a reversal — prevents duplicate admin actions |
-| `POST /api/offramp/refund` | POST | Processes a refund — prevents issuing a refund twice |
-| `POST /api/offramp/insurance` | POST | Purchases insurance / files claim — prevents duplicate purchases |
-| `POST /api/offramp/recurring` | POST | Creates recurring schedule — prevents duplicate schedules |
-| `POST /api/offramp/batch` | POST | Creates/executes batch — prevents duplicate batch creation |
-| `POST /api/transactions` | POST | Saves transaction — replays original write |
-| `PATCH /api/transactions/[id]` | PATCH | Updates transaction — replays original update |
-| `POST /api/onramp/order` | POST | Creates on-ramp order — prevents duplicate orders |
+| Endpoint                                  | Method | Reason                                                           |
+| ----------------------------------------- | ------ | ---------------------------------------------------------------- |
+| `POST /api/offramp/paycrest/order`        | POST   | Creates Paycrest payout order — replays original response        |
+| `POST /api/offramp/execute-payout`        | POST   | Saves transaction record — replays original creation             |
+| `POST /api/offramp/bridge/submit-soroban` | POST   | Submits on-chain Soroban transaction — prevents double-submit    |
+| `POST /api/offramp/reverse`               | POST   | Initiates a reversal — prevents duplicate reversal requests      |
+| `PATCH /api/offramp/reverse`              | PATCH  | Approves/rejects a reversal — prevents duplicate admin actions   |
+| `POST /api/offramp/refund`                | POST   | Processes a refund — prevents issuing a refund twice             |
+| `POST /api/offramp/insurance`             | POST   | Purchases insurance / files claim — prevents duplicate purchases |
+| `POST /api/offramp/recurring`             | POST   | Creates recurring schedule — prevents duplicate schedules        |
+| `POST /api/offramp/batch`                 | POST   | Creates/executes batch — prevents duplicate batch creation       |
+| `POST /api/transactions`                  | POST   | Saves transaction — replays original write                       |
+| `PATCH /api/transactions/[id]`            | PATCH  | Updates transaction — replays original update                    |
+| `POST /api/onramp/order`                  | POST   | Creates on-ramp order — prevents duplicate orders                |
 
 ### Contract
 
@@ -193,6 +279,7 @@ Validation errors from `POST /api/offramp/paycrest/order` include a `details` ma
 Returns service health and version.
 
 **Response `200`**
+
 ```json
 {
   "status": "ok",
@@ -213,11 +300,12 @@ Returns stored notification preferences for a wallet address.
 
 **Query Parameters**
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `userAddress` | string | ✅ | Wallet address tied to the transaction owner |
+| Parameter     | Type   | Required | Description                                  |
+| ------------- | ------ | -------- | -------------------------------------------- |
+| `userAddress` | string | ✅       | Wallet address tied to the transaction owner |
 
 **Response `200`**
+
 ```json
 {
   "data": {
@@ -242,6 +330,7 @@ If no preferences exist yet, the route returns `{ "data": null }`.
 Creates or updates notification preferences for a wallet address.
 
 **Request Body**
+
 ```json
 {
   "userAddress": "GABC...",
@@ -256,6 +345,7 @@ Creates or updates notification preferences for a wallet address.
 ```
 
 **Response `200`**
+
 ```json
 {
   "data": {
@@ -278,6 +368,7 @@ Creates or updates notification preferences for a wallet address.
 Returns notification delivery tracking records for a single transaction.
 
 **Response `200`**
+
 ```json
 {
   "data": [
@@ -300,6 +391,7 @@ Returns notification delivery tracking records for a single transaction.
 Returns supported fiat currencies. Cached for 5 minutes.
 
 **Response `200`**
+
 ```json
 {
   "data": [
@@ -311,9 +403,9 @@ Returns supported fiat currencies. Cached for 5 minutes.
 
 **Errors**
 
-| Status | Meaning |
-|---|---|
-| `500` | Paycrest API unreachable |
+| Status | Meaning                  |
+| ------ | ------------------------ |
+| `500`  | Paycrest API unreachable |
 
 ```bash
 curl http://localhost:3001/api/offramp/currencies
@@ -327,11 +419,12 @@ Returns supported banks/institutions for a given fiat currency code.
 
 **Path Parameters**
 
-| Parameter | Type | Description |
-|---|---|---|
+| Parameter  | Type   | Description                    |
+| ---------- | ------ | ------------------------------ |
 | `currency` | string | Fiat currency code, e.g. `NGN` |
 
 **Response `200`**
+
 ```json
 [
   { "code": "ACCESS", "name": "Access Bank" },
@@ -341,10 +434,10 @@ Returns supported banks/institutions for a given fiat currency code.
 
 **Errors**
 
-| Status | Meaning |
-|---|---|
-| `400` | Unsupported or unknown currency |
-| `500` | Internal server error |
+| Status | Meaning                         |
+| ------ | ------------------------------- |
+| `400`  | Unsupported or unknown currency |
+| `500`  | Internal server error           |
 
 ```bash
 curl http://localhost:3001/api/offramp/institutions/NGN
@@ -366,13 +459,14 @@ Fetches a conversion quote: Stellar USDC → fiat via Allbridge + Paycrest.
 }
 ```
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `amount` | string | ✅ | USDC amount to convert |
-| `currency` | string | ✅ | Target fiat currency code |
-| `feeMethod` | string | ✅ | `"USDC"` \| `"XLM"` \| `"stablecoin"` \| `"native"` |
+| Field       | Type   | Required | Description                                         |
+| ----------- | ------ | -------- | --------------------------------------------------- |
+| `amount`    | string | ✅       | USDC amount to convert                              |
+| `currency`  | string | ✅       | Target fiat currency code                           |
+| `feeMethod` | string | ✅       | `"USDC"` \| `"XLM"` \| `"stablecoin"` \| `"native"` |
 
 **Response `200`**
+
 ```json
 {
   "destinationAmount": "155000.00",
@@ -384,11 +478,11 @@ Fetches a conversion quote: Stellar USDC → fiat via Allbridge + Paycrest.
 
 **Errors**
 
-| Status | Meaning |
-|---|---|
-| `400` | Invalid amount, missing currency, or invalid feeMethod |
-| `502` | Allbridge or Paycrest quote unavailable |
-| `500` | Unexpected server error |
+| Status | Meaning                                                |
+| ------ | ------------------------------------------------------ |
+| `400`  | Invalid amount, missing currency, or invalid feeMethod |
+| `502`  | Allbridge or Paycrest quote unavailable                |
+| `500`  | Unexpected server error                                |
 
 ```bash
 curl -X POST http://localhost:3001/api/offramp/quote \
@@ -411,23 +505,24 @@ Verifies a beneficiary bank account via Paycrest.
 }
 ```
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `institution` | string | ✅ | Institution code from `/institutions/[currency]` |
-| `accountIdentifier` | string | ✅ | Account number or identifier |
+| Field               | Type   | Required | Description                                      |
+| ------------------- | ------ | -------- | ------------------------------------------------ |
+| `institution`       | string | ✅       | Institution code from `/institutions/[currency]` |
+| `accountIdentifier` | string | ✅       | Account number or identifier                     |
 
 **Response `200`**
+
 ```json
 { "accountName": "John Doe" }
 ```
 
 **Errors**
 
-| Status | Meaning |
-|---|---|
-| `400` | Missing fields or account not found |
-| `502` | Paycrest upstream error (5xx from Paycrest) |
-| `500` | Internal server error |
+| Status | Meaning                                     |
+| ------ | ------------------------------------------- |
+| `400`  | Missing fields or account not found         |
+| `502`  | Paycrest upstream error (5xx from Paycrest) |
+| `500`  | Internal server error                       |
 
 ```bash
 curl -X POST http://localhost:3001/api/offramp/verify-account \
@@ -442,6 +537,7 @@ curl -X POST http://localhost:3001/api/offramp/verify-account \
 Returns Allbridge gas fee options for the Stellar → Base USDC bridge. Cached for 60 seconds.
 
 **Response `200`**
+
 ```json
 {
   "feeOptions": {
@@ -455,10 +551,10 @@ Returns Allbridge gas fee options for the Stellar → Base USDC bridge. Cached f
 
 **Errors**
 
-| Status | Meaning |
-|---|---|
-| `502` | Allbridge SDK timeout or unavailable |
-| `500` | Chain details or token not found |
+| Status | Meaning                              |
+| ------ | ------------------------------------ |
+| `502`  | Allbridge SDK timeout or unavailable |
+| `500`  | Chain details or token not found     |
 
 ```bash
 curl http://localhost:3001/api/offramp/bridge/gas-fee-options
@@ -481,14 +577,15 @@ Builds an unsigned Soroban XDR transaction for bridging USDC from Stellar to Bas
 }
 ```
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `amount` | string | ✅ | USDC amount to bridge |
-| `fromAddress` | string | ✅ | Stellar (G...) sender address |
-| `toAddress` | string | ✅ | Base (0x...) recipient address |
-| `feePaymentMethod` | string | | `"stablecoin"` (default) or `"native"` |
+| Field              | Type   | Required | Description                            |
+| ------------------ | ------ | -------- | -------------------------------------- |
+| `amount`           | string | ✅       | USDC amount to bridge                  |
+| `fromAddress`      | string | ✅       | Stellar (G...) sender address          |
+| `toAddress`        | string | ✅       | Base (0x...) recipient address         |
+| `feePaymentMethod` | string |          | `"stablecoin"` (default) or `"native"` |
 
 **Response `200`**
+
 ```json
 {
   "xdr": "AAAAAgAAAA...",
@@ -509,11 +606,11 @@ Builds an unsigned Soroban XDR transaction for bridging USDC from Stellar to Bas
 
 **Errors**
 
-| Status | Meaning |
-|---|---|
-| `400` | Invalid amount, address, or feePaymentMethod |
-| `429` | Rate limit exceeded — check `Retry-After` header |
-| `500` | Simulation failed, insufficient balance, or chain unavailable |
+| Status | Meaning                                                       |
+| ------ | ------------------------------------------------------------- |
+| `400`  | Invalid amount, address, or feePaymentMethod                  |
+| `429`  | Rate limit exceeded — check `Retry-After` header              |
+| `500`  | Simulation failed, insufficient balance, or chain unavailable |
 
 ```bash
 curl -X POST http://localhost:3001/api/offramp/bridge/build-tx \
@@ -538,26 +635,27 @@ Submits a signed Stellar XDR transaction to the Soroban RPC.
 { "signedXdr": "AAAAAgAAAA..." }
 ```
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `signedXdr` | string | ✅ | Signed transaction XDR from the wallet |
+| Field       | Type   | Required | Description                            |
+| ----------- | ------ | -------- | -------------------------------------- |
+| `signedXdr` | string | ✅       | Signed transaction XDR from the wallet |
 
 **Response `200`**
+
 ```json
 { "status": "PENDING", "hash": "abc123..." }
 ```
 
-| `status` | Meaning |
-|---|---|
+| `status`  | Meaning                                     |
+| --------- | ------------------------------------------- |
 | `PENDING` | Transaction accepted, awaiting confirmation |
-| `SUCCESS` | Transaction confirmed on-chain |
+| `SUCCESS` | Transaction confirmed on-chain              |
 
 **Errors**
 
-| Status | Meaning |
-|---|---|
-| `400` | Missing `signedXdr`, RPC error, or transaction rejected |
-| `500` | Soroban RPC not configured or unreachable |
+| Status | Meaning                                                 |
+| ------ | ------------------------------------------------------- |
+| `400`  | Missing `signedXdr`, RPC error, or transaction rejected |
+| `500`  | Soroban RPC not configured or unreachable               |
 
 ```bash
 curl -X POST http://localhost:3001/api/offramp/bridge/submit-soroban \
@@ -573,27 +671,28 @@ Polls the Soroban RPC for a submitted transaction's confirmation status.
 
 **Path Parameters**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `hash` | string | Transaction hash from `submit-soroban` |
+| Parameter | Type   | Description                            |
+| --------- | ------ | -------------------------------------- |
+| `hash`    | string | Transaction hash from `submit-soroban` |
 
 **Response `200`**
+
 ```json
 { "status": "SUCCESS", "hash": "abc123..." }
 ```
 
-| `status` | Meaning |
-|---|---|
-| `SUCCESS` | Transaction confirmed |
-| `FAILED` | Transaction failed on-chain |
+| `status`    | Meaning                         |
+| ----------- | ------------------------------- |
+| `SUCCESS`   | Transaction confirmed           |
+| `FAILED`    | Transaction failed on-chain     |
 | `NOT_FOUND` | Not yet indexed or invalid hash |
 
 **Errors**
 
-| Status | Meaning |
-|---|---|
-| `400` | RPC returned an error |
-| `500` | Soroban RPC not configured or unreachable |
+| Status | Meaning                                   |
+| ------ | ----------------------------------------- |
+| `400`  | RPC returned an error                     |
+| `500`  | Soroban RPC not configured or unreachable |
 
 ```bash
 curl http://localhost:3001/api/offramp/bridge/tx-status/abc123...
@@ -607,11 +706,12 @@ Polls Allbridge for the cross-chain bridge transfer status.
 
 **Path Parameters**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `txHash` | string | Stellar transaction hash |
+| Parameter | Type   | Description              |
+| --------- | ------ | ------------------------ |
+| `txHash`  | string | Stellar transaction hash |
 
 **Response `200`**
+
 ```json
 {
   "data": {
@@ -622,19 +722,19 @@ Polls Allbridge for the cross-chain bridge transfer status.
 }
 ```
 
-| `status` | Meaning |
-|---|---|
-| `pending` | Bridge not yet picked up the transfer |
-| `processing` | Transfer in progress |
-| `completed` | USDC arrived on Base |
-| `failed` | Bridge transfer failed |
-| `expired` | Transfer expired |
+| `status`     | Meaning                               |
+| ------------ | ------------------------------------- |
+| `pending`    | Bridge not yet picked up the transfer |
+| `processing` | Transfer in progress                  |
+| `completed`  | USDC arrived on Base                  |
+| `failed`     | Bridge transfer failed                |
+| `expired`    | Transfer expired                      |
 
 **Errors**
 
-| Status | Meaning |
-|---|---|
-| `500` | Allbridge SDK error |
+| Status | Meaning             |
+| ------ | ------------------- |
+| `500`  | Allbridge SDK error |
 
 ```bash
 curl http://localhost:3001/api/offramp/bridge/status/abc123...
@@ -665,20 +765,21 @@ Creates a Paycrest fiat payout order. Rate-limited per IP.
 }
 ```
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `amount` | number | ✅ | USDC amount (positive) |
-| `rate` | number | ✅ | FX rate from `/quote` (positive) |
-| `token` | string | ✅ | Token symbol, e.g. `"USDC"` |
-| `network` | string | ✅ | Chain name, e.g. `"base"` |
-| `reference` | string | ✅ | Unique reference string |
-| `returnAddress` | string | ✅ | Base address for refunds |
-| `recipient.institution` | string | ✅ | Bank institution code |
-| `recipient.accountIdentifier` | string | ✅ | Account number |
-| `recipient.accountName` | string | ✅ | Verified account name |
-| `recipient.currency` | string | ✅ | Fiat currency code |
+| Field                         | Type   | Required | Description                      |
+| ----------------------------- | ------ | -------- | -------------------------------- |
+| `amount`                      | number | ✅       | USDC amount (positive)           |
+| `rate`                        | number | ✅       | FX rate from `/quote` (positive) |
+| `token`                       | string | ✅       | Token symbol, e.g. `"USDC"`      |
+| `network`                     | string | ✅       | Chain name, e.g. `"base"`        |
+| `reference`                   | string | ✅       | Unique reference string          |
+| `returnAddress`               | string | ✅       | Base address for refunds         |
+| `recipient.institution`       | string | ✅       | Bank institution code            |
+| `recipient.accountIdentifier` | string | ✅       | Account number                   |
+| `recipient.accountName`       | string | ✅       | Verified account name            |
+| `recipient.currency`          | string | ✅       | Fiat currency code               |
 
 **Response `200`**
+
 ```json
 {
   "data": {
@@ -690,12 +791,12 @@ Creates a Paycrest fiat payout order. Rate-limited per IP.
 
 **Errors**
 
-| Status | Meaning |
-|---|---|
-| `400` | Validation failed — see `details` map |
-| `429` | Rate limit exceeded — check `Retry-After` header |
-| `4xx` | Paycrest rejected the order |
-| `500` | Internal server error |
+| Status | Meaning                                          |
+| ------ | ------------------------------------------------ |
+| `400`  | Validation failed — see `details` map            |
+| `429`  | Rate limit exceeded — check `Retry-After` header |
+| `4xx`  | Paycrest rejected the order                      |
+| `500`  | Internal server error                            |
 
 ```bash
 curl -X POST http://localhost:3001/api/offramp/paycrest/order \
@@ -724,11 +825,12 @@ Fetches the status of a Paycrest payout order.
 
 **Path Parameters**
 
-| Parameter | Type | Description |
-|---|---|---|
+| Parameter | Type   | Description                                      |
+| --------- | ------ | ------------------------------------------------ |
 | `orderId` | string | Order ID from `POST /api/offramp/paycrest/order` |
 
 **Response `200`**
+
 ```json
 {
   "data": {
@@ -740,11 +842,11 @@ Fetches the status of a Paycrest payout order.
 
 **Errors**
 
-| Status | Meaning |
-|---|---|
-| `400` | Missing orderId |
-| `404` | Order not found |
-| `500` | Internal server error |
+| Status | Meaning               |
+| ------ | --------------------- |
+| `400`  | Missing orderId       |
+| `404`  | Order not found       |
+| `500`  | Internal server error |
 
 ```bash
 curl http://localhost:3001/api/offramp/paycrest/order/order-uuid
@@ -758,21 +860,22 @@ Polls Paycrest order status using Bearer token auth (alternative to the adapter-
 
 **Path Parameters**
 
-| Parameter | Type | Description |
-|---|---|---|
+| Parameter | Type   | Description       |
+| --------- | ------ | ----------------- |
 | `orderId` | string | Paycrest order ID |
 
 **Response `200`**
+
 ```json
 { "status": "pending", "id": "order-uuid" }
 ```
 
 **Errors**
 
-| Status | Meaning |
-|---|---|
+| Status    | Meaning                 |
+| --------- | ----------------------- |
 | `4xx/5xx` | Forwarded from Paycrest |
-| `500` | Internal server error |
+| `500`     | Internal server error   |
 
 ```bash
 curl http://localhost:3001/api/offramp/status/order-uuid
@@ -786,11 +889,12 @@ Receives Paycrest event webhooks. Verifies the `X-Paycrest-Signature` HMAC-SHA25
 
 **Headers**
 
-| Header | Required | Description |
-|---|---|---|
-| `X-Paycrest-Signature` | ✅ | HMAC-SHA256 hex digest of the raw request body, keyed with `PAYCREST_WEBHOOK_SECRET` |
+| Header                 | Required | Description                                                                          |
+| ---------------------- | -------- | ------------------------------------------------------------------------------------ |
+| `X-Paycrest-Signature` | ✅       | HMAC-SHA256 hex digest of the raw request body, keyed with `PAYCREST_WEBHOOK_SECRET` |
 
 **Request Body** (example)
+
 ```json
 {
   "event": "payment_order.settled",
@@ -799,16 +903,17 @@ Receives Paycrest event webhooks. Verifies the `X-Paycrest-Signature` HMAC-SHA25
 ```
 
 **Response `200`**
+
 ```json
 { "received": true }
 ```
 
 **Errors**
 
-| Status | Meaning |
-|---|---|
-| `401` | Invalid or missing signature |
-| `400` | Malformed JSON payload |
+| Status | Meaning                      |
+| ------ | ---------------------------- |
+| `401`  | Invalid or missing signature |
+| `400`  | Malformed JSON payload       |
 
 ---
 

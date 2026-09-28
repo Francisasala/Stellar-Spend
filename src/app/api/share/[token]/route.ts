@@ -1,12 +1,11 @@
 import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { globalContainer } from '@/lib/di';
-import { SERVICE_KEYS } from '@/lib/di/registry';
+import { SERVICE_KEYS } from '@/lib/di';
+import { ErrorHandler } from '@/lib/error-handler';
+import { ApiError, ErrorType } from '@/lib/error-types';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { token: string } }
-) {
+export async function GET(req: NextRequest, { params }: { params: { token: string } }) {
   try {
     const { token } = params;
 
@@ -14,11 +13,11 @@ export async function GET(
     const share = await svc.getShareLink(token);
 
     if (!share) {
-      return NextResponse.json({ error: 'Share link not found' }, { status: 404 });
+      return ErrorHandler.notFound('Share link');
     }
 
     if (share.expiresAt && share.expiresAt < Date.now()) {
-      return NextResponse.json({ error: 'Share link expired' }, { status: 410 });
+      return ErrorHandler.handle(new ApiError(ErrorType.NOT_FOUND, 'Share link expired', 410));
     }
 
     // Increment view count
@@ -39,9 +38,6 @@ export async function GET(
     });
   } catch (error) {
     logger.error('Error fetching share:', {}, error);
-    return NextResponse.json(
-      { error: 'Failed to fetch share' },
-      { status: 500 }
-    );
+    return ErrorHandler.handle(new ApiError(ErrorType.SERVER_ERROR, 'Failed to fetch share'));
   }
 }

@@ -1,5 +1,5 @@
-import { disputeRepository } from "./dispute-repository";
-import type { DisputeStatus } from "@/types/disputes";
+import { disputeRepository } from './dispute-repository';
+import type { Dispute, DisputeStatus } from '@stellar-spend/shared';
 
 export interface DisputeRecord {
   id: string;
@@ -15,7 +15,7 @@ export interface DisputeRecord {
   evidence: string[];
 }
 
-function toRecord(dispute: any): DisputeRecord {
+function toRecord(dispute: Dispute): DisputeRecord {
   return {
     id: dispute.id,
     transactionId: dispute.transactionId,
@@ -37,7 +37,10 @@ export async function getDisputeById(id: string): Promise<DisputeRecord | null> 
   return toRecord(dispute);
 }
 
-export async function getDisputes(options: { status?: string; limit?: number }): Promise<DisputeRecord[]> {
+export async function getDisputes(options: {
+  status?: string;
+  limit?: number;
+}): Promise<DisputeRecord[]> {
   const disputes = await disputeRepository.listDisputes(
     options.status as DisputeStatus | undefined,
     options.limit,

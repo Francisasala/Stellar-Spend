@@ -1,7 +1,7 @@
-import { logger } from '@/lib/logger';
-"use client";
+'use client';
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useMemo } from 'react';
+import { logger } from '@/lib/logger';
 
 export interface AnalyticsEvent {
   category: string;
@@ -17,8 +17,8 @@ export interface AnalyticsConfig {
 }
 
 const DEFAULT_CONFIG: AnalyticsConfig = {
-  enabled: typeof window !== "undefined" && process.env.NODE_ENV === "production",
-  debug: process.env.NODE_ENV === "development",
+  enabled: typeof window !== 'undefined' && process.env.NODE_ENV === 'production',
+  debug: process.env.NODE_ENV === 'development',
 };
 
 /**
@@ -26,13 +26,13 @@ const DEFAULT_CONFIG: AnalyticsConfig = {
  * Tracks user interactions for analytics (#398)
  */
 export function useAnalytics(config: Partial<AnalyticsConfig> = {}) {
-  const finalConfig = { ...DEFAULT_CONFIG, ...config };
+  const finalConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
 
   const track = useCallback(
     (event: AnalyticsEvent) => {
       if (!finalConfig.enabled) {
         if (finalConfig.debug) {
-          logger.info("[Analytics Debug]", event);
+          logger.debug('analytics.debug', { event });
         }
         return;
       }
@@ -47,30 +47,30 @@ export function useAnalytics(config: Partial<AnalyticsConfig> = {}) {
 
       // Use sendBeacon for reliability (doesn't block page unload)
       if (navigator.sendBeacon) {
-        const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-        navigator.sendBeacon("/api/monitoring/vitals", blob);
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        navigator.sendBeacon('/api/monitoring/vitals', blob);
       } else {
         // Fallback to fetch
-        fetch("/api/monitoring/vitals", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        fetch('/api/monitoring/vitals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
           keepalive: true,
         }).catch((err) => {
           if (finalConfig.debug) {
-            logger.error("[Analytics Error]", {}, err);
+            logger.error('analytics.send_failed', {}, err);
           }
         });
       }
     },
-    [finalConfig]
+    [finalConfig],
   );
 
   // Track page views
   useEffect(() => {
     track({
-      category: "Navigation",
-      action: "page_view",
+      category: 'Navigation',
+      action: 'page_view',
       label: window.location.pathname,
     });
   }, [track]);
@@ -79,44 +79,44 @@ export function useAnalytics(config: Partial<AnalyticsConfig> = {}) {
   const trackWalletConnect = useCallback(
     (walletType: string, success: boolean) => {
       track({
-        category: "Wallet",
-        action: success ? "connect_success" : "connect_failure",
+        category: 'Wallet',
+        action: success ? 'connect_success' : 'connect_failure',
         label: walletType,
       });
     },
-    [track]
+    [track],
   );
 
   // Track transaction events
   const trackTransaction = useCallback(
-    (action: "initiated" | "completed" | "failed", metadata?: Record<string, unknown>) => {
+    (action: 'initiated' | 'completed' | 'failed', metadata?: Record<string, unknown>) => {
       track({
-        category: "Transaction",
+        category: 'Transaction',
         action,
         metadata,
       });
     },
-    [track]
+    [track],
   );
 
   // Track theme changes
   const trackThemeChange = useCallback(
     (theme: string) => {
       track({
-        category: "Accessibility",
-        action: "theme_change",
+        category: 'Accessibility',
+        action: 'theme_change',
         label: theme,
       });
     },
-    [track]
+    [track],
   );
 
   // Track errors
   const trackError = useCallback(
     (error: Error, context?: string) => {
       track({
-        category: "Error",
-        action: "error_occurred",
+        category: 'Error',
+        action: 'error_occurred',
         label: context,
         metadata: {
           message: error.message,
@@ -124,7 +124,7 @@ export function useAnalytics(config: Partial<AnalyticsConfig> = {}) {
         },
       });
     },
-    [track]
+    [track],
   );
 
   return {

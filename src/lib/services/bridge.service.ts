@@ -1,5 +1,4 @@
-import { validateAmount, validateAddress } from '@/lib/offramp/utils/validation';
-import { extractErrorMessage } from '@/lib/offramp/utils/errors';
+import { validateAmount, validateAddress } from '@/lib/offramp';
 
 export interface BuildTxRequest {
   amount: string;
@@ -37,8 +36,6 @@ export interface SubmitTxResponse {
 export class BridgeService {
   async buildTransaction(request: BuildTxRequest): Promise<BuildTxResponse> {
     this.validateBuildRequest(request);
-
-    const feeMethod = request.feePaymentMethod || 'stablecoin';
 
     // Build transaction logic would go here
     // This is a placeholder that would integrate with Allbridge SDK
@@ -100,4 +97,3 @@ export class BridgeService {
     }
   }
 }
-

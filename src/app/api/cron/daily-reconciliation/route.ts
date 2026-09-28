@@ -8,38 +8,66 @@
  * Closes #1203
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { runReconciliation } from '@/lib/reconciliation';
+import { runReconciliationJob } from '@/lib/reconciliation';
+import { dal } from '@/lib/db';
+import { logger } from '@/lib/logger';
+import type { ReconciliationRecord } from '@/lib/reconciliation';
+import { ErrorHandler } from '@/lib/error-handler';
+import { ApiError, ErrorType } from '@/lib/error-types';
+import type { Transaction } from '@/lib/transaction-storage';
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+type ReconciliationTransaction = Transaction & { baseTxHash?: string };
 
-export async function GET(req: NextRequest) {
-  return handle(req);
+async function fetchDailyRecords(): Promise<ReconciliationRecord[]> {
+  const yesterday = Date.now() - 24 * 60 * 60 * 1000;
+  try {
+    const transactions = await dal.getByUser('*').catch(() => []);
+    return transactions
+      .filter((tx: ReconciliationTransaction) => tx.timestamp >= yesterday)
+      .map((tx: ReconciliationTransaction) => ({
+        transactionId: tx.id,
+        stellarTxHash: tx.stellarTxHash,
+        baseTxHash: tx.baseTxHash,
+        paycrestOrderId: tx.payoutOrderId,
+        amount: tx.amount,
+        currency: tx.currency,
+        timestamp: new Date(tx.timestamp).toISOString(),
+      }));
+  } catch {
+    return [];
+  }
 }
 
 export async function POST(req: NextRequest) {
-  return handle(req);
-}
-
-async function handle(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get('authorization');
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
-
-  const url = new URL(req.url);
-  const windowStart = url.searchParams.get('windowStart') ?? undefined;
-  const windowEnd = url.searchParams.get('windowEnd') ?? undefined;
-  const dryRun = url.searchParams.get('dryRun') === 'true';
-
   try {
-    const result = await runReconciliation({ windowStart, windowEnd, dryRun });
-    return NextResponse.json({ ok: true, result });
+    const secret = req.headers.get('x-cron-secret');
+    if (secret !== process.env.CRON_SECRET) {
+      return ErrorHandler.unauthorized('Unauthorized');
+    }
+
+    logger.info('cron.daily-reconciliation.start', {});
+
+    const records = await fetchDailyRecords();
+    const entry = await runReconciliationJob(records);
+
+    logger.info('cron.daily-reconciliation.complete', {
+      runId: entry.id,
+      totalTransactions: entry.report.totalTransactions,
+      discrepancies: entry.report.discrepancies.length,
+      alerts: entry.alerts.length,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      runId: entry.id,
+      runAt: entry.runAt,
+      report: entry.report,
+      alerts: entry.alerts,
+    });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    logger.error('cron.daily-reconciliation.failed', {}, err);
+    return ErrorHandler.handle(
+      new ApiError(ErrorType.SERVER_ERROR, 'Daily reconciliation failed')
+    );
   }
 }

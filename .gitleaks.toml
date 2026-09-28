@@ -1,0 +1,64 @@
+title = "Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allowlist for false positives and test fixtures"
+paths = [
+  '''\.env\.example$''',
+  '''\.env\.sample$''',
+  '''\.env\.template$''',
+  '''tests/fixtures/.*''',
+  '''e2e/.*''',
+  # Issue #1014 regression fixtures/test (synthetic secrets, must stay scanned
+  # by the dedicated .gitleaks-regression.toml, not the repo-wide scan).
+  '''src/test/fixtures/.*''',
+  '''src/test/gitleaks-regression\.test\.ts$''',
+  '''src/test/.*\.test\.ts$''',
+  '''__snapshots__/.*''',
+  '''\.example$''',
+  '''docs/.*\.md$''',
+  '''README\.md$''',
+  '''CONTRIBUTING\.md$''',
+  '''SECURITY\.md$''',
+  '''package-lock\.json$''',
+  '''src/test/fixtures/secret-scan/.*''',
+  '''contracts/target/.*''',
+  '''target/.*''',
+]
+regexes = [
+  '''(your_|YOUR_|REPLACE_|replace_|CHANGE_|change_|INSERT_|insert_|ENTER_|enter_)[a-zA-Z0-9_]*''',
+  '''(test_|TEST_|example_|EXAMPLE_|sample_|SAMPLE_|dummy_|DUMMY_|fake_|FAKE_|mock_|MOCK_)[a-zA-Z0-9_]*(key|token|secret|password|api_key)''',
+  '''G[A-Z0-9]{55}''',
+  '''(CA|CD|C)[A-Z0-9]{55}''',
+  '''0x[a-fA-F0-9]{40}''',
+  '''https://[a-f0-9]{32}@[a-z0-9]+\.ingest\.sentry\.io/\d+''',
+  '''https?://(rpc|soroban|horizon|api)\.[a-zA-Z0-9-]+\.(stellar|gateway|fm|org|com)''',
+  '''https?://(cdn|d\d+)\.(jsdelivr|cloudfront|unpkg)\.(net|com)''',
+  '''(password|passwd|pwd)["\s:=]+["\s]*(test|password|secret|changeme|example)["\s]*$''',
+  '''\/\/.*(test|example|sample|dummy|fake|mock).*(key|token|secret|password|credential)''',
+  '''https?://(etherscan|basescan|stellar\.org|stellarchain)\.(io|org)/.*''',
+  '''https?://(friendbot|laboratory)\.stellar\.org.*''',
+  '''https?://(docs|developers)\.base\.org.*''',
+  '''(your_|YOUR_|REPLACE_|replace_|CHANGE_|change_|INSERT_|insert_|ENTER_|enter_|FILL_|fill_)[a-zA-Z0-9_]*''',
+  '''^[A-Z_]+=(your_|YOUR_|REPLACE_|replace_|CHANGE_|change_|INSERT_|insert_|ENTER_|enter_|FILL_|fill_|test_|TEST_|testing_|TESTING_)''',
+  '''https?://(lobstr|keybase|stellarport|stomt|stellarexpert)\..*''',
+  '''https?://(base\.org|base\.com|coinbase\.com|warpcast\.com|onchain\.base\.org)''',
+  '''^(TEST_|TESTING_|TEST)[A-Z0-9_]+=''',
+  '''https?://(alchemy|infura|quicknode)\.(com|in|io)/.*''',
+  '''\b(USDC|XLM|AQUA|yUSDC|USDT)\b''',
+  '''^0x[a-fA-F0-9]{0,8}$''',
+  '''[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}''',
+  '''https?://github\.com/[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+''',
+  '''"(?:@[a-z0-9-]+\/)?[a-z0-9-]+"''',
+  '''\b\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?\b''',
+  '''(Test SDF Network ; September 2015|Public Global Stellar Network ; September 2015)''',
+  # False positives: performance threshold constants
+  '''PERF_THRESHOLDS\.(apiP95|apiP99|dbP95|dbP99)(Critical|Warn)Ms''',
+]
+
+[[rules]]
+id = "stellar-secret-key"
+description = "Stellar Secret Key (S + 55 base58 chars)"
+regex = '''(?i)S[a-zA-Z0-9]{55}'''

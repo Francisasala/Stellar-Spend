@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getActiveStablecoins, getStablecoinConfig, calculateStablecoinBridgeFee } from '@/lib/stablecoins';
+import {
+  getActiveStablecoins,
+  getStablecoinConfig,
+  calculateStablecoinBridgeFee,
+} from '@/lib/stablecoins';
+import { ErrorHandler } from '@/lib/error-handler';
 
 /**
  * GET /api/offramp/tokens
@@ -16,12 +21,14 @@ export async function GET(req: NextRequest) {
   if (symbol) {
     const config = getStablecoinConfig(symbol);
     if (!config) {
-      return NextResponse.json({ error: `Unsupported token: ${symbol}` }, { status: 400 });
+      return ErrorHandler.validation(`Unsupported token: ${symbol}`);
     }
     const result: Record<string, unknown> = { token: config };
     if (amount) {
       result.bridgeFee = calculateStablecoinBridgeFee(symbol, amount);
-      result.amountAfterFee = (parseFloat(amount) - parseFloat(result.bridgeFee as string)).toFixed(6);
+      result.amountAfterFee = (parseFloat(amount) - parseFloat(result.bridgeFee as string)).toFixed(
+        6,
+      );
     }
     return NextResponse.json(result);
   }

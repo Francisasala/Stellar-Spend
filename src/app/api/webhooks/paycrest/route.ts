@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 import { env } from '@/lib/env';
 import { ErrorHandler } from '@/lib/error-handler';
-import { generateRequestId, createRequestLogger } from '@/lib/offramp/utils/logger';
-import { mapPaycrestStatus } from '@/lib/offramp/utils/mapPaycrestStatus';
-import { dal, DatabaseError } from '@/lib/db/dal';
-import { enqueue } from '@/lib/webhook/dispatcher';
-import { verifyWebhookSignature, createNonceTable } from '@/lib/webhook/security';
-import { notifyTransactionStatusUpdate } from '@/lib/notifications/service';
+import { generateRequestId, createRequestLogger } from '@/lib/offramp';
+import { dal, DatabaseError } from '@/lib/db';
+import { enqueue } from '@/lib/webhook';
+import { verifyWebhookSignature, createNonceTable } from '@/lib/webhookVerify';
+import { notifyTransactionStatusUpdate } from '@/lib/notifications';
 import { withIdempotency } from '@/lib/idempotency';
 import { logger } from '@/lib/logger';
 import type { NextRequest } from 'next/server';
@@ -35,7 +34,12 @@ async function handleWebhook(request: NextRequest): Promise<NextResponse> {
   const nonce = request.headers.get('X-Paycrest-Nonce');
 
   if (!signature || !timestamp || !nonce) {
-    logger.warn('webhook.missing_headers', { requestId, hasSignature: !!signature, hasTimestamp: !!timestamp, hasNonce: !!nonce });
+    logger.warn('webhook.missing_headers', {
+      requestId,
+      hasSignature: !!signature,
+      hasTimestamp: !!timestamp,
+      hasNonce: !!nonce,
+    });
     reqLogger.logError(401, 'Missing required webhook headers');
     return ErrorHandler.unauthorized('Missing required security headers');
   }

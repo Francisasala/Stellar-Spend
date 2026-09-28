@@ -34,11 +34,11 @@ export class I18n {
 
   t(key: string): string {
     const keys = key.split('.');
-    let value: any = translations[this.currentLanguage];
+    let value: unknown = translations[this.currentLanguage];
 
     for (const k of keys) {
-      if (value && typeof value === 'object' && k in value) {
-        value = value[k];
+      if (value && typeof value === 'object' && !Array.isArray(value) && k in value) {
+        value = (value as Record<string, unknown>)[k];
       } else {
         return key;
       }

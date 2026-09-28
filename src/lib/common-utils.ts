@@ -12,14 +12,9 @@ export async function retryWithBackoff<T>(
     initialDelay?: number;
     maxDelay?: number;
     backoffMultiplier?: number;
-  } = {}
+  } = {},
 ): Promise<T> {
-  const {
-    maxAttempts = 3,
-    initialDelay = 1000,
-    maxDelay = 30000,
-    backoffMultiplier = 2,
-  } = options;
+  const { maxAttempts = 3, initialDelay = 1000, maxDelay = 30000, backoffMultiplier = 2 } = options;
 
   let lastError: Error | null = null;
   let delay = initialDelay;
@@ -45,9 +40,9 @@ export async function retryWithBackoff<T>(
 /**
  * Debounce a function
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   fn: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout | null = null;
 
@@ -65,9 +60,9 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * Throttle a function
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   fn: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let lastCall = 0;
   let timeoutId: NodeJS.Timeout | null = null;
@@ -83,11 +78,14 @@ export function throttle<T extends (...args: any[]) => any>(
         timeoutId = null;
       }
     } else if (!timeoutId) {
-      timeoutId = setTimeout(() => {
-        fn(...args);
-        lastCall = Date.now();
-        timeoutId = null;
-      }, delay - (now - lastCall));
+      timeoutId = setTimeout(
+        () => {
+          fn(...args);
+          lastCall = Date.now();
+          timeoutId = null;
+        },
+        delay - (now - lastCall),
+      );
     }
   };
 }
@@ -95,7 +93,7 @@ export function throttle<T extends (...args: any[]) => any>(
 /**
  * Memoize a function
  */
-export function memoize<T extends (...args: any[]) => any>(fn: T): T {
+export function memoize<T extends (...args: unknown[]) => unknown>(fn: T): T {
   const cache = new Map();
 
   return ((...args: Parameters<T>) => {
@@ -114,7 +112,7 @@ export function memoize<T extends (...args: any[]) => any>(fn: T): T {
 /**
  * Deep merge objects
  */
-export function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
+export function deepMerge<T extends Record<string, unknown>>(target: T, source: Partial<T>): T {
   const result = { ...target };
 
   for (const key in source) {
@@ -132,7 +130,7 @@ export function deepMerge<T extends Record<string, any>>(target: T, source: Part
       ) {
         result[key] = deepMerge(targetValue, sourceValue);
       } else {
-        result[key] = sourceValue as any;
+        result[key] = sourceValue as T[string];
       }
     }
   }
@@ -178,7 +176,7 @@ export function delay(ms: number): Promise<void> {
 /**
  * Check if value is empty
  */
-export function isEmpty(value: any): boolean {
+export function isEmpty(value: unknown): boolean {
   if (value === null || value === undefined) {
     return true;
   }

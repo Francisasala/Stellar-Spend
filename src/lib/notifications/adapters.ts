@@ -1,4 +1,4 @@
-import type { ChannelAdapter, DeliveryResult } from '@/lib/notifications/types';
+import type { ChannelAdapter, DeliveryResult } from '@/lib/notifications';
 
 function getProviderMessageId(payload: unknown): string | undefined {
   if (payload && typeof payload === 'object') {
@@ -34,7 +34,10 @@ export class EmailAdapter implements ChannelAdapter {
     });
 
     if (!response.ok) {
-      return { status: 'failed', errorMessage: `Email endpoint responded with HTTP ${response.status}` };
+      return {
+        status: 'failed',
+        errorMessage: `Email endpoint responded with HTTP ${response.status}`,
+      };
     }
 
     const payload = await response.json().catch(() => ({}));
@@ -64,7 +67,10 @@ export class SmsAdapter implements ChannelAdapter {
     });
 
     if (!response.ok) {
-      return { status: 'failed', errorMessage: `SMS endpoint responded with HTTP ${response.status}` };
+      return {
+        status: 'failed',
+        errorMessage: `SMS endpoint responded with HTTP ${response.status}`,
+      };
     }
 
     const payload = await response.json().catch(() => ({}));
@@ -94,7 +100,10 @@ export class PushAdapter implements ChannelAdapter {
     });
 
     if (!response.ok) {
-      return { status: 'failed', errorMessage: `Push endpoint responded with HTTP ${response.status}` };
+      return {
+        status: 'failed',
+        errorMessage: `Push endpoint responded with HTTP ${response.status}`,
+      };
     }
 
     const payload = await response.json().catch(() => ({}));

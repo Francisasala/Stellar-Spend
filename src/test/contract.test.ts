@@ -1,463 +1,285 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { PaycrestAdapter, mapPaycrestStatus } from '../lib/offramp/adapters/paycrest-adapter';
+import { HttpClientError } from '../lib/clients/http-client';
+import paycrestCurrencies from './fixtures/paycrest/currencies.json';
+import paycrestInstitutions from './fixtures/paycrest/institutions.json';
+import paycrestRate from './fixtures/paycrest/rate.json';
+import paycrestOrder from './fixtures/paycrest/order.json';
+import paycrestVerifyAccount from './fixtures/paycrest/verify-account.json';
+import paycrestErrors from './fixtures/paycrest/error-responses.json';
+import allbridgeTokens from './fixtures/allbridge/tokens.json';
+import allbridgeQuote from './fixtures/allbridge/quote.json';
+import allbridgeErrors from './fixtures/allbridge/error-responses.json';
 
-interface Contract {
-  version: string;
-  breaking: boolean;
-  fields: Record<string, string>;
+function mockFetch(data: unknown, ok = true, status = 200) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok,
+      status,
+      statusText: ok ? 'OK' : 'Bad Request',
+      json: () => Promise.resolve(data),
+    }),
+  );
 }
 
-const contracts: Map<string, Contract> = new Map();
+beforeEach(() => vi.restoreAllMocks());
 
-describe('Contract Testing - API Contracts', () => {
-  describe('Paycrest Integration Contract', () => {
-    it('should define quote request contract', () => {
-      const quoteRequest = {
-        amount: 100,
-        currency: 'NGN',
-        feeMethod: 'USDC',
-      };
+describe('Paycrest contract tests', () => {
+  const adapter = new PaycrestAdapter('test-api-key');
 
-      expect(quoteRequest).toHaveProperty('amount');
-      expect(quoteRequest).toHaveProperty('currency');
-      expect(quoteRequest).toHaveProperty('feeMethod');
-      expect(typeof quoteRequest.amount).toBe('number');
-      expect(typeof quoteRequest.currency).toBe('string');
+  describe('getCurrencies', () => {
+    it('parses all documented fields from currencies fixture', async () => {
+      mockFetch(paycrestCurrencies);
+      const currencies = await adapter.getCurrencies();
+      expect(Array.isArray(currencies)).toBe(true);
+      expect(currencies.length).toBe(paycrestCurrencies.length);
+
+      for (const c of currencies) {
+        expect(c).toHaveProperty('code');
+        expect(typeof c.code).toBe('string');
+        expect(c).toHaveProperty('name');
+        expect(typeof c.name).toBe('string');
+        expect(c).toHaveProperty('symbol');
+        expect(typeof c.symbol).toBe('string');
+      }
     });
 
-    it('should define quote response contract', () => {
-      const quoteResponse = {
-        destinationAmount: '158202.00',
-        rate: 1598,
-        currency: 'NGN',
-        bridgeFee: '0.5',
-        payoutFee: '0',
-        estimatedTime: 300,
-      };
-
-      expect(quoteResponse).toHaveProperty('destinationAmount');
-      expect(quoteResponse).toHaveProperty('rate');
-      expect(quoteResponse).toHaveProperty('currency');
-      expect(typeof quoteResponse.rate).toBe('number');
-      expect(quoteResponse.rate).toBeGreaterThan(0);
-    });
-
-    it('should define payout order request contract', () => {
-      const payoutRequest = {
-        amount: '100',
-        currency: 'NGN',
-        accountNumber: '1234567890',
-        bankCode: 'GTB',
-        accountName: 'John Doe',
-        narration: 'USDC Offramp',
-      };
-
-      expect(payoutRequest).toHaveProperty('amount');
-      expect(payoutRequest).toHaveProperty('currency');
-      expect(payoutRequest).toHaveProperty('accountNumber');
-      expect(payoutRequest).toHaveProperty('bankCode');
-      expect(typeof payoutRequest.amount).toBe('string');
-    });
-
-    it('should define payout order response contract', () => {
-      const payoutResponse = {
-        orderId: 'order_123456',
-        status: 'pending',
-        amount: '100',
-        currency: 'NGN',
-        createdAt: '2024-01-01T00:00:00Z',
-        reference: 'ref_123456',
-      };
-
-      expect(payoutResponse).toHaveProperty('orderId');
-      expect(payoutResponse).toHaveProperty('status');
-      expect(payoutResponse).toHaveProperty('amount');
-      expect(['pending', 'completed', 'failed']).toContain(payoutResponse.status);
-    });
-
-    it('should validate payout status values', () => {
-      const validStatuses = ['pending', 'processing', 'completed', 'failed'];
-      const testStatus = 'completed';
-
-      expect(validStatuses).toContain(testStatus);
+    it('includes expected currencies', async () => {
+      mockFetch(paycrestCurrencies);
+      const currencies = await adapter.getCurrencies();
+      const codes = currencies.map((c) => c.code);
+      expect(codes).toContain('NGN');
+      expect(codes).toContain('KES');
+      expect(codes).toContain('GHS');
     });
   });
 
-  describe('Allbridge Integration Contract', () => {
-    it('should define bridge transaction request contract', () => {
-      const bridgeRequest = {
-        amount: '99.5',
-        fromAddress: 'GCFX...ABCD',
-        toAddress: '0xd8dA...6045',
-        feePaymentMethod: 'stablecoin',
-      };
+  describe('getInstitutions', () => {
+    it('parses all documented fields from institutions fixture', async () => {
+      mockFetch(paycrestInstitutions);
+      const institutions = await adapter.getInstitutions('NGN');
+      expect(Array.isArray(institutions)).toBe(true);
+      expect(institutions.length).toBe(paycrestInstitutions.length);
 
-      expect(bridgeRequest).toHaveProperty('amount');
-      expect(bridgeRequest).toHaveProperty('fromAddress');
-      expect(bridgeRequest).toHaveProperty('toAddress');
-      expect(typeof bridgeRequest.amount).toBe('string');
+      for (const inst of institutions) {
+        expect(inst).toHaveProperty('code');
+        expect(typeof inst.code).toBe('string');
+        expect(inst).toHaveProperty('name');
+        expect(typeof inst.name).toBe('string');
+      }
     });
 
-    it('should define bridge transaction response contract', () => {
-      const bridgeResponse = {
-        xdr: 'AAAAAgAAAAB...',
-        sourceToken: {
-          symbol: 'USDC',
-          decimals: 7,
-          chain: 'STELLAR',
-        },
-        destinationToken: {
-          symbol: 'USDC',
-          decimals: 6,
-          chain: 'BASE',
-        },
-      };
-
-      expect(bridgeResponse).toHaveProperty('xdr');
-      expect(bridgeResponse).toHaveProperty('sourceToken');
-      expect(bridgeResponse).toHaveProperty('destinationToken');
-      expect(bridgeResponse.sourceToken).toHaveProperty('symbol');
-      expect(bridgeResponse.sourceToken).toHaveProperty('decimals');
-    });
-
-    it('should define bridge status response contract', () => {
-      const statusResponse = {
-        txHash: 'tx_hash_123',
-        status: 'completed',
-        sourceAmount: '99.5',
-        destinationAmount: '99',
-        timestamp: 1704067200,
-      };
-
-      expect(statusResponse).toHaveProperty('txHash');
-      expect(statusResponse).toHaveProperty('status');
-      expect(statusResponse).toHaveProperty('sourceAmount');
-      expect(statusResponse).toHaveProperty('destinationAmount');
-    });
-
-    it('should validate bridge status values', () => {
-      const validStatuses = ['pending', 'completed', 'failed'];
-      const testStatus = 'pending';
-
-      expect(validStatuses).toContain(testStatus);
+    it('includes well-known Nigerian banks', async () => {
+      mockFetch(paycrestInstitutions);
+      const institutions = await adapter.getInstitutions('NGN');
+      const codes = institutions.map((i) => i.code);
+      expect(codes).toContain('ACCESS');
+      expect(codes).toContain('GTB');
+      expect(codes).toContain('ZENITH');
     });
   });
 
-  describe('API Versioning Contract', () => {
-    it('should maintain backward compatibility for v1 endpoints', () => {
-      const v1Response = {
-        version: 'v1',
-        data: {
-          amount: 100,
-          currency: 'NGN',
-        },
-      };
-
-      expect(v1Response).toHaveProperty('version');
-      expect(v1Response.version).toBe('v1');
-      expect(v1Response).toHaveProperty('data');
+  describe('getRate', () => {
+    it('parses numeric rate from fixture', async () => {
+      mockFetch(paycrestRate);
+      const rate = await adapter.getRate('USDC', '100', 'NGN');
+      expect(typeof rate).toBe('number');
+      expect(rate).toBeGreaterThan(0);
+      expect(rate).toBe(paycrestRate.data);
     });
 
-    it('should support API versioning headers', () => {
-      const headers = {
-        'api-version': 'v1',
-        'content-type': 'application/json',
-      };
-
-      expect(headers).toHaveProperty('api-version');
-      expect(['v1', 'v2']).toContain(headers['api-version']);
-    });
-
-    it('should handle version deprecation gracefully', () => {
-      const deprecationWarning = {
-        status: 200,
-        warning: 'API v1 is deprecated. Please upgrade to v2.',
-        data: {},
-      };
-
-      expect(deprecationWarning).toHaveProperty('warning');
-      expect(deprecationWarning.status).toBe(200);
+    it('returns a finite positive number', async () => {
+      mockFetch(paycrestRate);
+      const rate = await adapter.getRate('USDC', '100', 'NGN');
+      expect(isFinite(rate)).toBe(true);
+      expect(rate).toBeGreaterThan(0);
     });
   });
 
-  describe('Error Response Contract', () => {
-    it('should define error response contract', () => {
-      const errorResponse = {
-        error: {
-          code: 'INSUFFICIENT_BALANCE',
-          message: 'Insufficient USDC balance',
-          details: {
-            required: 100,
-            available: 50,
-          },
-        },
-        timestamp: '2024-01-01T00:00:00Z',
-      };
-
-      expect(errorResponse).toHaveProperty('error');
-      expect(errorResponse.error).toHaveProperty('code');
-      expect(errorResponse.error).toHaveProperty('message');
-      expect(typeof errorResponse.error.code).toBe('string');
+  describe('getOrderStatus', () => {
+    it('parses order from fixture', async () => {
+      mockFetch(paycrestOrder);
+      const result = await adapter.getOrderStatus(paycrestOrder.id);
+      expect(result).toHaveProperty('status');
+      expect(result).toHaveProperty('id');
+      expect(typeof result.status).toBe('string');
+      expect(typeof result.id).toBe('string');
     });
 
-    it('should define validation error contract', () => {
-      const validationError = {
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Validation failed',
-          fields: {
-            amount: 'Amount must be greater than 0',
-            currency: 'Invalid currency code',
-          },
-        },
-      };
-
-      expect(validationError.error).toHaveProperty('fields');
-      expect(validationError.error.fields).toHaveProperty('amount');
-    });
-
-    it('should define rate limit error contract', () => {
-      const rateLimitError = {
-        error: {
-          code: 'RATE_LIMIT_EXCEEDED',
-          message: 'Too many requests',
-          retryAfter: 60,
-        },
-        status: 429,
-      };
-
-      expect(rateLimitError.status).toBe(429);
-      expect(rateLimitError.error).toHaveProperty('retryAfter');
+    it('returns status as a non-empty string', async () => {
+      mockFetch(paycrestOrder);
+      const result = await adapter.getOrderStatus(paycrestOrder.id);
+      expect(typeof result.status).toBe('string');
+      expect(result.status.length).toBeGreaterThan(0);
     });
   });
 
-  describe('Webhook Contract', () => {
-    it('should define webhook payload contract', () => {
-      const webhookPayload = {
-        event: 'payout.completed',
-        data: {
-          orderId: 'order_123456',
-          status: 'completed',
-          amount: '100',
-          currency: 'NGN',
-        },
-        timestamp: '2024-01-01T00:00:00Z',
-        signature: 'sig_123456',
-      };
-
-      expect(webhookPayload).toHaveProperty('event');
-      expect(webhookPayload).toHaveProperty('data');
-      expect(webhookPayload).toHaveProperty('signature');
-      expect(typeof webhookPayload.event).toBe('string');
+  describe('verifyAccount', () => {
+    it('parses account name from fixture', async () => {
+      mockFetch(paycrestVerifyAccount);
+      const name = await adapter.verifyAccount('GTB', '0123456789');
+      expect(typeof name).toBe('string');
+      expect(name.length).toBeGreaterThan(0);
     });
 
-    it('should validate webhook event types', () => {
-      const validEvents = [
-        'payout.pending',
-        'payout.processing',
-        'payout.completed',
-        'payout.failed',
-      ];
-      const testEvent = 'payout.completed';
+    it('returns the verified account name', async () => {
+      mockFetch(paycrestVerifyAccount);
+      const name = await adapter.verifyAccount('GTB', '0123456789');
+      expect(name).toBe(paycrestVerifyAccount.data.accountName);
+    });
+  });
+});
 
-      expect(validEvents).toContain(testEvent);
+describe('Paycrest error-response contract tests', () => {
+  const adapter = new PaycrestAdapter('test-api-key');
+
+  it('throws HttpClientError on 400 error', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        json: () => Promise.resolve({ message: 'Invalid request' }),
+      }),
+    );
+    await expect(adapter.getCurrencies()).rejects.toBeInstanceOf(HttpClientError);
+  });
+
+  it('throws HttpClientError on 401 error', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        json: () => Promise.resolve({ message: 'Unauthorized' }),
+      }),
+    );
+    await expect(adapter.getCurrencies()).rejects.toBeInstanceOf(HttpClientError);
+  });
+
+  it('throws HttpClientError on 500 error', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Server Error',
+        json: () => Promise.resolve({ message: 'Server error' }),
+      }),
+    );
+    await expect(adapter.getCurrencies()).rejects.toBeInstanceOf(HttpClientError);
+  }, 15000);
+
+  it('account_not_found returns empty string', async () => {
+    mockFetch(
+      paycrestErrors.account_not_found.body,
+      false,
+      paycrestErrors.account_not_found.status,
+    );
+    const name = await adapter.verifyAccount('GTB', '0000000000');
+    expect(name).toBe('');
+  });
+});
+
+describe('Allbridge contract tests', () => {
+  describe('token fixture structure', () => {
+    it('has stellar and base chains with USDC', () => {
+      expect(allbridgeTokens).toHaveProperty('stellar');
+      expect(allbridgeTokens).toHaveProperty('base');
+      expect(allbridgeTokens.stellar.tokens.some((t) => t.symbol === 'USDC')).toBe(true);
+      expect(allbridgeTokens.base.tokens.some((t) => t.symbol === 'USDC')).toBe(true);
     });
 
-    it('should verify webhook signature format', () => {
-      const signature = 'sig_abc123def456';
-      const isValidFormat = /^sig_[a-z0-9]+$/.test(signature);
+    it('all tokens have required fields', () => {
+      const allTokens = [...allbridgeTokens.stellar.tokens, ...allbridgeTokens.base.tokens];
+      for (const token of allTokens) {
+        expect(token).toHaveProperty('symbol');
+        expect(token).toHaveProperty('name');
+        expect(token).toHaveProperty('decimals');
+        expect(token).toHaveProperty('contract');
+        expect(token).toHaveProperty('allbridgeSymbol');
+        expect(typeof token.decimals).toBe('number');
+        expect(token.decimals).toBeGreaterThan(0);
+      }
+    });
 
-      expect(isValidFormat).toBe(true);
+    it('stellar USDC has 7 decimals, base USDC has 6', () => {
+      const stellarUsdc = allbridgeTokens.stellar.tokens.find((t) => t.symbol === 'USDC')!;
+      const baseUsdc = allbridgeTokens.base.tokens.find((t) => t.symbol === 'USDC')!;
+      expect(stellarUsdc.decimals).toBe(7);
+      expect(baseUsdc.decimals).toBe(6);
     });
   });
 
-  describe('Contract Versioning', () => {
-    it('should track contract version changes', () => {
-      const contractVersion = {
-        version: '1.0.0',
-        changes: [
-          'Added orderId field to payout response',
-          'Deprecated reference field',
-        ],
-        releaseDate: '2024-01-01',
-      };
-
-      expect(contractVersion).toHaveProperty('version');
-      expect(contractVersion).toHaveProperty('changes');
-      expect(Array.isArray(contractVersion.changes)).toBe(true);
+  describe('quote fixture structure', () => {
+    it('has all required fields', () => {
+      expect(allbridgeQuote).toHaveProperty('sourceAmount');
+      expect(allbridgeQuote).toHaveProperty('receiveAmount');
+      expect(allbridgeQuote).toHaveProperty('fee');
+      expect(allbridgeQuote).toHaveProperty('estimatedTime');
+      expect(allbridgeQuote).toHaveProperty('sourceToken');
+      expect(allbridgeQuote).toHaveProperty('destinationToken');
     });
 
-    it('should support contract migration', () => {
-      const migrationPath = {
-        from: '1.0.0',
-        to: '1.1.0',
-        breaking: false,
-        deprecations: ['reference'],
-        additions: ['orderId'],
-      };
-
-      expect(migrationPath).toHaveProperty('from');
-      expect(migrationPath).toHaveProperty('to');
-      expect(migrationPath.breaking).toBe(false);
+    it('receiveAmount is less than sourceAmount (fee deducted)', () => {
+      const source = parseFloat(allbridgeQuote.sourceAmount);
+      const receive = parseFloat(allbridgeQuote.receiveAmount);
+      expect(receive).toBeLessThan(source);
     });
 
-    it('should detect breaking changes', () => {
-      const v1 = { fields: { orderId: 'string', reference: 'string' } };
-      const v2 = { fields: { orderId: 'string' } };
-
-      const removedFields = Object.keys(v1.fields).filter(
-        (f) => !v2.fields.hasOwnProperty(f)
-      );
-
-      expect(removedFields.length).toBeGreaterThan(0);
-      expect(removedFields).toContain('reference');
+    it('estimatedTime is a positive integer', () => {
+      expect(typeof allbridgeQuote.estimatedTime).toBe('number');
+      expect(allbridgeQuote.estimatedTime).toBeGreaterThan(0);
     });
 
-    it('should track deprecation timeline', () => {
-      const deprecation = {
-        field: 'reference',
-        deprecatedIn: '1.1.0',
-        removedIn: '2.0.0',
-        replacement: 'orderId',
-      };
-
-      expect(deprecation).toHaveProperty('deprecatedIn');
-      expect(deprecation).toHaveProperty('removedIn');
-      expect(deprecation).toHaveProperty('replacement');
+    it('source and destination tokens have correct structure', () => {
+      for (const token of [allbridgeQuote.sourceToken, allbridgeQuote.destinationToken]) {
+        expect(token).toHaveProperty('symbol');
+        expect(token).toHaveProperty('decimals');
+        expect(token).toHaveProperty('contract');
+      }
     });
   });
 
-  describe('Integration Test Scenarios', () => {
-    it('should handle complete offramp flow contract', () => {
-      const flow = {
-        step1: { type: 'quote', status: 'success' },
-        step2: { type: 'bridge_build', status: 'success' },
-        step3: { type: 'bridge_submit', status: 'success' },
-        step4: { type: 'payout_order', status: 'success' },
-        step5: { type: 'payout_execute', status: 'success' },
-      };
-
-      Object.values(flow).forEach((step: any) => {
-        expect(step).toHaveProperty('type');
-        expect(step).toHaveProperty('status');
-        expect(['success', 'failed']).toContain(step.status);
-      });
+  describe('error fixtures structure', () => {
+    it('all error entries have status and body', () => {
+      for (const [, entry] of Object.entries(allbridgeErrors)) {
+        expect(entry).toHaveProperty('status');
+        expect(entry).toHaveProperty('body');
+        expect(entry.body).toHaveProperty('error');
+        expect(entry.body).toHaveProperty('message');
+      }
     });
 
-    it('should handle error recovery contract', () => {
-      const errorRecovery = {
-        originalError: 'BRIDGE_TIMEOUT',
-        retryCount: 3,
-        retryStrategy: 'exponential_backoff',
-        finalStatus: 'recovered',
-      };
-
-      expect(errorRecovery).toHaveProperty('originalError');
-      expect(errorRecovery).toHaveProperty('retryStrategy');
-      expect(errorRecovery.retryCount).toBeGreaterThan(0);
-    });
-
-    it('should validate contract consistency across endpoints', () => {
-      const endpoints = {
-        quote: { version: '1.0.0', breaking: false },
-        bridge: { version: '1.0.0', breaking: false },
-        payout: { version: '1.0.0', breaking: false },
-      };
-
-      Object.values(endpoints).forEach((endpoint) => {
-        expect(endpoint.version).toBe('1.0.0');
-        expect(endpoint.breaking).toBe(false);
-      });
+    it('includes expected error scenarios', () => {
+      const keys = Object.keys(allbridgeErrors);
+      expect(keys).toContain('chain_not_found');
+      expect(keys).toContain('token_not_found');
+      expect(keys).toContain('bridge_unavailable');
+      expect(keys).toContain('invalid_amount');
+      expect(keys).toContain('timeout');
+      expect(keys).toContain('rate_limit');
     });
   });
+});
 
-  describe('Contract Verification', () => {
-    it('should verify request matches contract', () => {
-      const contract = {
-        amount: 'number',
-        currency: 'string',
-        feeMethod: 'string',
-      };
-
-      const request = {
-        amount: 100,
-        currency: 'NGN',
-        feeMethod: 'USDC',
-      };
-
-      Object.entries(contract).forEach(([key, type]) => {
-        expect(typeof request[key as keyof typeof request]).toBe(type);
-      });
-    });
-
-    it('should verify response matches contract', () => {
-      const contract = {
-        destinationAmount: 'string',
-        rate: 'number',
-        currency: 'string',
-      };
-
-      const response = {
-        destinationAmount: '158202.00',
-        rate: 1598,
-        currency: 'NGN',
-      };
-
-      Object.entries(contract).forEach(([key, type]) => {
-        expect(typeof response[key as keyof typeof response]).toBe(type);
-      });
-    });
-
-    it('should detect contract violations', () => {
-      const contract = {
-        amount: 'number',
-        currency: 'string',
-      };
-
-      const invalidRequest = {
-        amount: '100', // Should be number
-        currency: 'NGN',
-      };
-
-      const violations = Object.entries(contract).filter(([key, type]) => {
-        return typeof invalidRequest[key as keyof typeof invalidRequest] !== type;
-      });
-
-      expect(violations.length).toBeGreaterThan(0);
-    });
+describe('mapPaycrestStatus contract', () => {
+  it.each([
+    ['payment_order.pending', 'pending'],
+    ['payment_order.validated', 'validated'],
+    ['payment_order.settled', 'settled'],
+    ['payment_order.refunded', 'refunded'],
+    ['payment_order.expired', 'expired'],
+  ])('maps %s to %s', (input, expected) => {
+    expect(mapPaycrestStatus(input)).toBe(expected);
   });
 
-  describe('Contract Breaking Changes', () => {
-    it('should detect removed fields', () => {
-      const oldContract = { orderId: 'string', reference: 'string' };
-      const newContract = { orderId: 'string' };
-
-      const removed = Object.keys(oldContract).filter(
-        (k) => !newContract.hasOwnProperty(k)
-      );
-
-      expect(removed).toContain('reference');
-    });
-
-    it('should detect type changes', () => {
-      const oldContract = { amount: 'string' };
-      const newContract = { amount: 'number' };
-
-      const typeChanges = Object.entries(oldContract).filter(
-        ([key, type]) => newContract[key as keyof typeof newContract] !== type
-      );
-
-      expect(typeChanges.length).toBeGreaterThan(0);
-    });
-
-    it('should detect required field additions', () => {
-      const oldContract = { amount: 'number' };
-      const newContract = { amount: 'number', orderId: 'string' };
-
-      const added = Object.keys(newContract).filter(
-        (k) => !oldContract.hasOwnProperty(k)
-      );
-
-      expect(added).toContain('orderId');
-    });
+  it('defaults unknown statuses to pending', () => {
+    expect(mapPaycrestStatus('payment_order.unknown')).toBe('pending');
+    expect(mapPaycrestStatus('')).toBe('pending');
+    expect(mapPaycrestStatus('garbage')).toBe('pending');
   });
 });

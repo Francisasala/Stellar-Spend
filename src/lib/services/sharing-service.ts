@@ -1,10 +1,10 @@
-import { ShareableTransaction, ShareSettings } from '@/types/sharing';
+import { ShareableTransaction, ShareSettings } from '@stellar-spend/shared';
 
 export class SharingService {
   async createShareLink(
     transactionId: string,
     userAddress: string,
-    settings: ShareSettings
+    settings: ShareSettings,
   ): Promise<ShareableTransaction> {
     const shareToken = this.generateShareToken();
     const id = `share_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -26,27 +26,28 @@ export class SharingService {
     return share;
   }
 
-  async getShareLink(shareToken: string): Promise<ShareableTransaction | null> {
+  async getShareLink(_shareToken: string): Promise<ShareableTransaction | null> {
     // TODO: Fetch from database
     return null;
   }
 
-  async incrementViewCount(shareToken: string): Promise<void> {
+  async incrementViewCount(_shareToken: string): Promise<void> {
     // TODO: Update view count in database
   }
 
-  async revokeShareLink(shareToken: string): Promise<void> {
+  async revokeShareLink(_shareToken: string): Promise<void> {
     // TODO: Delete from database
   }
 
-  async getUserShareLinks(userAddress: string): Promise<ShareableTransaction[]> {
+  async getUserShareLinks(_userAddress: string): Promise<ShareableTransaction[]> {
     // TODO: Fetch from database
     return [];
   }
 
   private generateShareToken(): string {
-    return Math.random().toString(36).substring(2, 15) +
-           Math.random().toString(36).substring(2, 15);
+    return (
+      Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    );
   }
 
   generateShareUrl(shareToken: string, baseUrl: string): string {
@@ -73,9 +74,8 @@ export class SharingService {
   generateEmailShareUrl(shareUrl: string, amount: string, currency: string): string {
     const subject = encodeURIComponent(`Check out my Stellar-Spend transaction`);
     const body = encodeURIComponent(
-      `I just completed a transaction of ${amount} ${currency}.\n\nView details: ${shareUrl}`
+      `I just completed a transaction of ${amount} ${currency}.\n\nView details: ${shareUrl}`,
     );
     return `mailto:?subject=${subject}&body=${body}`;
   }
 }
-

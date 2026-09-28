@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { DeliveryRecord } from '@/lib/webhook/types';
 import {
   TransactionPriorityQueue,
   TransactionPriority,
   DeliveryRetryQueue,
   getTransactionQueue,
-  getDeliveryRetryQueue,
   calculatePriorityFee,
   inferPriorityFromAmount,
 } from './priority-queue';
@@ -21,7 +21,7 @@ vi.mock('@/lib/logger', () => ({
 
 vi.mock('@/lib/webhook/retry-scheduler', () => ({
   calculateBackoff: vi.fn((attempt: number) => 1000 * Math.pow(2, attempt - 1)),
-  hasRemainingAttempts: vi.fn((record: any) => record.attemptCount < record.maxAttempts),
+  hasRemainingAttempts: vi.fn((record: DeliveryRecord) => record.attemptCount < record.maxAttempts),
 }));
 
 describe('TransactionPriorityQueue', () => {
@@ -32,9 +32,30 @@ describe('TransactionPriorityQueue', () => {
 
   it('enqueues and dequeues in priority order', () => {
     const q = new TransactionPriorityQueue();
-    q.enqueue({ id: '1', priority: TransactionPriority.LOW, amount: '10', currency: 'USDC', feeMethod: 'stablecoin', payload: {} });
-    q.enqueue({ id: '2', priority: TransactionPriority.URGENT, amount: '10000', currency: 'USDC', feeMethod: 'stablecoin', payload: {} });
-    q.enqueue({ id: '3', priority: TransactionPriority.NORMAL, amount: '100', currency: 'USDC', feeMethod: 'stablecoin', payload: {} });
+    q.enqueue({
+      id: '1',
+      priority: TransactionPriority.LOW,
+      amount: '10',
+      currency: 'USDC',
+      feeMethod: 'stablecoin',
+      payload: {},
+    });
+    q.enqueue({
+      id: '2',
+      priority: TransactionPriority.URGENT,
+      amount: '10000',
+      currency: 'USDC',
+      feeMethod: 'stablecoin',
+      payload: {},
+    });
+    q.enqueue({
+      id: '3',
+      priority: TransactionPriority.NORMAL,
+      amount: '100',
+      currency: 'USDC',
+      feeMethod: 'stablecoin',
+      payload: {},
+    });
 
     expect(q.dequeue()!.id).toBe('2');
     expect(q.dequeue()!.id).toBe('3');
@@ -44,8 +65,22 @@ describe('TransactionPriorityQueue', () => {
 
   it('tracks metrics', () => {
     const q = new TransactionPriorityQueue();
-    q.enqueue({ id: '1', priority: TransactionPriority.HIGH, amount: '1000', currency: 'USDC', feeMethod: 'native', payload: {} });
-    q.enqueue({ id: '2', priority: TransactionPriority.LOW, amount: '10', currency: 'USDC', feeMethod: 'native', payload: {} });
+    q.enqueue({
+      id: '1',
+      priority: TransactionPriority.HIGH,
+      amount: '1000',
+      currency: 'USDC',
+      feeMethod: 'native',
+      payload: {},
+    });
+    q.enqueue({
+      id: '2',
+      priority: TransactionPriority.LOW,
+      amount: '10',
+      currency: 'USDC',
+      feeMethod: 'native',
+      payload: {},
+    });
 
     const metrics = q.getMetrics();
     expect(metrics.totalEnqueued).toBe(2);
@@ -57,7 +92,14 @@ describe('TransactionPriorityQueue', () => {
 
   it('removes a transaction by id', () => {
     const q = new TransactionPriorityQueue();
-    q.enqueue({ id: 'remove-me', priority: TransactionPriority.NORMAL, amount: '50', currency: 'USDC', feeMethod: 'stablecoin', payload: {} });
+    q.enqueue({
+      id: 'remove-me',
+      priority: TransactionPriority.NORMAL,
+      amount: '50',
+      currency: 'USDC',
+      feeMethod: 'stablecoin',
+      payload: {},
+    });
     expect(q.remove('remove-me')).toBe(true);
     expect(q.size()).toBe(0);
     expect(q.remove('nonexistent')).toBe(false);
@@ -65,7 +107,14 @@ describe('TransactionPriorityQueue', () => {
 
   it('overrides priority', () => {
     const q = new TransactionPriorityQueue();
-    q.enqueue({ id: 'tx-1', priority: TransactionPriority.LOW, amount: '10', currency: 'USDC', feeMethod: 'stablecoin', payload: {} });
+    q.enqueue({
+      id: 'tx-1',
+      priority: TransactionPriority.LOW,
+      amount: '10',
+      currency: 'USDC',
+      feeMethod: 'stablecoin',
+      payload: {},
+    });
     expect(q.overridePriority('tx-1', TransactionPriority.URGENT)).toBe(true);
     expect(q.dequeue()!.id).toBe('tx-1');
   });
@@ -232,9 +281,14 @@ describe('calculatePriorityFee', () => {
 });
 
 describe('inferPriorityFromAmount', () => {
-  it('returns URGENT for >= 10000', () => expect(inferPriorityFromAmount('10000')).toBe(TransactionPriority.URGENT));
-  it('returns HIGH for >= 1000', () => expect(inferPriorityFromAmount('1000')).toBe(TransactionPriority.HIGH));
-  it('returns NORMAL for >= 100', () => expect(inferPriorityFromAmount('100')).toBe(TransactionPriority.NORMAL));
-  it('returns LOW for < 100', () => expect(inferPriorityFromAmount('10')).toBe(TransactionPriority.LOW));
-  it('returns NORMAL for NaN', () => expect(inferPriorityFromAmount('abc')).toBe(TransactionPriority.NORMAL));
+  it('returns URGENT for >= 10000', () =>
+    expect(inferPriorityFromAmount('10000')).toBe(TransactionPriority.URGENT));
+  it('returns HIGH for >= 1000', () =>
+    expect(inferPriorityFromAmount('1000')).toBe(TransactionPriority.HIGH));
+  it('returns NORMAL for >= 100', () =>
+    expect(inferPriorityFromAmount('100')).toBe(TransactionPriority.NORMAL));
+  it('returns LOW for < 100', () =>
+    expect(inferPriorityFromAmount('10')).toBe(TransactionPriority.LOW));
+  it('returns NORMAL for NaN', () =>
+    expect(inferPriorityFromAmount('abc')).toBe(TransactionPriority.NORMAL));
 });

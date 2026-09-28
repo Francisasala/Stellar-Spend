@@ -5,9 +5,9 @@
  * Every signature collected is written to the audit log.
  */
 
-import crypto from "crypto";
-import { logger } from "@/lib/logger";
-import { pool } from "@/lib/db/client";
+import crypto from 'crypto';
+import { logger } from '@/lib/logger';
+import { pool } from '@/lib/db';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -20,9 +20,29 @@ export interface MultisigConfig {
    * Transfers above this USDC amount (in base units) require the full
    * threshold. Below it a single signer suffices.
    * Set to 0 to always require the full threshold.
+   *
+   * Matches `required_threshold()` in contracts/multisig-authority/src/lib.rs
+   * and contracts/shared/src/auth.rs — kept in sync deliberately, see
+   * docs/multisig-offchain-onchain-parity.md.
    */
   highValueLimit: bigint;
 }
+
+/**
+ * Reads the *live* signer set + threshold from the on-chain
+ * multisig-authority contract (via `add_signer`/`remove_signer`-derived
+ * state). The contract re-derives its signer set at execution time rather
+ * than trusting proposal-time state (see lib.rs: "Re-derive the threshold
+ * at execution time rather than trusting one from proposal time: the
+ * signer set may have shrunk since"). The off-chain service must do the
+ * same or it risks accepting a signature from a signer who was removed
+ * on-chain after the proposal was created — this was the drift this
+ * interface was added to close.
+ */
+export type OnChainAuthorityReader = () => Promise<{
+  signers: string[];
+  threshold: number;
+}>;
 
 export interface MultisigProposal {
   id: string;
@@ -50,18 +70,47 @@ export type ProposalStatus =
 // ── Service ───────────────────────────────────────────────────────────────────
 
 export class MultisigSettlementService {
-  private readonly config: MultisigConfig;
+  private config: MultisigConfig;
   /** Proposal TTL in milliseconds (default: 24 h). */
   private readonly proposalTtlMs: number;
+  /**
+   * Optional live reader for the on-chain signer set / threshold. When
+   * provided, `sign()` and `execute()` refresh `this.config` from it before
+   * validating, mirroring the contract's execution-time re-derivation and
+   * preventing off-chain/on-chain drift after add_signer/remove_signer.
+   */
+  private readonly onChainReader?: OnChainAuthorityReader;
 
-  constructor(config: MultisigConfig, proposalTtlMs = 24 * 60 * 60 * 1000) {
+  constructor(
+    config: MultisigConfig,
+    proposalTtlMs = 24 * 60 * 60 * 1000,
+    onChainReader?: OnChainAuthorityReader,
+  ) {
     if (config.threshold < 1 || config.threshold > config.signers.length) {
-      throw new Error(
-        `Invalid threshold ${config.threshold} for ${config.signers.length} signers`,
-      );
+      throw new Error(`Invalid threshold ${config.threshold} for ${config.signers.length} signers`);
     }
     this.config = config;
     this.proposalTtlMs = proposalTtlMs;
+    this.onChainReader = onChainReader;
+  }
+
+  /**
+   * Re-fetch the live signer set/threshold from the on-chain authority, if
+   * an `onChainReader` was configured. Called before signer-set-sensitive
+   * checks (`assertIsSigner`, quorum evaluation) so a signer removed
+   * on-chain cannot still sign or count toward quorum off-chain.
+   */
+  private async syncFromChain(): Promise<void> {
+    if (!this.onChainReader) return;
+    const live = await this.onChainReader();
+    if (live.threshold < 1 || live.threshold > live.signers.length) {
+      logger.warn('multisig:onchain_sync_invalid', {
+        threshold: live.threshold,
+        signerCount: live.signers.length,
+      });
+      return;
+    }
+    this.config = { ...this.config, signers: live.signers, threshold: live.threshold };
   }
 
   // ── Proposal lifecycle ────────────────────────────────────────────────────
@@ -78,7 +127,7 @@ export class MultisigSettlementService {
   ): Promise<MultisigProposal> {
     this.assertIsSigner(proposer);
 
-    const id = `prop_${Date.now()}_${crypto.randomBytes(6).toString("hex")}`;
+    const id = `prop_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
     const now = Date.now();
     const expiresAt = now + this.proposalTtlMs;
 
@@ -98,7 +147,7 @@ export class MultisigSettlementService {
     // Record proposer's initial signature
     await this.recordSignature(proposal, proposer, signature);
 
-    logger.info("multisig:proposed", {
+    logger.info('multisig:proposed', {
       proposalId: id,
       proposer,
       target,
@@ -112,18 +161,14 @@ export class MultisigSettlementService {
   /**
    * Add a signer's approval.  Emits an audit log entry for every signature.
    */
-  async sign(
-    proposalId: string,
-    signer: string,
-    signature: string,
-  ): Promise<ProposalStatus> {
+  async sign(proposalId: string, signer: string, signature: string): Promise<ProposalStatus> {
+    await this.syncFromChain();
     this.assertIsSigner(signer);
 
     const proposal = await this.getProposal(proposalId);
     if (!proposal) throw new Error(`Proposal ${proposalId} not found`);
-    if (proposal.executed) throw new Error("Proposal already executed");
-    if (Date.now() > proposal.expiresAt)
-      throw new Error("Proposal has expired");
+    if (proposal.executed) throw new Error('Proposal already executed');
+    if (Date.now() > proposal.expiresAt) throw new Error('Proposal has expired');
     if (proposal.signatures.some((s) => s.signer === signer))
       throw new Error(`${signer} has already signed`);
 
@@ -133,7 +178,7 @@ export class MultisigSettlementService {
     const required = this.requiredThreshold(proposal.value);
     const collected = updated.signatures.length;
 
-    logger.info("multisig:signed", {
+    logger.info('multisig:signed', {
       proposalId,
       signer,
       collected,
@@ -148,18 +193,25 @@ export class MultisigSettlementService {
    * Returns the approved value for the caller to act on.
    */
   async execute(proposalId: string, executor: string): Promise<bigint> {
+    // Re-derive signer set + threshold at execution time (not proposal time),
+    // matching contracts/multisig-authority/src/lib.rs::execute — the signer
+    // set may have shrunk since the proposal or intermediate signatures.
+    await this.syncFromChain();
     this.assertIsSigner(executor);
 
     const proposal = await this.getProposal(proposalId);
     if (!proposal) throw new Error(`Proposal ${proposalId} not found`);
-    if (proposal.executed) throw new Error("Already executed");
-    if (Date.now() > proposal.expiresAt) throw new Error("Proposal expired");
+    if (proposal.executed) throw new Error('Already executed');
+    if (Date.now() > proposal.expiresAt) throw new Error('Proposal expired');
 
+    // Only signatures from currently-registered signers count toward quorum —
+    // a signer removed on-chain after signing must not still count.
+    const liveSignatures = proposal.signatures.filter((s) =>
+      this.config.signers.includes(s.signer),
+    );
     const required = this.requiredThreshold(proposal.value);
-    if (proposal.signatures.length < required) {
-      throw new Error(
-        `Quorum not met: ${proposal.signatures.length}/${required}`,
-      );
+    if (liveSignatures.length < required) {
+      throw new Error(`Quorum not met: ${liveSignatures.length}/${required}`);
     }
 
     await pool.query(
@@ -167,7 +219,7 @@ export class MultisigSettlementService {
       [executor, Date.now(), proposalId],
     );
 
-    logger.info("multisig:executed", {
+    logger.info('multisig:executed', {
       proposalId,
       executor,
       value: proposal.value.toString(),
@@ -252,7 +304,7 @@ export class MultisigSettlementService {
     signer: string,
     signature: string,
   ): Promise<void> {
-    const entryId = `sig_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+    const entryId = `sig_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     const now = Date.now();
 
     await pool.query(
@@ -262,8 +314,8 @@ export class MultisigSettlementService {
     );
 
     // Structured audit log — every signature is permanently recorded
-    logger.info("multisig:signature_collected", {
-      auditEventType: "MULTISIG_SIGNATURE",
+    logger.info('multisig:signature_collected', {
+      auditEventType: 'MULTISIG_SIGNATURE',
       signatureId: entryId,
       proposalId: proposal.id,
       signer,

@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getTransactionQueue, getDeliveryRetryQueue } from '@/lib/priority-queue';
-import { list } from '@/lib/webhook/dlq';
+import { list } from '@/lib/webhook';
 import { logger } from '@/lib/logger';
+import { ErrorHandler } from '@/lib/error-handler';
 
 export async function GET() {
   try {
-    const txMetrics = getTransactionQueue().getMetrics();
+    const txQueue = getTransactionQueue();
+    const txMetrics = txQueue.getMetrics();
+    const backpressure = txQueue.getBackpressureStatus();
     const retryQueue = getDeliveryRetryQueue();
 
     const dlqEntries = await list().catch(() => []);
@@ -13,15 +16,20 @@ export async function GET() {
 
     const retryMetrics = retryQueue.getMetrics();
 
+    if (backpressure.overLimit) {
+      logger.warn('queue.backpressure_limit_reached', { backpressure });
+    }
+
     return NextResponse.json({
       ok: true,
       metrics: {
         transactions: txMetrics,
         deliveryRetry: retryMetrics,
       },
+      backpressure,
     });
   } catch (err) {
     logger.error('metrics.fetch_failed', {}, err);
-    return NextResponse.json({ ok: false, error: 'Failed to fetch metrics' }, { status: 500 });
+    return ErrorHandler.serverError(err);
   }
 }

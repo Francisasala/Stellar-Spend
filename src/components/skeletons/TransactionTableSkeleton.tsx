@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/Skeleton";
-import { cn } from "@/lib/cn";
+import { SkeletonBase } from './SkeletonBase';
+import { cn } from '@/lib/cn';
 
 interface TransactionTableSkeletonProps {
   rows?: number;
@@ -17,16 +17,19 @@ export function TransactionTableSkeleton({ rows = 3 }: TransactionTableSkeletonP
     >
       {/* Header bar */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#333333]">
-        <Skeleton width={120} height={10} aria-label="Loading section title…" />
-        <Skeleton width={64} height={26} aria-label="Loading view all link…" />
+        <SkeletonBase width={120} height={10} aria-label="Loading section title…" />
+        <SkeletonBase width={64} height={26} aria-label="Loading view all link…" />
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[520px] border-collapse" aria-label="Loading transactions table">
+        <table
+          className="w-full min-w-[520px] border-collapse"
+          aria-label="Loading transactions table"
+        >
           <thead>
             <tr className="bg-[#c9a962]">
-              {["TX HASH", "USDC", "FIAT", "STATUS"].map((col) => (
+              {['TX HASH', 'USDC', 'FIAT', 'STATUS'].map((col) => (
                 <th
                   key={col}
                   scope="col"
@@ -41,12 +44,23 @@ export function TransactionTableSkeleton({ rows = 3 }: TransactionTableSkeletonP
             {Array.from({ length: rows }).map((_, i) => (
               <tr
                 key={i}
-                className={cn("border-b border-[#222222]", i % 2 === 0 ? "bg-[#111111]" : "bg-[#0f0f0f]")}
+                className={cn(
+                  'border-b border-[#222222]',
+                  i % 2 === 0 ? 'bg-[#111111]' : 'bg-[#0f0f0f]',
+                )}
               >
-                <td className="px-5 py-3"><Skeleton width={120} height={14} aria-label="Loading transaction hash…" /></td>
-                <td className="px-5 py-3"><Skeleton width={80} height={14} aria-label="Loading USDC amount…" /></td>
-                <td className="px-5 py-3"><Skeleton width={80} height={14} aria-label="Loading fiat amount…" /></td>
-                <td className="px-5 py-3"><Skeleton width={60} height={20} aria-label="Loading status…" /></td>
+                <td className="px-5 py-3">
+                  <SkeletonBase width={120} height={14} aria-label="Loading transaction hash…" />
+                </td>
+                <td className="px-5 py-3">
+                  <SkeletonBase width={80} height={14} aria-label="Loading USDC amount…" />
+                </td>
+                <td className="px-5 py-3">
+                  <SkeletonBase width={80} height={14} aria-label="Loading fiat amount…" />
+                </td>
+                <td className="px-5 py-3">
+                  <SkeletonBase width={60} height={20} aria-label="Loading status…" />
+                </td>
               </tr>
             ))}
           </tbody>

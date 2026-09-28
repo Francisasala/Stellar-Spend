@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { FeatureFlags } from '@/lib/feature-flags/schema';
+import type { FeatureFlags } from '@/lib/feature-flags';
 
 interface UseFeatureFlagResult {
   flags: FeatureFlags | null;
@@ -45,7 +45,11 @@ export function useFeatureFlag(userId?: string): UseFeatureFlagResult {
       }
     }
     if (typeof current === 'boolean') return current;
-    if (current && typeof current === 'object' && 'enabled' in (current as Record<string, unknown>)) {
+    if (
+      current &&
+      typeof current === 'object' &&
+      'enabled' in (current as Record<string, unknown>)
+    ) {
       return Boolean((current as Record<string, unknown>).enabled);
     }
     return false;

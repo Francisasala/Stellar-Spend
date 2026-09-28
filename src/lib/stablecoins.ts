@@ -36,9 +36,7 @@ export const SUPPORTED_STABLECOINS: StablecoinConfig[] = [
 ];
 
 export function getStablecoinConfig(symbol: string): StablecoinConfig | undefined {
-  return SUPPORTED_STABLECOINS.find(
-    (s) => s.symbol === symbol.toUpperCase() && s.active
-  );
+  return SUPPORTED_STABLECOINS.find((s) => s.symbol === symbol.toUpperCase() && s.active);
 }
 
 export function getActiveStablecoins(): StablecoinConfig[] {
@@ -58,4 +56,37 @@ export function calculateStablecoinBridgeFee(symbol: string, amount: string): st
   const amountNum = parseFloat(amount);
   if (!config || isNaN(amountNum) || amountNum <= 0) return '0';
   return ((amountNum * config.bridgeFeePercent) / 100).toFixed(6);
+}
+
+/** Swap pair for Stellar DEX path payments between two supported stablecoins. */
+export interface SwapPair {
+  from: string;
+  to: string;
+  /** DEX route via intermediate assets (empty = direct) */
+  path: string[];
+}
+
+/**
+ * Returns the Stellar DEX swap path for two supported stablecoins.
+ * USDC <-> USDT trade directly on the Stellar AMM.
+ */
+export function getSwapPair(fromSymbol: string, toSymbol: string): SwapPair | undefined {
+  const from = fromSymbol.toUpperCase();
+  const to = toSymbol.toUpperCase();
+  if (from === to) return undefined;
+  if (isSupportedStablecoin(from) && isSupportedStablecoin(to)) {
+    return { from, to, path: [] };
+  }
+  return undefined;
+}
+
+/**
+ * Calculate the minimum amount out after applying slippage tolerance.
+ * slippageTolerance is a fraction, e.g. 0.005 = 0.5%.
+ */
+export function calculateMinAmountOut(amount: string, slippageTolerance: number): string {
+  const amt = parseFloat(amount);
+  if (isNaN(amt) || amt <= 0) return '0';
+  const tol = Math.min(Math.max(slippageTolerance, 0), 0.05);
+  return (amt * (1 - tol)).toFixed(7);
 }

@@ -1,0 +1,29 @@
+[
+  {
+    "code": "NGN",
+    "name": "Nigerian Naira",
+    "symbol": "₦",
+    "network": "base",
+    "decimals": 2,
+    "minAmount": 100,
+    "maxAmount": 10000000
+  },
+  {
+    "code": "KES",
+    "name": "Kenyan Shilling",
+    "symbol": "KSh",
+    "network": "base",
+    "decimals": 2,
+    "minAmount": 100,
+    "maxAmount": 5000000
+  },
+  {
+    "code": "GHS",
+    "name": "Ghanaian Cedi",
+    "symbol": "GH₵",
+    "network": "base",
+    "decimals": 2,
+    "minAmount": 10,
+    "maxAmount": 500000
+  }
+]

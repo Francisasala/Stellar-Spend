@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   encryptData,
   decryptData,
@@ -288,9 +288,7 @@ describe('Encryption Module', () => {
       const backup = JSON.parse(encrypted);
 
       // Tamper with encrypted data
-      backup.encrypted = Buffer.from(backup.encrypted, 'base64')
-        .slice(0, -1)
-        .toString('base64');
+      backup.encrypted = Buffer.from(backup.encrypted, 'base64').slice(0, -1).toString('base64');
 
       const tampered = JSON.stringify(backup);
       const decrypted = decryptBackupData(tampered);

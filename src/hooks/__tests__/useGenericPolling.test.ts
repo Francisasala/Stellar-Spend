@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useGenericPolling } from '../useGenericPolling';
-import type { PollingConfig } from '@/lib/polling/backoff';
+import type { PollingConfig } from '@/lib/polling';
 
 const TEST_CONFIG: PollingConfig = {
   baseDelay: 100,
@@ -14,7 +14,7 @@ const TEST_CONFIG: PollingConfig = {
 
 // The polling manager uses AbortSignal internally, so we need to mock fetch
 const mockFetch = vi.fn();
-global.fetch = mockFetch as any;
+global.fetch = mockFetch as unknown as typeof fetch;
 
 function createSuccessResponse(data: unknown) {
   return {
@@ -41,7 +41,7 @@ describe('useGenericPolling', () => {
       useGenericPolling({
         config: TEST_CONFIG,
         terminalStates: ['completed', 'failed'],
-      })
+      }),
     );
     expect(result.current.pollStatus).toBeInstanceOf(Function);
   });
@@ -53,7 +53,7 @@ describe('useGenericPolling', () => {
       useGenericPolling({
         config: { ...TEST_CONFIG, baseDelay: 50, maxTotalDurationMs: 5000 },
         terminalStates: ['completed', 'failed'],
-      })
+      }),
     );
 
     let resolved = false;
@@ -79,7 +79,7 @@ describe('useGenericPolling', () => {
         config: { ...TEST_CONFIG, baseDelay: 50, maxTotalDurationMs: 1000 },
         terminalStates: ['completed'],
         updateStorage,
-      })
+      }),
     );
 
     await act(async () => {
@@ -107,7 +107,7 @@ describe('useGenericPolling', () => {
         config: { ...TEST_CONFIG, baseDelay: 50, maxTotalDurationMs: 5000 },
         terminalStates: ['completed', 'failed'],
         onTerminalState,
-      })
+      }),
     );
 
     await act(async () => {
@@ -130,7 +130,7 @@ describe('useGenericPolling', () => {
       useGenericPolling({
         config: { ...TEST_CONFIG, baseDelay: 50, maxTotalDurationMs: 5000 },
         terminalStates: ['completed', 'failed'],
-      })
+      }),
     );
 
     await act(async () => {
@@ -151,7 +151,7 @@ describe('useGenericPolling', () => {
       useGenericPolling({
         config: { ...TEST_CONFIG, baseDelay: 50, maxTotalDurationMs: 1000 },
         terminalStates: ['completed', 'failed'],
-      })
+      }),
     );
 
     let error: Error | undefined;
@@ -182,7 +182,7 @@ describe('useGenericPolling', () => {
         terminalStates: ['completed'],
         onError,
         throwOnTimeout: true,
-      })
+      }),
     );
 
     await act(async () => {
@@ -208,7 +208,7 @@ describe('useGenericPolling', () => {
         config: { ...TEST_CONFIG, baseDelay: 50, maxTotalDurationMs: 200, requestTimeoutMs: 100 },
         terminalStates: ['completed'],
         throwOnTimeout: false,
-      })
+      }),
     );
 
     let resolved = false;
@@ -238,7 +238,7 @@ describe('useGenericPolling', () => {
         terminalStates: ['completed'],
         throwOnTimeout: false,
         onTimeout,
-      })
+      }),
     );
 
     await act(async () => {
@@ -264,7 +264,7 @@ describe('useGenericPolling', () => {
       useGenericPolling({
         config: { ...TEST_CONFIG, baseDelay: 50, maxTotalDurationMs: 5000 },
         terminalStates: ['completed', 'failed'],
-      })
+      }),
     );
 
     await act(async () => {
@@ -285,7 +285,7 @@ describe('useGenericPolling', () => {
       useGenericPolling({
         config: { ...TEST_CONFIG, baseDelay: 50, maxTotalDurationMs: 5000 },
         terminalStates: ['completed'],
-      })
+      }),
     );
 
     await act(async () => {

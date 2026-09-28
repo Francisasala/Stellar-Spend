@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { createMocks } from 'node-mocks-http';
 
 describe('Paycrest API Endpoints - Integration Tests', () => {
   describe('POST /api/offramp/paycrest/order', () => {
     it('should create payout order with valid data', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           amount: '100',
@@ -24,7 +24,7 @@ describe('Paycrest API Endpoints - Integration Tests', () => {
     });
 
     it('should reject invalid amount', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           amount: '-100',
@@ -41,7 +41,7 @@ describe('Paycrest API Endpoints - Integration Tests', () => {
     });
 
     it('should reject unsupported currency', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           amount: '100',
@@ -58,7 +58,7 @@ describe('Paycrest API Endpoints - Integration Tests', () => {
     });
 
     it('should reject missing beneficiary data', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           amount: '100',
@@ -78,7 +78,7 @@ describe('Paycrest API Endpoints - Integration Tests', () => {
       const currencies = ['NGN', 'KES', 'GHS', 'UGX'];
 
       for (const currency of currencies) {
-        const { req, res } = createMocks({
+        const { req } = createMocks({
           method: 'POST',
           body: {
             amount: '100',
@@ -98,7 +98,7 @@ describe('Paycrest API Endpoints - Integration Tests', () => {
 
   describe('GET /api/offramp/status/:orderId', () => {
     it('should return order status', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'GET',
         query: { orderId: 'order-123' },
       });
@@ -107,7 +107,7 @@ describe('Paycrest API Endpoints - Integration Tests', () => {
     });
 
     it('should handle pending status', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'GET',
         query: { orderId: 'pending-order' },
       });
@@ -116,7 +116,7 @@ describe('Paycrest API Endpoints - Integration Tests', () => {
     });
 
     it('should handle completed status', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'GET',
         query: { orderId: 'completed-order' },
       });
@@ -125,7 +125,7 @@ describe('Paycrest API Endpoints - Integration Tests', () => {
     });
 
     it('should handle failed status', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'GET',
         query: { orderId: 'failed-order' },
       });
@@ -136,7 +136,7 @@ describe('Paycrest API Endpoints - Integration Tests', () => {
 
   describe('POST /api/offramp/verify-account', () => {
     it('should verify valid account', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           accountNumber: '1234567890',
@@ -150,7 +150,7 @@ describe('Paycrest API Endpoints - Integration Tests', () => {
     });
 
     it('should reject invalid account number', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           accountNumber: 'invalid',
@@ -163,7 +163,7 @@ describe('Paycrest API Endpoints - Integration Tests', () => {
     });
 
     it('should reject missing bank code', async () => {
-      const { req, res } = createMocks({
+      const { req } = createMocks({
         method: 'POST',
         body: {
           accountNumber: '1234567890',

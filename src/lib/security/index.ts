@@ -55,3 +55,13 @@ export {
   createEncryptedBackup,
   restoreEncryptedBackup,
 } from './database-encryption';
+
+// Field-level encryption for PII columns (#692)
+export {
+  encryptField,
+  decryptField,
+  isEncrypted,
+  maskPiiForLog,
+  rotateFieldEncryption,
+  type RotationResult,
+} from './field-encryption';

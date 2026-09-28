@@ -1,17 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type {
+  ChainDetailsWithTokens,
+  TokenWithChainDetails,
+} from '@allbridge/bridge-core-sdk';
 import { env } from '@/lib/env';
-import { validateAmount, validateAddress } from '@/lib/offramp/utils/validation';
-import { extractErrorMessage } from '@/lib/offramp/utils/errors';
-import { buildTxLimiter, getClientIp } from '@/lib/offramp/utils/rate-limiter';
-import { generateRequestId, createRequestLogger } from '@/lib/offramp/utils/logger';
+import { validateAmount, validateAddress } from '@/lib/offramp';
+import { extractErrorMessage } from '@/lib/offramp';
+import { buildTxLimiter, getClientIp } from '@/lib/offramp';
+import { generateRequestId, createRequestLogger } from '@/lib/offramp';
+import { ErrorHandler } from '@/lib/error-handler';
+import { allbridgeBreaker, CircuitOpenError } from '@/lib/circuit-breaker';
 
 export const maxDuration = 30;
 
+function withRequestId<T>(response: NextResponse<T>, requestId: string): NextResponse<T> {
+  response.headers.set('X-Request-Id', requestId);
+  return response;
+}
+
 /**
  * POST /api/offramp/bridge/build-tx
- * 
+ *
  * Builds a Soroban XDR transaction for bridging USDC from Stellar to Base.
- * 
+ *
  * Request body:
  * {
  *   amount: string (USDC amount)
@@ -19,7 +30,7 @@ export const maxDuration = 30;
  *   toAddress: string (Base address)
  *   feePaymentMethod: 'native' | 'stablecoin' (default: 'stablecoin')
  * }
- * 
+ *
  * Response:
  * {
  *   xdr: string
@@ -37,16 +48,12 @@ export async function POST(request: NextRequest) {
     const rateLimitCheck = await buildTxLimiter.check(clientIp);
     if (!rateLimitCheck.allowed) {
       logger.logError(429, 'Rate limit exceeded');
-      return NextResponse.json(
-        { error: 'Too many requests' },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(rateLimitCheck.retryAfter),
-            'X-Request-Id': requestId,
-          },
-        }
+      const res = withRequestId(
+        ErrorHandler.rateLimit('Too many requests', rateLimitCheck.retryAfter),
+        requestId,
       );
+      res.headers.set('Retry-After', String(rateLimitCheck.retryAfter));
+      return res;
     }
 
     const body = await request.json();
@@ -55,38 +62,34 @@ export async function POST(request: NextRequest) {
     // Validate inputs
     if (!validateAmount(amount)) {
       logger.logError(400, 'Invalid amount: must be a positive number');
-      return NextResponse.json(
-        { error: 'Invalid amount: must be a positive number' },
-        { status: 400, headers: { 'X-Request-Id': requestId } }
+      return withRequestId(
+        ErrorHandler.validation('Invalid amount: must be a positive number'),
+        requestId,
       );
     }
 
     if (!validateAddress(fromAddress, 'stellar')) {
       logger.logError(400, 'Invalid Stellar address');
-      return NextResponse.json(
-        { error: 'Invalid Stellar address' },
-        { status: 400, headers: { 'X-Request-Id': requestId } }
-      );
+      return withRequestId(ErrorHandler.validation('Invalid Stellar address'), requestId);
     }
 
     if (!validateAddress(toAddress, 'base')) {
       logger.logError(400, 'Invalid Base address');
-      return NextResponse.json(
-        { error: 'Invalid Base address' },
-        { status: 400, headers: { 'X-Request-Id': requestId } }
-      );
+      return withRequestId(ErrorHandler.validation('Invalid Base address'), requestId);
     }
 
     if (!['native', 'stablecoin'].includes(feePaymentMethod)) {
       logger.logError(400, 'Invalid feePaymentMethod: must be "native" or "stablecoin"');
-      return NextResponse.json(
-        { error: 'Invalid feePaymentMethod: must be "native" or "stablecoin"' },
-        { status: 400, headers: { 'X-Request-Id': requestId } }
+      return withRequestId(
+        ErrorHandler.validation('Invalid feePaymentMethod: must be "native" or "stablecoin"'),
+        requestId,
       );
     }
 
     // Initialize Allbridge SDK
-    const { AllbridgeCoreSdk, nodeRpcUrlsDefault, Messenger, FeePaymentMethod } = await import('@allbridge/bridge-core-sdk');
+    const { AllbridgeCoreSdk, nodeRpcUrlsDefault, Messenger, FeePaymentMethod } = await import(
+      '@allbridge/bridge-core-sdk'
+    );
 
     const sdk = new AllbridgeCoreSdk({
       ...nodeRpcUrlsDefault,
@@ -95,52 +98,98 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    // Fetch chain details and tokens
-    const chainDetails = await sdk.chainDetailsMap();
+    // Fetch chain details and tokens — wrapped in circuit breaker
+    let chainDetails: Awaited<ReturnType<typeof sdk.chainDetailsMap>>;
+    try {
+      chainDetails = await allbridgeBreaker.execute(() => sdk.chainDetailsMap(), {
+        fallback: () => {
+          throw new Error('Allbridge SDK unavailable — circuit open');
+        },
+      });
+    } catch (err) {
+      if (
+        err instanceof CircuitOpenError ||
+        (err instanceof Error && err.message.includes('circuit open'))
+      ) {
+        logger.logError(503, 'Bridge service temporarily unavailable');
+        return withRequestId(
+          NextResponse.json(
+            { error: 'Bridge service is temporarily unavailable. Please try again shortly.' },
+            { status: 503 },
+          ),
+          requestId,
+        );
+      }
+      throw err;
+    }
 
-    let stellarChain: any = null;
-    let baseChain: any = null;
+    let stellarChain: ChainDetailsWithTokens | null = null;
+    let baseChain: ChainDetailsWithTokens | null = null;
 
     for (const [, chain] of Object.entries(chainDetails)) {
-      const chainObj = chain as any;
-      if (chainObj.name?.toLowerCase().includes('stellar') || chainObj.name?.toLowerCase().includes('soroban')) {
+      const chainObj = chain;
+      if (
+        chainObj.name?.toLowerCase().includes('stellar') ||
+        chainObj.name?.toLowerCase().includes('soroban')
+      ) {
         stellarChain = chainObj;
       }
-      if (chainObj.name?.toLowerCase().includes('ethereum') || chainObj.name?.toLowerCase().includes('base')) {
+      if (
+        chainObj.name?.toLowerCase().includes('ethereum') ||
+        chainObj.name?.toLowerCase().includes('base')
+      ) {
         baseChain = chainObj;
       }
     }
 
     if (!stellarChain || !baseChain) {
       logger.logError(500, 'Failed to fetch chain details from Allbridge');
-      return NextResponse.json(
-        { error: 'Failed to fetch chain details from Allbridge' },
-        { status: 500, headers: { 'X-Request-Id': requestId } }
+      return withRequestId(
+        ErrorHandler.handle(new Error('Failed to fetch chain details from Allbridge')),
+        requestId,
       );
     }
 
     // Find USDC tokens
-    const sourceToken = stellarChain.tokens.find((t: any) => t.symbol === 'USDC');
-    const destinationToken = baseChain.tokens.find((t: any) => t.symbol === 'USDC');
+    type BridgeToken = TokenWithChainDetails & { contract?: string; chain?: string };
+    const sourceToken = stellarChain.tokens.find((t) => t.symbol === 'USDC') as
+      | BridgeToken
+      | undefined;
+    const destinationToken = baseChain.tokens.find((t) => t.symbol === 'USDC') as
+      | BridgeToken
+      | undefined;
 
     if (!sourceToken || !destinationToken) {
       logger.logError(500, 'USDC token not found on one or both chains');
-      return NextResponse.json(
-        { error: 'USDC token not found on one or both chains' },
-        { status: 500, headers: { 'X-Request-Id': requestId } }
+      return withRequestId(
+        ErrorHandler.handle(new Error('USDC token not found on one or both chains')),
+        requestId,
       );
     }
 
     // Get fee options
-    const feeOptions = await sdk.getGasFeeOptions(sourceToken, destinationToken, Messenger.ALLBRIDGE);
+    const feeOptions = await sdk.getGasFeeOptions(
+      sourceToken,
+      destinationToken,
+      Messenger.ALLBRIDGE,
+    );
 
     // Select fee based on payment method
-    const gasFeePaymentMethod = feePaymentMethod === 'native'
-      ? FeePaymentMethod.WITH_NATIVE_CURRENCY
-      : FeePaymentMethod.WITH_STABLECOIN;
-    const selectedFee = feePaymentMethod === 'native'
-      ? (feeOptions as any).native?.float ?? (feeOptions as any)[FeePaymentMethod.WITH_NATIVE_CURRENCY]?.float
-      : (feeOptions as any).stablecoin?.float ?? (feeOptions as any)[FeePaymentMethod.WITH_STABLECOIN]?.float;
+    const gasFeePaymentMethod =
+      feePaymentMethod === 'native'
+        ? FeePaymentMethod.WITH_NATIVE_CURRENCY
+        : FeePaymentMethod.WITH_STABLECOIN;
+    const feeOptionsTyped = feeOptions as unknown as {
+      native?: { float?: number | string };
+      stablecoin?: { float?: number | string };
+      [key: string]: { float?: number | string } | undefined;
+    };
+    const selectedFee =
+      feePaymentMethod === 'native'
+        ? (feeOptionsTyped.native?.float ??
+          feeOptionsTyped[FeePaymentMethod.WITH_NATIVE_CURRENCY]?.float)
+        : (feeOptionsTyped.stablecoin?.float ??
+          feeOptionsTyped[FeePaymentMethod.WITH_STABLECOIN]?.float);
 
     // Build raw transaction
     const rawTx = await sdk.bridge.rawTxBuilder.send({
@@ -155,7 +204,10 @@ export async function POST(request: NextRequest) {
     });
 
     // rawTx for Stellar/Soroban is an XDR string
-    const xdr = typeof rawTx === 'string' ? rawTx : (rawTx as any).toXDR?.() ?? JSON.stringify(rawTx);
+    const xdr =
+      typeof rawTx === 'string'
+        ? rawTx
+        : ((rawTx as { toXDR?: () => string }).toXDR?.() ?? JSON.stringify(rawTx));
 
     const response = NextResponse.json({
       xdr,
@@ -175,51 +227,38 @@ export async function POST(request: NextRequest) {
     response.headers.set('X-Request-Id', requestId);
     logger.logSuccess(200);
     return response;
-  } catch (error: any) {
-    logger.error('Build TX error:', {}, error);
+  } catch (error: unknown) {
+    logger.logError(500, extractErrorMessage(error));
 
     const message = extractErrorMessage(error);
 
     // Parse common simulation errors
     if (message.includes('resulting balance is not within the allowed range')) {
-      const userFriendly = "Insufficient XLM balance for native gas fee. Your remaining XLM would fall below Stellar's minimum account reserve. Switch to USDC fee payment or add more XLM.";
+      const userFriendly =
+        "Insufficient XLM balance for native gas fee. Your remaining XLM would fall below Stellar's minimum account reserve. Switch to USDC fee payment or add more XLM.";
       logger.logError(500, userFriendly);
-      return NextResponse.json(
-        { error: userFriendly },
-        { status: 500, headers: { 'X-Request-Id': requestId } }
-      );
+      return withRequestId(ErrorHandler.handle(new Error(userFriendly)), requestId);
     }
 
     if (message.includes('contract call failed') && message.includes('transfer')) {
-      const userFriendly = "A token transfer in the bridge contract failed during simulation. This usually means insufficient balance for the amount + fees.";
+      const userFriendly =
+        'A token transfer in the bridge contract failed during simulation. This usually means insufficient balance for the amount + fees.';
       logger.logError(500, userFriendly);
-      return NextResponse.json(
-        { error: userFriendly },
-        { status: 500, headers: { 'X-Request-Id': requestId } }
-      );
+      return withRequestId(ErrorHandler.handle(new Error(userFriendly)), requestId);
     }
 
     // Generic simulation error handling
     if (message.includes('Simulation failed')) {
       logger.logError(500, message);
-      return NextResponse.json(
-        { error: message },
-        { status: 500, headers: { 'X-Request-Id': requestId } }
-      );
+      return withRequestId(ErrorHandler.handle(new Error(message)), requestId);
     }
 
     if (message.includes('Invalid')) {
       logger.logError(400, message);
-      return NextResponse.json(
-        { error: message },
-        { status: 400, headers: { 'X-Request-Id': requestId } }
-      );
+      return withRequestId(ErrorHandler.validation(message), requestId);
     }
 
     logger.logError(500, message);
-    return NextResponse.json(
-      { error: 'Failed to build transaction' },
-      { status: 500, headers: { 'X-Request-Id': requestId } }
-    );
+    return withRequestId(ErrorHandler.handle(new Error('Failed to build transaction')), requestId);
   }
 }

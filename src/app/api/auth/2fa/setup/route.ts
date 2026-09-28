@@ -1,18 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { TwoFAService } from '@/lib/two-fa';
+import { ErrorHandler } from '@/lib/error-handler';
+import { validateBody } from '@/lib/validation/validate-request';
 
+// STORAGE_KEY was used in an earlier in-memory implementation; the record
+// now lives in the session store. Preserved here for reference.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const STORAGE_KEY = 'stellar_spend_2fa_config';
+
+const setupSchema = z.object({
+  userId: z.string().min(1),
+  method: z.enum(['totp', 'sms']),
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, method } = await req.json();
-
-    if (!userId || !method || !['totp', 'sms'].includes(method)) {
-      return NextResponse.json(
-        { error: 'Invalid userId or method' },
-        { status: 400 }
-      );
-    }
+    const validation = await validateBody(req, setupSchema);
+    if (!validation.success) return validation.response;
+    const { userId, method } = validation.data;
 
     if (method === 'totp') {
       const secret = TwoFAService.generateTOTPSecret();
@@ -34,9 +40,6 @@ export async function POST(req: NextRequest) {
       });
     }
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
-    );
+    return ErrorHandler.serverError(error);
   }
 }

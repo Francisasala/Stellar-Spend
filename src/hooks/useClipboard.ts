@@ -1,5 +1,5 @@
+import { useState, useCallback } from 'react';
 import { logger } from '@/lib/logger';
-import { useState, useCallback } from "react";
 
 export function useClipboard(timeout = 2000) {
   const [isCopied, setIsCopied] = useState(false);
@@ -7,7 +7,7 @@ export function useClipboard(timeout = 2000) {
   const copy = useCallback(
     async (text: string) => {
       if (!navigator?.clipboard) {
-        logger.warn("Clipboard not supported");
+        logger.warn('clipboard.unsupported');
         return false;
       }
 
@@ -17,12 +17,12 @@ export function useClipboard(timeout = 2000) {
         setTimeout(() => setIsCopied(false), timeout);
         return true;
       } catch (error) {
-        logger.warn("Copy failed", error);
+        logger.warn('clipboard.copy_failed', {}, error);
         setIsCopied(false);
         return false;
       }
     },
-    [timeout]
+    [timeout],
   );
 
   return { isCopied, copy };
