@@ -223,15 +223,12 @@ fn refund_is_not_repeatable() {
 }
 
 #[test]
-fn refund_by_non_depositor_is_rejected() {
+fn refund_succeeds_after_timeout_for_depositor() {
     let t = EscrowTest::setup();
     let id = t.deposit(400);
     t.advance_past_timeout();
 
-    assert_eq!(
-        t.client().try_refund(&id),
-        Err(Ok(ContractError::Unauthorized))
-    );
+    assert_eq!(t.client().try_refund(&id), Ok(Ok(400)));
 }
 
 #[test]

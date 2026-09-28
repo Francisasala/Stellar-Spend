@@ -4,7 +4,7 @@
 //! `set_timeout` (admin) and `can_refund` (read-only) entrypoints that relate to
 //! the lifecycle of a contested or time-locked deposit.
 
-use soroban_sdk::{symbol_short, Address, Env, panic_with_error};
+use soroban_sdk::{contracttype, symbol_short, Address, Env, Map, String};
 use stellar_spend_shared::errors::ContractError;
 
 use crate::release::{load_deposits, require_admin};
@@ -14,6 +14,7 @@ use crate::{
 };
 
 /// Dispute error types
+#[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DisputeError {
     AlreadyResolved = 1,
@@ -25,6 +26,7 @@ pub enum DisputeError {
 }
 
 /// Dispute status
+#[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DisputeStatus {
     None,
@@ -36,6 +38,8 @@ pub enum DisputeStatus {
 }
 
 /// Dispute record
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Dispute {
     pub id: u64,
     pub escrow_id: u64,
@@ -102,7 +106,7 @@ impl DisputeHandler {
 
         // Create dispute
         let dispute = Dispute {
-            id: env.ledger().sequence(),
+            id: env.ledger().sequence() as u64,
             escrow_id,
             initiator: initiator.clone(),
             respondent: respondent.clone(),
@@ -242,18 +246,28 @@ impl DisputeHandler {
 
     /// Store dispute (implementation specific)
     fn store_dispute(env: &Env, dispute: &Dispute) {
-        let key = format!("dispute_{}", dispute.escrow_id);
-        env.storage().set(&String::from_str(env, &key), dispute);
+        let mut disputes: Map<u64, Dispute> = env
+            .storage()
+            .instance()
+            .get(&DataKey::Disputes)
+            .unwrap_or_else(|| Map::new(env));
+        disputes.set(dispute.escrow_id, dispute.clone());
+        env.storage()
+            .instance()
+            .set(&DataKey::Disputes, &disputes);
     }
 
     /// Load dispute (implementation specific)
     fn load_dispute(env: &Env, escrow_id: u64) -> Option<Dispute> {
-        let key = format!("dispute_{}", escrow_id);
-        env.storage().get(&String::from_str(env, &key))
+        let disputes: Map<u64, Dispute> = env
+            .storage()
+            .instance()
+            .get(&DataKey::Disputes)?;
+        disputes.get(escrow_id)
     }
 
     /// Authorize resolver
-    fn authorize_resolver(env: &Env, resolver: &Address) -> Result<(), DisputeError> {
+    fn authorize_resolver(_env: &Env, resolver: &Address) -> Result<(), DisputeError> {
         resolver.require_auth();
         Ok(())
     }
