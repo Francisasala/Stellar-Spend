@@ -4,10 +4,10 @@ import { env } from '@/lib/env';
 import { getCorridorConfig } from '@/lib/corridor-config';
 import { ErrorHandler } from '@/lib/error-handler';
 import { ApiError, ErrorType } from '@/lib/error-types';
+import { paycrestBreaker } from '@/lib/circuit-breaker';
 
 export const maxDuration = 10;
 
-// Edge / CDN cache: 1 hour fresh + 24 hours stale-while-revalidate
 const CACHE_CONTROL_HEADER = 'public, max-age=3600, stale-while-revalidate=86400';
 
 interface PaycrestHttpError extends Error {
@@ -23,12 +23,14 @@ class PaycrestAdapter {
   }
 
   async getInstitutions(currency: string) {
-    const response = await fetch(`${this.apiUrl}/institutions/${encodeURIComponent(currency)}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'API-Key': this.apiKey,
-      },
-    });
+    const response = await paycrestBreaker.execute(() =>
+      fetch(`${this.apiUrl}/institutions/${encodeURIComponent(currency)}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'API-Key': this.apiKey,
+        },
+      }),
+    );
 
     const data = await response.json();
 
@@ -57,7 +59,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ currenc
   } catch (err: unknown) {
     logger.error('Error fetching institutions from Paycrest:', {}, err);
 
-    // Fallback to corridor-config institutions when Paycrest is unreachable
     const corridorConfig = getCorridorConfig(currency);
     if (corridorConfig && corridorConfig.institutions.length > 0) {
       const fallback = corridorConfig.institutions.map((inst) => ({
