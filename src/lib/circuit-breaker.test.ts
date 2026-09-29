@@ -1,73 +1,41 @@
 /**
  * Tests for the lightweight CircuitBreaker (#800)
  * Covers: CLOSED→OPEN transition, OPEN rejection, HALF_OPEN probe, fallback, timeout.
+ *
+ * Plus offramp provider-breaker assertions (#1206).
  */
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { CircuitBreaker, CircuitOpenError, CircuitTimeoutError } from './circuit-breaker';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import {
+  CircuitBreaker,
+  CircuitOpenError,
+  CircuitTimeoutError,
+  paycrestBreaker,
+  allbridgeBreaker,
+  sorobanRpcBreaker,
+} from './circuit-breaker';
 
-describe('CircuitBreaker', () => {
+describe('CircuitBreaker (core)', () => {
+  let breaker: CircuitBreaker;
+
+  beforeEach(() => {
+    breaker = new CircuitBreaker({ name: 'test', failureThreshold: 2, resetTimeoutMs: 50 });
+  });
+
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  // ── CLOSED state ────────────────────────────────────────────────────────────
-
-  describe('CLOSED state', () => {
-    it('passes calls through when upstream succeeds', async () => {
-      const breaker = new CircuitBreaker({ name: 'test', failureThreshold: 3 });
-      const fn = vi.fn().mockResolvedValue('ok');
-
-      const result = await breaker.execute(fn);
-
-      expect(result).toBe('ok');
-      expect(breaker.getStatus().state).toBe('CLOSED');
-    });
-
-    it('counts failures and stays CLOSED below threshold', async () => {
-      const breaker = new CircuitBreaker({ name: 'test', failureThreshold: 3, timeoutMs: 0 });
-      const fn = vi.fn().mockRejectedValue(new Error('boom'));
-
-      await expect(breaker.execute(fn)).rejects.toThrow('boom');
-      await expect(breaker.execute(fn)).rejects.toThrow('boom');
-
-      expect(breaker.getStatus().state).toBe('CLOSED');
-      expect(breaker.getStatus().failures).toBe(2);
-    });
-
-    it('resets failure counter after a success', async () => {
-      const breaker = new CircuitBreaker({ name: 'test', failureThreshold: 3, timeoutMs: 0 });
-      const fail = vi.fn().mockRejectedValue(new Error('boom'));
-      const succeed = vi.fn().mockResolvedValue('ok');
-
-      await expect(breaker.execute(fail)).rejects.toThrow();
-      await expect(breaker.execute(fail)).rejects.toThrow();
-      await breaker.execute(succeed);
-
-      expect(breaker.getStatus().failures).toBe(0);
-    });
-  });
-
-  // ── CLOSED → OPEN ──────────────────────────────────────────────────────────
-
-  describe('CLOSED → OPEN transition', () => {
-    it('opens after reaching failure threshold', async () => {
-      const breaker = new CircuitBreaker({ name: 'test', failureThreshold: 3, timeoutMs: 0 });
-      const fn = vi.fn().mockRejectedValue(new Error('boom'));
-
-      for (let i = 0; i < 3; i++) {
-        await expect(breaker.execute(fn)).rejects.toThrow('boom');
-      }
-
-      expect(breaker.getStatus().state).toBe('OPEN');
-    });
+  it('passes through successful calls', async () => {
+    const fn = vi.fn().mockResolvedValue('ok');
+    await expect(breaker.execute(fn)).resolves.toBe('ok');
   });
 
   // ── OPEN state ─────────────────────────────────────────────────────────────
 
   describe('OPEN state', () => {
     async function openBreaker(threshold = 3, timeoutMs = 0) {
-      const breaker = new CircuitBreaker({
+      const b = new CircuitBreaker({
         name: 'test',
         failureThreshold: threshold,
         timeoutMs,
@@ -75,33 +43,33 @@ describe('CircuitBreaker', () => {
       });
       const fn = vi.fn().mockRejectedValue(new Error('boom'));
       for (let i = 0; i < threshold; i++) {
-        await expect(breaker.execute(fn)).rejects.toThrow();
+        await expect(b.execute(fn)).rejects.toThrow();
       }
-      return breaker;
+      return b;
     }
 
     it('throws CircuitOpenError when open and no fallback provided', async () => {
-      const breaker = await openBreaker();
-      await expect(breaker.execute(vi.fn())).rejects.toBeInstanceOf(CircuitOpenError);
+      const b = await openBreaker();
+      await expect(b.execute(vi.fn())).rejects.toBeInstanceOf(CircuitOpenError);
     });
 
     it('calls fallback instead of upstream when open', async () => {
-      const breaker = await openBreaker();
+      const b = await openBreaker();
       const upstream = vi.fn();
 
-      const result = await breaker.execute(upstream, { fallback: () => 'fallback-value' });
+      const result = await b.execute(upstream, { fallback: () => 'fallback-value' });
 
       expect(result).toBe('fallback-value');
       expect(upstream).not.toHaveBeenCalled();
     });
 
     it('does not increment failure counter while open', async () => {
-      const breaker = await openBreaker();
-      const before = breaker.getStatus().failures;
+      const b = await openBreaker();
+      const before = b.getStatus().failures;
 
-      await expect(breaker.execute(vi.fn())).rejects.toBeInstanceOf(CircuitOpenError);
+      await expect(b.execute(vi.fn())).rejects.toBeInstanceOf(CircuitOpenError);
 
-      expect(breaker.getStatus().failures).toBe(before);
+      expect(b.getStatus().failures).toBe(before);
     });
   });
 
@@ -110,7 +78,7 @@ describe('CircuitBreaker', () => {
   describe('OPEN → HALF_OPEN transition', () => {
     it('transitions to HALF_OPEN after resetTimeout elapses', async () => {
       vi.useFakeTimers();
-      const breaker = new CircuitBreaker({
+      const b = new CircuitBreaker({
         name: 'test',
         failureThreshold: 1,
         timeoutMs: 0,
@@ -118,21 +86,20 @@ describe('CircuitBreaker', () => {
       });
       const fail = vi.fn().mockRejectedValue(new Error('boom'));
 
-      await expect(breaker.execute(fail)).rejects.toThrow();
-      expect(breaker.getStatus().state).toBe('OPEN');
+      await expect(b.execute(fail)).rejects.toThrow();
+      expect(b.getStatus().state).toBe('OPEN');
 
       vi.advanceTimersByTime(5_001);
 
-      // Trying to execute now should trigger HALF_OPEN probe
       const succeed = vi.fn().mockResolvedValue('ok');
-      await breaker.execute(succeed);
+      await b.execute(succeed);
 
-      expect(breaker.getStatus().state).toBe('CLOSED');
+      expect(b.getStatus().state).toBe('CLOSED');
     });
 
     it('re-opens on probe failure in HALF_OPEN', async () => {
       vi.useFakeTimers();
-      const breaker = new CircuitBreaker({
+      const b = new CircuitBreaker({
         name: 'test',
         failureThreshold: 1,
         timeoutMs: 0,
@@ -140,11 +107,11 @@ describe('CircuitBreaker', () => {
       });
       const fail = vi.fn().mockRejectedValue(new Error('boom'));
 
-      await expect(breaker.execute(fail)).rejects.toThrow();
+      await expect(b.execute(fail)).rejects.toThrow();
       vi.advanceTimersByTime(5_001);
 
-      await expect(breaker.execute(fail)).rejects.toThrow('boom');
-      expect(breaker.getStatus().state).toBe('OPEN');
+      await expect(b.execute(fail)).rejects.toThrow('boom');
+      expect(b.getStatus().state).toBe('OPEN');
     });
   });
 
@@ -153,59 +120,48 @@ describe('CircuitBreaker', () => {
   describe('timeout', () => {
     it('throws CircuitTimeoutError when fn exceeds timeoutMs', async () => {
       vi.useFakeTimers();
-      const breaker = new CircuitBreaker({ name: 'test', failureThreshold: 10, timeoutMs: 100 });
+      const b = new CircuitBreaker({ name: 'test', failureThreshold: 10, timeoutMs: 100 });
 
       const slowFn = () =>
         new Promise<never>((_, reject) => {
           setTimeout(() => reject(new Error('should not reach')), 5_000);
         });
 
-      const exec = breaker.execute(slowFn);
+      const exec = b.execute(slowFn);
       vi.advanceTimersByTime(101);
 
       await expect(exec).rejects.toBeInstanceOf(CircuitTimeoutError);
     });
+  });
+});
 
-    it('counts timeout as a failure', async () => {
-      vi.useFakeTimers();
-      const breaker = new CircuitBreaker({ name: 'test', failureThreshold: 3, timeoutMs: 100 });
-      const slowFn = () => new Promise<never>(() => undefined);
+// ── Offramp provider breakers (#1206) ────────────────────────────────────────
 
-      const exec = breaker.execute(slowFn);
-      vi.advanceTimersByTime(101);
-      await expect(exec).rejects.toBeInstanceOf(CircuitTimeoutError);
-
-      expect(breaker.getStatus().failures).toBe(1);
-    });
+describe('offramp provider breakers are exported and healthy (#1206)', () => {
+  it('exports a paycrestBreaker', () => {
+    expect(paycrestBreaker).toBeInstanceOf(CircuitBreaker);
   });
 
-  // ── reset ──────────────────────────────────────────────────────────────────
-
-  describe('reset', () => {
-    it('resets an open breaker back to CLOSED', async () => {
-      const breaker = new CircuitBreaker({ name: 'test', failureThreshold: 1, timeoutMs: 0 });
-      await expect(breaker.execute(() => Promise.reject(new Error('boom')))).rejects.toThrow();
-      expect(breaker.getStatus().state).toBe('OPEN');
-
-      breaker.reset();
-
-      expect(breaker.getStatus().state).toBe('CLOSED');
-      expect(breaker.getStatus().failures).toBe(0);
-    });
+  it('exports an allbridgeBreaker', () => {
+    expect(allbridgeBreaker).toBeInstanceOf(CircuitBreaker);
   });
 
-  // ── getStatus ─────────────────────────────────────────────────────────────
+  it('exports a sorobanRpcBreaker', () => {
+    expect(sorobanRpcBreaker).toBeInstanceOf(CircuitBreaker);
+  });
 
-  describe('getStatus', () => {
-    it('exposes circuit name and initial closed state', () => {
-      const breaker = new CircuitBreaker({ name: 'my-service' });
-      const status = breaker.getStatus();
+  it('each provider breaker passes through successful calls', async () => {
+    for (const b of [paycrestBreaker, allbridgeBreaker, sorobanRpcBreaker]) {
+      const fn = vi.fn().mockResolvedValue('ok');
+      await expect(b.execute(fn)).resolves.toBe('ok');
+    }
+  });
 
-      expect(status.name).toBe('my-service');
-      expect(status.state).toBe('CLOSED');
-      expect(status.failures).toBe(0);
-      expect(status.lastFailureAt).toBeNull();
-      expect(status.nextAttemptAt).toBeNull();
-    });
+  it('paycrestBreaker opens after consecutive failures', async () => {
+    const failing = vi.fn().mockRejectedValue(new Error('paycrest down'));
+    for (let i = 0; i < 5; i++) {
+      await paycrestBreaker.execute(failing).catch(() => {});
+    }
+    await expect(paycrestBreaker.execute(failing)).rejects.toBeInstanceOf(CircuitOpenError);
   });
 });

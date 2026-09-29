@@ -326,3 +326,36 @@ describe('performManualReconciliation', () => {
     expect(result.message).toContain('investigate');
   });
 });
+
+/* -------------------------------------------------------------------------
+ * Route delegation tests (#1203)
+ * Ensures the cron route uses runReconciliation and forwards params.
+ * ----------------------------------------------------------------------- */
+
+describe('daily-reconciliation cron route (#1203)', () => {
+  it('is a thin wrapper that imports runReconciliation', async () => {
+    const routePath = require.resolve('../../app/api/cron/daily-reconciliation/route.ts');
+    const src = require('fs').readFileSync(routePath, 'utf8');
+    expect(src).toMatch(/import\s+\{[^}]*runReconciliation[^}]*\}\s+from\s+['"]@\/lib\/reconciliation['"]/);
+  });
+
+  it('runReconciliation defaults windowEnd to now and windowStart to 24h earlier', async () => {
+    const mod = await import('../reconciliation');
+    const result = await mod.runReconciliation({ dryRun: true });
+    expect(result.dryRun).toBe(true);
+    expect(typeof result.windowStart).toBe('string');
+    expect(typeof result.windowEnd).toBe('string');
+    const start = new Date(result.windowStart).getTime();
+    const end = new Date(result.windowEnd).getTime();
+    expect(end).toBeGreaterThanOrEqual(start);
+  });
+
+  it('runReconciliation honours explicit windowStart / windowEnd', async () => {
+    const mod = await import('../reconciliation');
+    const start = '2025-01-01T00:00:00.000Z';
+    const end = '2025-01-02T00:00:00.000Z';
+    const result = await mod.runReconciliation({ windowStart: start, windowEnd: end });
+    expect(result.windowStart).toBe(start);
+    expect(result.windowEnd).toBe(end);
+  });
+});

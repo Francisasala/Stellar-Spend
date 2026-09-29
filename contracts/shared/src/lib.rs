@@ -7,9 +7,8 @@ pub mod policy;
 pub mod token;
 pub mod validation;
 
-pub use events::EventFormat;
-pub use events::topics;
-pub use auth::{
-    assert_is_admin, assert_is_signer, AdminAuth, AuthError, required_threshold, verify_threshold,
-};
+pub use events::emit_admin_initialized;
+pub use auth::AdminAuth;
+pub use auth::AuthError;
 pub use errors::ContractError;
+pub use errors::SharedError;

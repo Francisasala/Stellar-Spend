@@ -1,9 +1,10 @@
 /**
- * Request signing utilities for API authentication
- * Implements HMAC-based request signing with timestamp validation
+ * Request signing utilities for API authentication.
+ * HMAC computation is delegated to the shared primitive in
+ * src/lib/crypto/signature.ts (closes #1205).
  */
 
-import { createHmac, timingSafeEqual } from 'crypto';
+import { sign as _sign, safeCompare } from '@/lib/crypto/signature';
 
 export interface SignatureConfig {
   algorithm: 'sha256' | 'sha512';
@@ -17,9 +18,6 @@ export const DEFAULT_SIGNATURE_CONFIG: SignatureConfig = {
   timestampTolerance: 5 * 60 * 1000, // 5 minutes
 };
 
-/**
- * Generate HMAC signature for request
- */
 export function generateSignature(
   method: string,
   path: string,
@@ -29,16 +27,9 @@ export function generateSignature(
   config: SignatureConfig = DEFAULT_SIGNATURE_CONFIG,
 ): string {
   const message = [method, path, body || '', timestamp].join('\n');
-
-  const hmac = createHmac(config.algorithm, secret);
-  hmac.update(message);
-
-  return hmac.digest(config.encoding);
+  return _sign(message, secret, config.algorithm, config.encoding);
 }
 
-/**
- * Verify request signature
- */
 export function verifySignature(
   method: string,
   path: string,
@@ -48,7 +39,6 @@ export function verifySignature(
   secret: string,
   config: SignatureConfig = DEFAULT_SIGNATURE_CONFIG,
 ): { valid: boolean; error?: string } {
-  // Validate timestamp
   const requestTime = parseInt(timestamp, 10);
   const now = Date.now();
 
@@ -60,19 +50,8 @@ export function verifySignature(
     return { valid: false, error: 'Request timestamp is too old or in the future' };
   }
 
-  // Generate expected signature
-  const expectedSignature = generateSignature(method, path, body, timestamp, secret, config);
-
-  // Use constant-time comparison to prevent timing attacks
-  try {
-    const isValid = timingSafeEqual(
-      Buffer.from(signature, config.encoding),
-      Buffer.from(expectedSignature, config.encoding),
-    );
-    return { valid: isValid };
-  } catch {
-    return { valid: false, error: 'Signature verification failed' };
-  }
+  const expected = generateSignature(method, path, body, timestamp, secret, config);
+  return safeCompare(expected, signature) ? { valid: true } : { valid: false };
 }
 
 /**
@@ -102,16 +81,10 @@ export function extractSignatureFromHeaders(
   };
 }
 
-/**
- * Generate timestamp for request signing
- */
 export function generateTimestamp(): string {
   return Date.now().toString();
 }
 
-/**
- * Create signed request headers
- */
 export function createSignedRequestHeaders(
   method: string,
   path: string,
@@ -128,9 +101,6 @@ export function createSignedRequestHeaders(
   };
 }
 
-/**
- * Validate request signature and timestamp
- */
 export function validateRequestSignature(
   method: string,
   path: string,
@@ -152,54 +122,29 @@ export function validateRequestSignature(
   return verifySignature(method, path, body, timestamp, signature, secret, config);
 }
 
-/**
- * Replay attack prevention - track used timestamps
- */
 export class ReplayAttackPrevention {
-  private usedTimestamps: Set<string> = new Set();
+  private usedTimestamps = new Set<string>();
   private cleanupInterval: NodeJS.Timeout;
 
   constructor(private toleranceMs: number = 5 * 60 * 1000) {
-    // Clean up old timestamps every minute
     this.cleanupInterval = setInterval(() => this.cleanup(), 60 * 1000);
   }
 
-  /**
-   * Check if timestamp has been used before
-   */
   isReplay(timestamp: string): boolean {
     return this.usedTimestamps.has(timestamp);
   }
 
-  /**
-   * Record timestamp as used
-   */
   recordTimestamp(timestamp: string): void {
     this.usedTimestamps.add(timestamp);
   }
 
-  /**
-   * Clean up old timestamps
-   */
   private cleanup(): void {
-    const now = Date.now();
-    const cutoff = now - this.toleranceMs;
-
-    const toDelete: string[] = [];
-    for (const timestamp of this.usedTimestamps) {
-      if (parseInt(timestamp, 10) < cutoff) {
-        toDelete.push(timestamp);
-      }
-    }
-
-    for (const timestamp of toDelete) {
-      this.usedTimestamps.delete(timestamp);
+    const cutoff = Date.now() - this.toleranceMs;
+    for (const ts of this.usedTimestamps) {
+      if (parseInt(ts, 10) < cutoff) this.usedTimestamps.delete(ts);
     }
   }
 
-  /**
-   * Destroy the cleanup interval
-   */
   destroy(): void {
     clearInterval(this.cleanupInterval);
   }
