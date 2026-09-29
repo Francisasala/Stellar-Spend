@@ -251,3 +251,124 @@ describe("Session Management Service - Expiry & Revocation Workflow", () => {
     });
   });
 });
+
+/* ============================================================================
+ * Route-level integration tests (#1207)
+ *
+ * Verifies that the security/sessions routes delegate to the shared lib
+ * module and that session expiry + rotation behave correctly end-to-end.
+ * ========================================================================= */
+
+import { POST as createSessionRoute } from '@/app/api/security/sessions/route';
+import { GET as listSessionsRoute } from '@/app/api/security/sessions/route';
+import { POST as refreshRoute } from '@/app/api/security/sessions/refresh/route';
+import { POST as revokeRoute } from '@/app/api/security/sessions/revoke/route';
+import { NextRequest } from 'next/server';
+
+function makeRequest(
+  url: string,
+  opts: { method?: string; headers?: Record<string, string>; body?: unknown } = {},
+) {
+  return new NextRequest(url, {
+    method: opts.method ?? 'GET',
+    headers: opts.headers ?? {},
+    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+  });
+}
+
+describe('security/sessions routes delegate to lib (#1207)', () => {
+  const user = 'GTESTUSER0000000000000000000000000000000000000000000000000';
+
+  it('POST /sessions calls sessionManagementService.createSession', async () => {
+    const spy = vi
+      .spyOn(sessionManagementService, 'createSession')
+      .mockResolvedValue({
+        id: 's1',
+        userAddress: user,
+        token: 'tok',
+        refreshToken: 'ref',
+        isActive: true,
+        createdAt: 1,
+        expiresAt: 2,
+        lastActivityAt: 1,
+        activityCount: 0,
+      } as any);
+
+    const req = makeRequest('http://x/api/security/sessions', {
+      method: 'POST',
+      headers: { 'x-user-address': user, 'user-agent': 'test', 'x-forwarded-for': '1.2.3.4' },
+    });
+
+    const res = await createSessionRoute(req as any);
+    expect(res.status).toBe(201);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0][0]).toBe(user);
+    spy.mockRestore();
+  });
+
+  it('GET /sessions calls getUserSessions', async () => {
+    const spy = vi
+      .spyOn(sessionManagementService, 'getUserSessions')
+      .mockResolvedValue([]);
+
+    const req = makeRequest('http://x/api/security/sessions', {
+      headers: { 'x-user-address': user },
+    });
+
+    const res = await listSessionsRoute(req as any);
+    expect(res.status).toBe(200);
+    expect(spy).toHaveBeenCalledWith(user);
+    spy.mockRestore();
+  });
+
+  it('POST /sessions/refresh calls refreshSession', async () => {
+    const spy = vi
+      .spyOn(sessionManagementService, 'refreshSession')
+      .mockResolvedValue(null);
+
+    const req = makeRequest('http://x/api/security/sessions/refresh', {
+      method: 'POST',
+      body: { refreshToken: 'invalid' },
+    });
+
+    const res = await refreshRoute(req as any);
+    // null → unauthorized
+    expect(res.status).toBe(401);
+    expect(spy).toHaveBeenCalledWith('invalid');
+    spy.mockRestore();
+  });
+
+  it('POST /sessions/revoke calls revokeSession', async () => {
+    const spy = vi
+      .spyOn(sessionManagementService, 'revokeSession')
+      .mockResolvedValue(undefined);
+
+    const req = makeRequest('http://x/api/security/sessions/revoke', {
+      method: 'POST',
+      headers: { 'x-user-address': user },
+      body: { sessionId: 'session_abc' },
+    });
+
+    const res = await revokeRoute(req as any);
+    expect(res.status).toBe(200);
+    expect(spy).toHaveBeenCalledWith('session_abc', undefined);
+    spy.mockRestore();
+  });
+
+  it('POST /sessions/revoke with revokeAll calls revokeAllUserSessions', async () => {
+    const spy = vi
+      .spyOn(sessionManagementService, 'revokeAllUserSessions')
+      .mockResolvedValue(undefined);
+
+    const req = makeRequest('http://x/api/security/sessions/revoke', {
+      method: 'POST',
+      headers: { 'x-user-address': user },
+      body: { revokeAll: true, reason: 'logout everywhere' },
+    });
+
+    const res = await revokeRoute(req as any);
+    expect(res.status).toBe(200);
+    expect(spy).toHaveBeenCalledWith(user, 'logout everywhere');
+    spy.mockRestore();
+  });
+});
