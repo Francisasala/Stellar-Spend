@@ -166,9 +166,9 @@ export function getRows<T = unknown>(table: TableName): T[] {
  *
  * @param pool - A `pg.Pool` or compatible object with a `query` method.
  */
-export async function resetDbReal(pool: { query: (sql: string) => Promise<unknown> }): Promise<void> {
+export async function resetDbReal(pool: {
+  query: (sql: string) => Promise<unknown>;
+}): Promise<void> {
   // Single statement avoids round-trips; CASCADE handles FK constraints.
-  await pool.query(
-    `TRUNCATE TABLE ${ALL_TABLES.join(', ')} RESTART IDENTITY CASCADE`,
-  );
+  await pool.query(`TRUNCATE TABLE ${ALL_TABLES.join(', ')} RESTART IDENTITY CASCADE`);
 }

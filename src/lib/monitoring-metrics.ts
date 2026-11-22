@@ -87,7 +87,9 @@ export function buildMetricsEnvelope<T extends Record<string, unknown>>(
 }
 
 /** Safely coerce an unknown vitals rating into one of the known buckets. */
-export function normalizeVitalRating(rating: unknown): 'good' | 'needs-improvement' | 'poor' | 'unknown' {
+export function normalizeVitalRating(
+  rating: unknown,
+): 'good' | 'needs-improvement' | 'poor' | 'unknown' {
   if (rating === 'good' || rating === 'needs-improvement' || rating === 'poor') return rating;
   return 'unknown';
 }

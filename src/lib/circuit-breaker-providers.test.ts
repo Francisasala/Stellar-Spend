@@ -23,7 +23,11 @@ const failingFetch = vi.fn(async () => {
 
 describe('circuit breaker opens on failing mock', () => {
   it('opens after the failure threshold and rejects without calling the upstream', async () => {
-    const breaker = new CircuitBreaker({ name: 'mock', failureThreshold: 2, resetTimeoutMs: 60_000 });
+    const breaker = new CircuitBreaker({
+      name: 'mock',
+      failureThreshold: 2,
+      resetTimeoutMs: 60_000,
+    });
     const upstream = vi.fn().mockRejectedValue(new Error('boom'));
 
     await expect(breaker.execute(upstream)).rejects.toThrow('boom');

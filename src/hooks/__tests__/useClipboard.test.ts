@@ -44,7 +44,9 @@ describe('useClipboard', () => {
     });
     expect(result.current.isCopied).toBe(true);
 
-    act(() => { vi.advanceTimersByTime(500); });
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
     expect(result.current.isCopied).toBe(false);
   });
 
@@ -75,13 +77,19 @@ describe('useClipboard', () => {
   it('should respect a custom timeout value', async () => {
     const { result } = renderHook(() => useClipboard(1000));
 
-    await act(async () => { await result.current.copy('text'); });
+    await act(async () => {
+      await result.current.copy('text');
+    });
     expect(result.current.isCopied).toBe(true);
 
-    act(() => { vi.advanceTimersByTime(999); });
+    act(() => {
+      vi.advanceTimersByTime(999);
+    });
     expect(result.current.isCopied).toBe(true);
 
-    act(() => { vi.advanceTimersByTime(1); });
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
     expect(result.current.isCopied).toBe(false);
   });
 });

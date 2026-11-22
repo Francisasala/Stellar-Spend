@@ -72,7 +72,8 @@ export class StellarWalletAdapter {
    */
   async isFreighterAvailable(): Promise<boolean> {
     try {
-      if (typeof window !== 'undefined' && (window as unknown as WindowWallets).freighter) return true;
+      if (typeof window !== 'undefined' && (window as unknown as WindowWallets).freighter)
+        return true;
       const result = await freighterApi.isConnected();
       return !!result.isConnected;
     } catch {

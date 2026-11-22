@@ -254,7 +254,9 @@ describe('SkeletonBase snapshots', () => {
   });
 
   it('renders with additional className', () => {
-    expect(snap(<SkeletonBase className="rounded-full" width={40} height={40} />)).toMatchSnapshot();
+    expect(
+      snap(<SkeletonBase className="rounded-full" width={40} height={40} />),
+    ).toMatchSnapshot();
   });
 });
 

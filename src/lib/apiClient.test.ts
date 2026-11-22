@@ -18,9 +18,7 @@ describe('apiClient', () => {
   describe('apiGet', () => {
     it('makes a GET request and returns typed data', async () => {
       const mockData: TestData = { id: 1, name: 'Test' };
-      fetchMock.mockResolvedValueOnce(
-        new Response(JSON.stringify(mockData), { status: 200 }),
-      );
+      fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(mockData), { status: 200 }));
 
       const result = await apiGet<TestData>('/api/test');
       expect(result).toEqual(mockData);
@@ -49,9 +47,7 @@ describe('apiClient', () => {
       const mockData: TestData = { id: 1, name: 'Created' };
       const payload = { name: 'Test' };
 
-      fetchMock.mockResolvedValueOnce(
-        new Response(JSON.stringify(mockData), { status: 200 }),
-      );
+      fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(mockData), { status: 200 }));
 
       const result = await apiPost<TestData>('/api/test', payload);
       expect(result).toEqual(mockData);
@@ -76,9 +72,7 @@ describe('apiClient', () => {
     it('makes a PATCH request with body', async () => {
       const mockData: TestData = { id: 1, name: 'Updated' };
 
-      fetchMock.mockResolvedValueOnce(
-        new Response(JSON.stringify(mockData), { status: 200 }),
-      );
+      fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(mockData), { status: 200 }));
 
       const result = await apiPatch<TestData>('/api/test/1', { name: 'Updated' });
       expect(result).toEqual(mockData);

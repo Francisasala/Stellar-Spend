@@ -59,7 +59,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 type FeeSchedule = Map<bigint, number>;
 
 const DEFAULT_SCHEDULE: FeeSchedule = new Map([
-  [0n, 50],        // 0.5% for amounts < 1M stroops
+  [0n, 50], // 0.5% for amounts < 1M stroops
   [1_000_000n, 25], // 0.25% for amounts >= 1M
   [10_000_000n, 10], // 0.10% for amounts >= 10M
 ]);
@@ -173,7 +173,10 @@ class TreasuryService {
       throw new TreasuryValidationError('NOT_INITIALIZED', 'Contract is not initialized');
     }
     if (amount < 0n) {
-      throw new TreasuryValidationError('NEGATIVE_AMOUNT', `Amount must be non-negative; got ${amount}`);
+      throw new TreasuryValidationError(
+        'NEGATIVE_AMOUNT',
+        `Amount must be non-negative; got ${amount}`,
+      );
     }
     return basisPointsOf(amount, selectTier(this.schedule, amount));
   }
@@ -538,8 +541,8 @@ describe('Custom fee schedule', () => {
 
   it('custom multi-tier schedule selects highest tier below amount', () => {
     const schedule: FeeSchedule = new Map([
-      [0n, 7],          // 0.07%
-      [500_000n, 6],    // 0.06%
+      [0n, 7], // 0.07%
+      [500_000n, 6], // 0.06%
       [25_000_000n, 5], // 0.05%
     ]);
     const service = makeService(100_000_000n, schedule);

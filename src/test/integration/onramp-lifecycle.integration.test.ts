@@ -11,10 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import type {
-  OnrampState,
-  OnrampWebhookPayload,
-} from '@/lib/onramp';
+import type { OnrampState, OnrampWebhookPayload } from '@/lib/onramp';
 
 // Mock implementation of onramp service for testing
 interface TestOnrampOrder {

@@ -28,7 +28,10 @@ function failingPairs(pairs: ContrastPair[]): ContrastPair[] {
 
 function formatFailures(pairs: ContrastPair[]): string {
   return pairs
-    .map((p) => `  ${p.foregroundName}(${p.foreground}) on ${p.backgroundName}(${p.background}): ${p.contrast}:1`)
+    .map(
+      (p) =>
+        `  ${p.foregroundName}(${p.foreground}) on ${p.backgroundName}(${p.background}): ${p.contrast}:1`,
+    )
     .join('\n');
 }
 

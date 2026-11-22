@@ -18,7 +18,7 @@ function isStorageAvailable(): boolean {
 
 export function useProgressiveDisclosure(
   key: string,
-  defaultOpen = false
+  defaultOpen = false,
 ): UseProgressiveDisclosureResult {
   const [isOpen, setIsOpen] = useState<boolean>(defaultOpen);
   const [isMounted, setIsMounted] = useState<boolean>(false);

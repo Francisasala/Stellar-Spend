@@ -25,7 +25,13 @@ describe('Shared Form Validators', () => {
     });
 
     it('should reject invalid email addresses', () => {
-      const invalidEmails = ['invalid', '@example.com', 'user@', 'user name@example.com', 'user@.com'];
+      const invalidEmails = [
+        'invalid',
+        '@example.com',
+        'user@',
+        'user name@example.com',
+        'user@.com',
+      ];
 
       invalidEmails.forEach((email) => {
         const result = emailValidator.safeParse(email);
@@ -241,7 +247,7 @@ describe('Shared Form Validators', () => {
   describe('Invalid Stellar address formats', () => {
     it('should reject non-Base32 characters in Stellar address', () => {
       const result = stellarAddressValidator.safeParse(
-        'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLL-L-5'
+        'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLL-L-5',
       );
       expect(result.success).toBe(false);
     });

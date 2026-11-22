@@ -150,9 +150,7 @@ describe('AppProviders', () => {
     });
 
     it('does not cause context errors with consistent provider order', () => {
-      const TestComponent = () => (
-        <div data-testid="context-safe">Context Safe</div>
-      );
+      const TestComponent = () => <div data-testid="context-safe">Context Safe</div>;
 
       const { rerender } = render(
         <AppProviders>
@@ -197,9 +195,7 @@ describe('AppProviders', () => {
     });
 
     it('eliminates need to track deep provider nesting for consumers', () => {
-      const NestedChild = () => (
-        <div data-testid="nested-consumer">Nested Consumer</div>
-      );
+      const NestedChild = () => <div data-testid="nested-consumer">Nested Consumer</div>;
 
       render(
         <AppProviders>

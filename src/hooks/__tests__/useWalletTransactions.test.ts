@@ -22,9 +22,7 @@ const mockTransactions: Transaction[] = [
 
 vi.mock('@/lib/transaction-storage', () => ({
   TransactionStorage: {
-    getByUser: vi.fn((publicKey: string) =>
-      publicKey === 'GCFX...1234' ? mockTransactions : [],
-    ),
+    getByUser: vi.fn((publicKey: string) => (publicKey === 'GCFX...1234' ? mockTransactions : [])),
   },
 }));
 
@@ -42,7 +40,9 @@ describe('useWalletTransactions', () => {
     const { result } = renderHook(() => useWalletTransactions('GCFX...1234'));
 
     // Wait for useTransition to flush
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     expect(result.current.transactions).toHaveLength(1);
     expect(result.current.transactions[0].id).toBe('tx-1');
@@ -51,7 +51,9 @@ describe('useWalletTransactions', () => {
   it('should return empty array for an unknown publicKey', async () => {
     const { result } = renderHook(() => useWalletTransactions('UNKNOWN'));
 
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     expect(result.current.transactions).toHaveLength(0);
   });
@@ -62,12 +64,16 @@ describe('useWalletTransactions', () => {
       { initialProps: { pk: 'GCFX...1234' as string | undefined } },
     );
 
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(result.current.transactions).toHaveLength(1);
 
     rerender({ pk: undefined });
 
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(result.current.transactions).toHaveLength(0);
   });
 
@@ -77,12 +83,18 @@ describe('useWalletTransactions', () => {
 
     const { result } = renderHook(() => useWalletTransactions('GCFX...1234'));
 
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     const callsBefore = spy.mock.calls.length;
 
-    act(() => { result.current.reload(); });
+    act(() => {
+      result.current.reload();
+    });
 
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(spy.mock.calls.length).toBeGreaterThan(callsBefore);
   });
 });

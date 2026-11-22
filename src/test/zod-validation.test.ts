@@ -197,7 +197,9 @@ describe('POST /api/merchant — zod validation', () => {
   });
 
   it('rejects invalid businessEmail format', async () => {
-    const res = await POST(makeRequest({ userId: 'u1', businessName: 'Test', businessEmail: 'not-an-email' }));
+    const res = await POST(
+      makeRequest({ userId: 'u1', businessName: 'Test', businessEmail: 'not-an-email' }),
+    );
     await expectValidation400(res);
   });
 
@@ -217,18 +219,38 @@ describe('POST /api/merchant/payouts — zod validation', () => {
   });
 
   it('rejects missing merchantId', async () => {
-    const res = await POST(makeRequest({
-      idempotencyKey: 'key-1',
-      items: [{ beneficiaryInstitution: 'B', beneficiaryAccount: 'A', beneficiaryName: 'N', amount: 100, currency: 'NGN' }],
-    }));
+    const res = await POST(
+      makeRequest({
+        idempotencyKey: 'key-1',
+        items: [
+          {
+            beneficiaryInstitution: 'B',
+            beneficiaryAccount: 'A',
+            beneficiaryName: 'N',
+            amount: 100,
+            currency: 'NGN',
+          },
+        ],
+      }),
+    );
     await expectValidation400(res);
   });
 
   it('rejects missing idempotencyKey', async () => {
-    const res = await POST(makeRequest({
-      merchantId: 'm1',
-      items: [{ beneficiaryInstitution: 'B', beneficiaryAccount: 'A', beneficiaryName: 'N', amount: 100, currency: 'NGN' }],
-    }));
+    const res = await POST(
+      makeRequest({
+        merchantId: 'm1',
+        items: [
+          {
+            beneficiaryInstitution: 'B',
+            beneficiaryAccount: 'A',
+            beneficiaryName: 'N',
+            amount: 100,
+            currency: 'NGN',
+          },
+        ],
+      }),
+    );
     await expectValidation400(res);
   });
 
@@ -238,20 +260,32 @@ describe('POST /api/merchant/payouts — zod validation', () => {
   });
 
   it('rejects item missing beneficiaryInstitution', async () => {
-    const res = await POST(makeRequest({
-      merchantId: 'm1',
-      idempotencyKey: 'k1',
-      items: [{ beneficiaryAccount: 'A', beneficiaryName: 'N', amount: 100, currency: 'NGN' }],
-    }));
+    const res = await POST(
+      makeRequest({
+        merchantId: 'm1',
+        idempotencyKey: 'k1',
+        items: [{ beneficiaryAccount: 'A', beneficiaryName: 'N', amount: 100, currency: 'NGN' }],
+      }),
+    );
     await expectValidation400(res);
   });
 
   it('rejects item with negative amount', async () => {
-    const res = await POST(makeRequest({
-      merchantId: 'm1',
-      idempotencyKey: 'k1',
-      items: [{ beneficiaryInstitution: 'B', beneficiaryAccount: 'A', beneficiaryName: 'N', amount: -50, currency: 'NGN' }],
-    }));
+    const res = await POST(
+      makeRequest({
+        merchantId: 'm1',
+        idempotencyKey: 'k1',
+        items: [
+          {
+            beneficiaryInstitution: 'B',
+            beneficiaryAccount: 'A',
+            beneficiaryName: 'N',
+            amount: -50,
+            currency: 'NGN',
+          },
+        ],
+      }),
+    );
     await expectValidation400(res);
   });
 });

@@ -199,11 +199,11 @@ Coverage is not enforced by a hard threshold today, but the following targets ar
 
 TypeScript type coverage is measured with [`type-coverage`](https://github.com/plantain-00/type-coverage) and enforced locally via `.type-coverage`.
 
-| Metric              | Value                                |
-| ------------------- | ------------------------------------ |
-| **Baseline**        | **98.38%** (93 452 / 94 984 nodes)   |
-| **Enforced floor**  | **98%** (configured in `.type-coverage`) |
-| Measured at         | 2026-10-22, commit on `fix/code-quality-1319-1320-1359-1360` |
+| Metric             | Value                                                        |
+| ------------------ | ------------------------------------------------------------ |
+| **Baseline**       | **98.38%** (93 452 / 94 984 nodes)                           |
+| **Enforced floor** | **98%** (configured in `.type-coverage`)                     |
+| Measured at        | 2026-10-22, commit on `fix/code-quality-1319-1320-1359-1360` |
 
 To run locally:
 
@@ -503,7 +503,6 @@ await page.route('**/api/kyc**', (route) =>
 );
 ```
 
-
 ---
 
 ## Code Coverage Thresholds (Issue #1348)
@@ -516,22 +515,22 @@ Stellar-Spend enforces code coverage thresholds to prevent coverage regressions 
 
 All files must meet these minimum thresholds:
 
-| Metric       | Threshold |
-| ------------ | --------- |
-| Lines        | 85%       |
-| Statements   | 85%       |
-| Functions    | 85%       |
-| Branches     | 80%       |
+| Metric     | Threshold |
+| ---------- | --------- |
+| Lines      | 85%       |
+| Statements | 85%       |
+| Functions  | 85%       |
+| Branches   | 80%       |
 
 ### Per-file thresholds for critical paths
 
 Some modules have stricter per-file thresholds due to their security/payment-critical nature:
 
-| Module               | Lines | Statements | Functions | Branches | Reason                     |
-| -------------------- | ----- | ---------- | --------- | -------- | -------------------------- |
-| `src/lib/auth/**`    | 90%   | 90%        | 90%       | 85%      | Security-critical         |
-| `src/lib/offramp/**` | 85%   | 85%        | 85%       | 80%      | Payment flows              |
-| `src/lib/onramp/**`  | 85%   | 85%        | 85%       | 80%      | Onboarding flows           |
+| Module               | Lines | Statements | Functions | Branches | Reason                      |
+| -------------------- | ----- | ---------- | --------- | -------- | --------------------------- |
+| `src/lib/auth/**`    | 90%   | 90%        | 90%       | 85%      | Security-critical           |
+| `src/lib/offramp/**` | 85%   | 85%        | 85%       | 80%      | Payment flows               |
+| `src/lib/onramp/**`  | 85%   | 85%        | 85%       | 80%      | Onboarding flows            |
 | `src/app/api/**`     | 80%   | 80%        | 80%       | 75%      | Route handlers (lower req.) |
 
 ### Running coverage locally
@@ -579,11 +578,13 @@ If a PR fails the coverage check:
 If `npm run test:coverage` shows unexpected gaps:
 
 1. **Run a focused test file:**
+
    ```bash
    npx vitest run --coverage src/lib/your-module.test.ts
    ```
 
 2. **Check which test covered which line:**
+
    ```bash
    npx vitest run --coverage -- --reporter=verbose src/lib/your-module.test.ts
    ```
@@ -591,8 +592,6 @@ If `npm run test:coverage` shows unexpected gaps:
 3. **Check for dead code:** if a line is never covered despite a test, it may be unreachable or a logic error. Simplify or remove it.
 
 4. **Review branch coverage:** branch coverage is often lower than line coverage. Open the HTML report and hover over red branches to see which condition branches are missed.
-
-
 
 ---
 
@@ -694,11 +693,13 @@ Snapshot name: `should format date correctly`
 **Option 1: The test is wrong** — Fix the test logic and re-run
 
 **Option 2: The snapshot is outdated** — Review the change, then:
+
 ```bash
 npm run test:snapshots:update -- src/lib/formatters.test.ts
 ```
 
 **Option 3: Partial updates** — Some snapshots changed, some didn't. Use interactive mode:
+
 ```bash
 npm run test:snapshots -- --reporter=verbose
 ```
@@ -714,7 +715,7 @@ Then select which snapshots to update.
    ```
 3. **Use inline snapshots for small values:**
    ```ts
-   expect(formatDate('2024-01-15')).toMatchInlineSnapshot(`"Jan 15, 2024"`)
+   expect(formatDate('2024-01-15')).toMatchInlineSnapshot(`"Jan 15, 2024"`);
    ```
 4. **Test one scenario per snapshot:** don't combine multiple test cases into one snapshot
 5. **Update CI snapshots carefully:** never auto-update snapshots in CI; always require a developer to review and commit the change locally
@@ -722,8 +723,6 @@ Then select which snapshots to update.
 ### Snapshot exclusions from coverage
 
 Snapshot test files are excluded from code coverage calculations by default (see `vitest.config.ts` exclude patterns). This prevents snapshot-heavy tests from inflating coverage metrics.
-
-
 
 ---
 
@@ -735,27 +734,27 @@ Storybook interaction tests use the `play()` function to simulate user interacti
 
 ### When to use interaction tests vs. unit tests
 
-| Scenario | Interaction Test | Unit Test |
-| --- | --- | --- |
-| Testing click handlers | ✅ Use play() | Unit test callback |
-| Testing form input | ✅ Use play() | Unit test value/onChange |
-| Testing focus/blur | ✅ Use play() | Unit test for aria attributes |
-| Testing accessibility | ✅ Use play() | Unit test tree structure |
-| Testing business logic | ❌ | ✅ Use unit test |
-| Testing error states | Interaction for UI, unit for logic | Unit test |
+| Scenario               | Interaction Test                   | Unit Test                     |
+| ---------------------- | ---------------------------------- | ----------------------------- |
+| Testing click handlers | ✅ Use play()                      | Unit test callback            |
+| Testing form input     | ✅ Use play()                      | Unit test value/onChange      |
+| Testing focus/blur     | ✅ Use play()                      | Unit test for aria attributes |
+| Testing accessibility  | ✅ Use play()                      | Unit test tree structure      |
+| Testing business logic | ❌                                 | ✅ Use unit test              |
+| Testing error states   | Interaction for UI, unit for logic | Unit test                     |
 
 ### Core UI primitives with interaction tests
 
 Interaction tests have been added to the following core components:
 
-| Component | Tests Added | Coverage |
-| --- | --- | --- |
-| `Button` | Interactive, InteractiveWithCallback | Click, enabled/disabled state |
-| `Input` | Interactive, InteractiveWithClear, DisabledInteraction | Type, focus/blur, disabled state |
-| `Label` | Interactive, AccessibilityTest | htmlFor association, tag structure |
-| `Badge` | Interactive, VariantStates | Rendering, variant display |
-| `Alert` | Interactive, VariantDisplay | Title/body rendering, variant states |
-| `Card` | Interactive, InteractiveWithButtons | Composition (header/content/footer), button interaction |
+| Component | Tests Added                                            | Coverage                                                |
+| --------- | ------------------------------------------------------ | ------------------------------------------------------- |
+| `Button`  | Interactive, InteractiveWithCallback                   | Click, enabled/disabled state                           |
+| `Input`   | Interactive, InteractiveWithClear, DisabledInteraction | Type, focus/blur, disabled state                        |
+| `Label`   | Interactive, AccessibilityTest                         | htmlFor association, tag structure                      |
+| `Badge`   | Interactive, VariantStates                             | Rendering, variant display                              |
+| `Alert`   | Interactive, VariantDisplay                            | Title/body rendering, variant states                    |
+| `Card`    | Interactive, InteractiveWithButtons                    | Composition (header/content/footer), button interaction |
 
 ### Writing Storybook interaction tests
 
@@ -775,16 +774,18 @@ export default meta;
 type Story = StoryObj<typeof MyComponent>;
 
 export const Interactive: Story = {
-  args: { /* story args */ },
+  args: {
+    /* story args */
+  },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    
+
     // 1. Query the element
     const element = canvas.getByRole('button', { name: /click me/i });
-    
+
     // 2. Simulate user interaction
     await userEvent.click(element);
-    
+
     // 3. Assert the result
     await expect(element).toBeInTheDocument();
   },
@@ -824,7 +825,7 @@ await userEvent.hover(element);
 
 // Keyboard shortcuts
 await userEvent.hotKeys(element, 'ctrl+a'); // Select all
-await userEvent.hotKeys(element, 'Escape');  // Escape key
+await userEvent.hotKeys(element, 'Escape'); // Escape key
 ```
 
 #### Common assertions
@@ -895,15 +896,17 @@ Then open the browser DevTools to inspect the component and interaction.
 ### Troubleshooting
 
 **"Element not found" error:**
+
 - Use `getByRole('button', { name: /label/i })` for better debugging
 - Add `screen.debug()` in the play() function to see the rendered HTML
 
 **Flaky tests (sometimes pass, sometimes fail):**
+
 - Add `await page.waitForLoadState('networkidle')` if component fetches data
 - Avoid hard timeouts; use assertions that wait (Storybook waits up to 10s by default)
 
 **Tests run locally but fail in CI:**
+
 - Ensure all args are provided (no undefined values)
 - Mock external dependencies consistently
 - Check browser version compatibility (Playwright uses Chromium in CI)
-

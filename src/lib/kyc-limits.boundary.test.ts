@@ -14,11 +14,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import {
-  KYCLimitService,
-  setCorridorOverrides,
-  type LimitTier,
-} from './kyc-limits';
+import { KYCLimitService, setCorridorOverrides, type LimitTier } from './kyc-limits';
 
 // ── localStorage mock ─────────────────────────────────────────────────────────
 //

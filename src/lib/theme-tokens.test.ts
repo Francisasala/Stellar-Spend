@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { getContrastRatio, isWcagAA, isWcagAAA, auditContrastPairs, auditSemanticTokens } from './contrast-checker';
+import {
+  getContrastRatio,
+  isWcagAA,
+  isWcagAAA,
+  auditContrastPairs,
+  auditSemanticTokens,
+} from './contrast-checker';
 import { DARK_TOKENS, LIGHT_TOKENS, HIGH_CONTRAST_TOKENS } from './theme-tokens';
 
 /**

@@ -6,11 +6,7 @@ import { QuoteDisplaySkeleton } from './skeletons';
 import { useFxRate } from '@/hooks/useFxRate';
 import { CollapsibleSection } from './CollapsibleSection';
 import { useTranslations } from '@/lib/i18n';
-import {
-  type RightPanelProps,
-  formatFiat,
-  formatNetworkFee,
-} from './right-panel/types';
+import { type RightPanelProps, formatFiat, formatNetworkFee } from './right-panel/types';
 import { HeroPanel } from './right-panel/HeroPanel';
 import { BreakdownRow } from './right-panel/BreakdownRow';
 
@@ -80,11 +76,7 @@ function RightPanel(props: RightPanelProps) {
           value={formatNetworkFee(quote)}
           muted={!quote}
         />
-        <BreakdownRow
-          label={t('rightPanel.platformFee')}
-          value={platformFeeUsdc}
-          muted={!quote}
-        />
+        <BreakdownRow label={t('rightPanel.platformFee')} value={platformFeeUsdc} muted={!quote} />
 
         <div className="border-t border-[#333333] my-1" />
 

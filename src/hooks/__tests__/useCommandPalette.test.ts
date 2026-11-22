@@ -26,7 +26,9 @@ describe('useCommandPalette', () => {
   it('should open the palette via open()', () => {
     const { result } = renderHook(() => useCommandPalette());
 
-    act(() => { result.current.open(); });
+    act(() => {
+      result.current.open();
+    });
 
     expect(result.current.isOpen).toBe(true);
   });
@@ -34,8 +36,12 @@ describe('useCommandPalette', () => {
   it('should close the palette via close()', () => {
     const { result } = renderHook(() => useCommandPalette());
 
-    act(() => { result.current.open(); });
-    act(() => { result.current.close(); });
+    act(() => {
+      result.current.open();
+    });
+    act(() => {
+      result.current.close();
+    });
 
     expect(result.current.isOpen).toBe(false);
   });
@@ -43,10 +49,14 @@ describe('useCommandPalette', () => {
   it('should toggle the palette via toggle()', () => {
     const { result } = renderHook(() => useCommandPalette());
 
-    act(() => { result.current.toggle(); });
+    act(() => {
+      result.current.toggle();
+    });
     expect(result.current.isOpen).toBe(true);
 
-    act(() => { result.current.toggle(); });
+    act(() => {
+      result.current.toggle();
+    });
     expect(result.current.isOpen).toBe(false);
   });
 
@@ -65,8 +75,12 @@ describe('useCommandPalette', () => {
   it('should track recent commands via onCommandExecute', () => {
     const { result } = renderHook(() => useCommandPalette());
 
-    act(() => { result.current.onCommandExecute('transfer'); });
-    act(() => { result.current.onCommandExecute('settings'); });
+    act(() => {
+      result.current.onCommandExecute('transfer');
+    });
+    act(() => {
+      result.current.onCommandExecute('settings');
+    });
 
     expect(result.current.recentCommands).toEqual(['settings', 'transfer']);
     expect(localStorage.getItem(STORAGE_KEY)).toContain('settings');
@@ -76,9 +90,7 @@ describe('useCommandPalette', () => {
     const { result } = renderHook(() => useCommandPalette());
 
     act(() => {
-      ['a', 'b', 'c', 'd', 'e', 'f'].forEach((id) =>
-        result.current.onCommandExecute(id),
-      );
+      ['a', 'b', 'c', 'd', 'e', 'f'].forEach((id) => result.current.onCommandExecute(id));
     });
 
     expect(result.current.recentCommands).toHaveLength(5);
@@ -95,9 +107,15 @@ describe('useCommandPalette', () => {
   it('should de-duplicate commands when re-executing an existing one', () => {
     const { result } = renderHook(() => useCommandPalette());
 
-    act(() => { result.current.onCommandExecute('transfer'); });
-    act(() => { result.current.onCommandExecute('settings'); });
-    act(() => { result.current.onCommandExecute('transfer'); }); // duplicate
+    act(() => {
+      result.current.onCommandExecute('transfer');
+    });
+    act(() => {
+      result.current.onCommandExecute('settings');
+    });
+    act(() => {
+      result.current.onCommandExecute('transfer');
+    }); // duplicate
 
     expect(result.current.recentCommands[0]).toBe('transfer');
     // 'transfer' should appear only once

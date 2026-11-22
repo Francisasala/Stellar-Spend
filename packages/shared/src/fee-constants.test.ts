@@ -10,13 +10,17 @@ describe('FEE_CONSTANTS', () => {
   it('exports stablecoin fee as 0.5% and 50 basis points', () => {
     expect(FEE_CONSTANTS.STABLECOIN_FEE_PERCENTAGE).toBe(0.5);
     expect(FEE_CONSTANTS.STABLECOIN_FEE_BASIS_POINTS).toBe(50);
-    expect(FEE_CONSTANTS.STABLECOIN_FEE_PERCENTAGE * 100).toBe(FEE_CONSTANTS.STABLECOIN_FEE_BASIS_POINTS);
+    expect(FEE_CONSTANTS.STABLECOIN_FEE_PERCENTAGE * 100).toBe(
+      FEE_CONSTANTS.STABLECOIN_FEE_BASIS_POINTS,
+    );
   });
 
   it('exports paycrest fee as 1.0% and 100 basis points', () => {
     expect(FEE_CONSTANTS.PAYCREST_FEE_PERCENTAGE).toBe(1.0);
     expect(FEE_CONSTANTS.PAYCREST_FEE_BASIS_POINTS).toBe(100);
-    expect(FEE_CONSTANTS.PAYCREST_FEE_PERCENTAGE * 100).toBe(FEE_CONSTANTS.PAYCREST_FEE_BASIS_POINTS);
+    expect(FEE_CONSTANTS.PAYCREST_FEE_PERCENTAGE * 100).toBe(
+      FEE_CONSTANTS.PAYCREST_FEE_BASIS_POINTS,
+    );
   });
 
   it('exports network fee constants in XLM and stroops', () => {

@@ -51,7 +51,9 @@ describe('useStellarBalances', () => {
 
     const { result } = renderHook(() => useStellarBalances('GCFX...1234'));
 
-    await act(async () => { await vi.runAllTicks(); });
+    await act(async () => {
+      await vi.runAllTicks();
+    });
 
     expect(result.current.isLoading).toBe(false);
     expect(result.current.xlm).not.toBeNull();
@@ -63,7 +65,9 @@ describe('useStellarBalances', () => {
 
     const { result } = renderHook(() => useStellarBalances('GCFX...1234'));
 
-    await act(async () => { await vi.runAllTicks(); });
+    await act(async () => {
+      await vi.runAllTicks();
+    });
 
     expect(result.current.usdc).toBe('0.00');
     expect(result.current.xlm).toBe('0.00');
@@ -74,7 +78,9 @@ describe('useStellarBalances', () => {
 
     const { result } = renderHook(() => useStellarBalances('GCFX...1234'));
 
-    await act(async () => { await vi.runAllTicks(); });
+    await act(async () => {
+      await vi.runAllTicks();
+    });
 
     expect(result.current.usdc).toBe('0.00');
     expect(result.current.xlm).toBe('0.00');
@@ -88,7 +94,9 @@ describe('useStellarBalances', () => {
       { initialProps: { pk: 'GCFX...1234' as string | undefined } },
     );
 
-    await act(async () => { await vi.runAllTicks(); });
+    await act(async () => {
+      await vi.runAllTicks();
+    });
     expect(result.current.xlm).not.toBeNull();
 
     rerender({ pk: undefined });
@@ -101,10 +109,14 @@ describe('useStellarBalances', () => {
 
     const { result } = renderHook(() => useStellarBalances('GCFX...1234'));
 
-    await act(async () => { await vi.runAllTicks(); });
+    await act(async () => {
+      await vi.runAllTicks();
+    });
     const callsBefore = mockFetch.mock.calls.length;
 
-    await act(async () => { await result.current.refresh(); });
+    await act(async () => {
+      await result.current.refresh();
+    });
 
     expect(mockFetch.mock.calls.length).toBeGreaterThan(callsBefore);
   });

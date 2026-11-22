@@ -25,8 +25,8 @@ the `required_threshold_policy_invariant_holds` proptest. No fix needed here.
 
 The contract's `execute()` explicitly **re-derives the signer set and
 threshold at execution time** rather than trusting proposal-time state
-(see the comment in `lib.rs::execute`: *"the signer set may have shrunk
-since"*). The off-chain `MultisigSettlementService` previously used a
+(see the comment in `lib.rs::execute`: _"the signer set may have shrunk
+since"_). The off-chain `MultisigSettlementService` previously used a
 `signers`/`threshold` snapshot fixed at construction time for the entire
 lifetime of the service — if a signer was removed on-chain via
 `remove_signer` after a proposal was created, the off-chain service would

@@ -17,8 +17,7 @@ for a follow-up implementation PR to pick up.
 - **`reverse/route.ts`**: defines its own status type inline
   (`'pending' | 'approved' | 'rejected' | 'completed'`, line 33) and its own
   in-memory store, `const reversalRequests = new Map<string, ReversalRequest>()`
-  (line 48). Transitions happen ad hoc inside `POST` (creates `pending`, line
-  140) and `PATCH` (moves to `approved`→`completed` or `rejected`, lines
+  (line 48). Transitions happen ad hoc inside `POST` (creates `pending`, line 140) and `PATCH` (moves to `approved`→`completed` or `rejected`, lines
   181-190). This map is **process-local and non-persistent** — it will not
   survive a restart or be visible across multiple server instances, unlike
   `refund`/`timeout` which go through `dal`/`TransactionStorage`.
@@ -64,7 +63,7 @@ state-machine consolidation itself.
 ### 3. `reverse` POST applies an effect before the approval gate
 
 `POST` in `reverse/route.ts` calls `TransactionStorage.reverse(transactionId, amount, reason)`
-(line 145) immediately when a reversal *request* is created, while the
+(line 145) immediately when a reversal _request_ is created, while the
 request itself sits in `'pending'` status awaiting a separate `PATCH`
 approval. If `TransactionStorage.reverse` has any side effect beyond
 bookkeeping (not confirmed — out of scope, lives in a different file), then
@@ -83,7 +82,7 @@ exporting:
   by all three flows today (`pending`, `approved`, `rejected`, `completed`,
   `failed`, at minimum — reconcile against whatever `dal`'s transaction
   `status` field already allows).
-- A `transition(current, event)` function that is the *only* place allowed
+- A `transition(current, event)` function that is the _only_ place allowed
   to decide whether a transition is legal, returning a typed error for
   invalid transitions instead of letting each route silently accept
   whatever string it's handed.
@@ -117,6 +116,6 @@ PR, once the questions in findings #2 and #3 are resolved.
 ## Status
 
 - [ ] Shared state machine backs all three routes — **not done**; this is a
-  design review recommending one, not an implementation
+      design review recommending one, not an implementation
 - [ ] Tests passing — none written/run
 - [ ] Code review passed — self-review only

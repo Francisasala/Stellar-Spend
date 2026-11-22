@@ -9,12 +9,7 @@ export interface PayoutBoxProps {
   flash?: boolean;
 }
 
-export function PayoutBox({
-  quote,
-  currency,
-  liveRate,
-  flash,
-}: PayoutBoxProps) {
+export function PayoutBox({ quote, currency, liveRate, flash }: PayoutBoxProps) {
   const effectiveRate = liveRate ?? quote.rate;
   const amount = parseFloat(quote.destinationAmount);
   const liveDestination =

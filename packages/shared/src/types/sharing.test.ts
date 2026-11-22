@@ -1,10 +1,5 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
-import type {
-  ShareableTransaction,
-  SharePreview,
-  ShareSettings,
-  SharePlatform,
-} from './sharing';
+import type { ShareableTransaction, SharePreview, ShareSettings, SharePlatform } from './sharing';
 
 describe('Sharing types', () => {
   it('ShareableTransaction has all required fields', () => {
@@ -52,13 +47,7 @@ describe('Sharing types', () => {
   });
 
   it('SharePlatform includes all valid platforms', () => {
-    const platforms: SharePlatform[] = [
-      'twitter',
-      'facebook',
-      'linkedin',
-      'email',
-      'copy',
-    ];
+    const platforms: SharePlatform[] = ['twitter', 'facebook', 'linkedin', 'email', 'copy'];
     expect(platforms).toHaveLength(5);
   });
 });

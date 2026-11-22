@@ -144,10 +144,9 @@ async function getAllbridgeTransferStatus(
   txHash: string,
 ): Promise<{ status: BridgeStatus; txHash: string; receiveAmount?: string }> {
   try {
-    const transferStatus = (await sdk.getTransferStatus(
-      chainSymbol,
-      txHash,
-    )) as { status?: string; receiveAmount?: string } | undefined;
+    const transferStatus = (await sdk.getTransferStatus(chainSymbol, txHash)) as
+      | { status?: string; receiveAmount?: string }
+      | undefined;
 
     // Map Allbridge status strings to BridgeStatus type
     let status: BridgeStatus = 'pending';

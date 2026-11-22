@@ -17,7 +17,9 @@ describe('useWalletFlow', () => {
   it('should transition to "connecting" via setConnecting', () => {
     const { result } = renderHook(() => useWalletFlow());
 
-    act(() => { result.current.setConnecting(); });
+    act(() => {
+      result.current.setConnecting();
+    });
 
     expect(result.current.state).toBe('connecting');
   });
@@ -25,7 +27,9 @@ describe('useWalletFlow', () => {
   it('should transition to "connected" via setConnected', () => {
     const { result } = renderHook(() => useWalletFlow());
 
-    act(() => { result.current.setConnected(); });
+    act(() => {
+      result.current.setConnected();
+    });
 
     expect(result.current.state).toBe('connected');
   });
@@ -33,7 +37,9 @@ describe('useWalletFlow', () => {
   it('should transition back to "pre_connect" via setPreConnect', () => {
     const { result } = renderHook(() => useWalletFlow('connected' as WalletFlowState));
 
-    act(() => { result.current.setPreConnect(); });
+    act(() => {
+      result.current.setPreConnect();
+    });
 
     expect(result.current.state).toBe('pre_connect');
   });
@@ -55,7 +61,9 @@ describe('useWalletFlow', () => {
 
     const initialSteps = result.current.steps;
 
-    act(() => { result.current.setConnecting(); });
+    act(() => {
+      result.current.setConnecting();
+    });
 
     // Steps are re-derived; they may differ between states
     expect(result.current.steps).toBeDefined();
@@ -67,7 +75,9 @@ describe('useWalletFlow', () => {
   it('should allow arbitrary state via setState', () => {
     const { result } = renderHook(() => useWalletFlow());
 
-    act(() => { result.current.setState('connecting' as WalletFlowState); });
+    act(() => {
+      result.current.setState('connecting' as WalletFlowState);
+    });
 
     expect(result.current.state).toBe('connecting');
   });

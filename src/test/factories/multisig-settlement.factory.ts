@@ -149,7 +149,5 @@ export function makeMultisigSignatures(
   overrides?: Partial<MultisigSignature>,
   rng?: Rng,
 ): MultisigSignature[] {
-  return Array.from({ length: count }, () =>
-    makeMultisigSignature(proposalId, overrides, rng),
-  );
+  return Array.from({ length: count }, () => makeMultisigSignature(proposalId, overrides, rng));
 }

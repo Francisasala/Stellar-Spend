@@ -14,7 +14,8 @@ describe('FormCard Subcomponents', () => {
       render(<InputField label="Amount" id="amount" value="100" onChange={onChange} />);
 
       expect(screen.getByLabelText(/amount/i)).toBeInTheDocument();
-      const input = screen.getByRole('spinbutton', { hidden: true }) || screen.getByDisplayValue('100');
+      const input =
+        screen.getByRole('spinbutton', { hidden: true }) || screen.getByDisplayValue('100');
       fireEvent.change(input, { target: { value: '200' } });
       expect(onChange).toHaveBeenCalledWith('200');
     });

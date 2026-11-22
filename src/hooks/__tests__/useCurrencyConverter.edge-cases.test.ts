@@ -153,7 +153,7 @@ describe('useCurrencyConverter - Edge Cases & Fallbacks', () => {
       // Verify the reverse calculation
       const toAmount = 100000;
       const fromAmountCalculated = parseFloat(result.current.fromAmount);
-      const expectedToAmount = (fromAmountCalculated * 650 - (fromAmountCalculated * 0.5) / 100);
+      const expectedToAmount = fromAmountCalculated * 650 - (fromAmountCalculated * 0.5) / 100;
 
       expect(Math.abs(expectedToAmount - toAmount)).toBeLessThan(1);
     });

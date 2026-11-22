@@ -289,8 +289,22 @@ Response:
 
 ```json
 {
-  "usage": [{ "operationType": "Query", "fieldName": "transaction", "callCount": 42, "lastCalledAt": 1690000000000 }],
-  "unused": [{ "operationType": "Query", "fieldName": "legacyMerchantReport", "callCount": 0, "lastCalledAt": null }]
+  "usage": [
+    {
+      "operationType": "Query",
+      "fieldName": "transaction",
+      "callCount": 42,
+      "lastCalledAt": 1690000000000
+    }
+  ],
+  "unused": [
+    {
+      "operationType": "Query",
+      "fieldName": "legacyMerchantReport",
+      "callCount": 0,
+      "lastCalledAt": null
+    }
+  ]
 }
 ```
 

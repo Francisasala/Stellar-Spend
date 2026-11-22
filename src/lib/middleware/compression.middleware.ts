@@ -15,7 +15,7 @@ const COMPRESSIBLE_ROUTES = [
  * Check if the route should have compression applied.
  */
 function shouldCompress(pathname: string): boolean {
-  return COMPRESSIBLE_ROUTES.some(pattern => pattern.test(pathname));
+  return COMPRESSIBLE_ROUTES.some((pattern) => pattern.test(pathname));
 }
 
 /**

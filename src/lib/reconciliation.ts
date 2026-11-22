@@ -341,7 +341,7 @@ export async function performManualReconciliation(
     resolvedBy: action.resolvedBy,
   });
 
-   if (action.action === 'retry') {
+  if (action.action === 'retry') {
     const txModule = await import('./transaction-timeout');
     try {
       await txModule.attemptTimeoutRecovery(action.transactionId);
@@ -423,7 +423,12 @@ export async function getReconciliationHistory(): Promise<ReconciliationHistoryE
   try {
     const result = await pool.query(sql);
     return result.rows.map(
-      (row: { id: string; run_at: string | Date; report: ReconciliationReport; alerts: ReconciliationAlert[] }) => ({
+      (row: {
+        id: string;
+        run_at: string | Date;
+        report: ReconciliationReport;
+        alerts: ReconciliationAlert[];
+      }) => ({
         id: row.id,
         runAt: new Date(row.run_at).toISOString(),
         report: row.report,

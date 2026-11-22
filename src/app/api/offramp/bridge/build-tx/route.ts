@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type {
-  ChainDetailsWithTokens,
-  TokenWithChainDetails,
-} from '@allbridge/bridge-core-sdk';
+import type { ChainDetailsWithTokens, TokenWithChainDetails } from '@allbridge/bridge-core-sdk';
 import { env } from '@/lib/env';
 import { validateAmount, validateAddress } from '@/lib/offramp';
 import { extractErrorMessage } from '@/lib/offramp';

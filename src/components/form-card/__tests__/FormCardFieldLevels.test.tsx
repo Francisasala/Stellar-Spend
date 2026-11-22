@@ -91,15 +91,7 @@ describe('FormCard Field-Level Components', () => {
     });
 
     it('should display suffix in input field', () => {
-      render(
-        <InputField
-          label="Amount"
-          id="amount"
-          value="100"
-          onChange={vi.fn()}
-          suffix="NGN"
-        />,
-      );
+      render(<InputField label="Amount" id="amount" value="100" onChange={vi.fn()} suffix="NGN" />);
 
       expect(screen.getByText('NGN')).toBeInTheDocument();
     });
@@ -107,13 +99,7 @@ describe('FormCard Field-Level Components', () => {
     it('should handle disabled state', () => {
       const onChange = vi.fn();
       render(
-        <InputField
-          label="Amount"
-          id="amount"
-          value="100"
-          onChange={onChange}
-          disabled={true}
-        />,
+        <InputField label="Amount" id="amount" value="100" onChange={onChange} disabled={true} />,
       );
 
       const input = screen.getByDisplayValue('100') as HTMLInputElement;
@@ -166,13 +152,7 @@ describe('FormCard Field-Level Components', () => {
 
     it('should handle numeric type input', () => {
       render(
-        <InputField
-          label="Amount"
-          id="amount"
-          value="100"
-          onChange={vi.fn()}
-          type="number"
-        />,
+        <InputField label="Amount" id="amount" value="100" onChange={vi.fn()} type="number" />,
       );
 
       const input = screen.getByDisplayValue('100') as HTMLInputElement;
@@ -336,9 +316,7 @@ describe('FormCard Field-Level Components', () => {
     });
 
     it('should transition from loading to resolved value', () => {
-      const { rerender } = render(
-        <ResolvedField label="Account Name" value="" loading={true} />,
-      );
+      const { rerender } = render(<ResolvedField label="Account Name" value="" loading={true} />);
 
       expect(screen.getByText('Resolving...')).toBeInTheDocument();
 
@@ -395,12 +373,7 @@ describe('FormCard Field-Level Components', () => {
 
       render(
         <>
-          <InputField
-            label="Amount"
-            id="amount"
-            value="100"
-            onChange={onAmountChange}
-          />
+          <InputField label="Amount" id="amount" value="100" onChange={onAmountChange} />
           <SelectField
             label="Currency"
             id="currency"

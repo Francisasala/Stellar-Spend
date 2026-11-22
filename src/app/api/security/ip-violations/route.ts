@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const { offset, limit } = parsePaginationQuery(searchParams, { defaultLimit: 50, maxLimit: 1000 });
+    const { offset, limit } = parsePaginationQuery(searchParams, {
+      defaultLimit: 50,
+      maxLimit: 1000,
+    });
 
     const violations = await ipWhitelistService.getViolations(userAddress, limit + 1, offset);
 

@@ -25,8 +25,12 @@ import * as path from 'path';
 // Parse command line arguments
 const args = process.argv.slice(2);
 const exportSql = args.includes('--export-sql');
-const tableArg = args.find(arg => arg.startsWith('--table=')) || args.find(arg => arg === '--table' && args[args.indexOf(arg) + 1]);
-const targetTable = tableArg?.includes('=') ? tableArg.split('=')[1] : args[args.indexOf('--table') + 1];
+const tableArg =
+  args.find((arg) => arg.startsWith('--table=')) ||
+  args.find((arg) => arg === '--table' && args[args.indexOf(arg) + 1]);
+const targetTable = tableArg?.includes('=')
+  ? tableArg.split('=')[1]
+  : args[args.indexOf('--table') + 1];
 const format = args.includes('--json') ? 'json' : args.includes('--markdown') ? 'markdown' : 'text';
 
 async function main() {
@@ -47,7 +51,7 @@ async function main() {
 
     // Filter out tables with no issues
     const issuesFound = auditResults.filter(
-      r => r.potentiallyUnusedColumns.length > 0 || r.potentiallyUnusedIndexes.length > 0,
+      (r) => r.potentiallyUnusedColumns.length > 0 || r.potentiallyUnusedIndexes.length > 0,
     );
 
     if (format === 'json') {
@@ -94,9 +98,7 @@ async function main() {
           if (result.potentiallyUnusedColumns.length > 0) {
             console.log(`   Unused columns (${result.potentiallyUnusedColumns.length}):`);
             for (const col of result.potentiallyUnusedColumns) {
-              console.log(
-                `     • ${col.name} (${col.type}, nullable: ${col.nullable})`,
-              );
+              console.log(`     • ${col.name} (${col.type}, nullable: ${col.nullable})`);
             }
           }
 
@@ -113,7 +115,7 @@ async function main() {
         console.log('💡 Recommendations:');
         const allRecs = new Set<string>();
         for (const result of issuesFound) {
-          result.recommendations.forEach(r => allRecs.add(r));
+          result.recommendations.forEach((r) => allRecs.add(r));
         }
         for (const rec of allRecs) {
           console.log(`   • ${rec}`);

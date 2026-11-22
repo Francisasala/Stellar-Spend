@@ -1,4 +1,4 @@
-import { randomHexUpper } from "@/lib/crypto/ids";
+import { randomHexUpper } from '@/lib/crypto/ids';
 import { db } from '@/lib/db';
 
 export interface InsuranceQuote {

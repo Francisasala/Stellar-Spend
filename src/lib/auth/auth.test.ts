@@ -85,9 +85,7 @@ describe('AuthService', () => {
         createdAt: Date.now(),
       };
 
-      vi.mocked(sessionManagementService.validateSession).mockResolvedValueOnce(
-        mockSession,
-      );
+      vi.mocked(sessionManagementService.validateSession).mockResolvedValueOnce(mockSession);
 
       const token = {
         type: 'bearer' as const,
@@ -109,9 +107,7 @@ describe('AuthService', () => {
     });
 
     it('should handle invalid session token', async () => {
-      vi.mocked(sessionManagementService.validateSession).mockResolvedValueOnce(
-        null,
-      );
+      vi.mocked(sessionManagementService.validateSession).mockResolvedValueOnce(null);
 
       const token = {
         type: 'bearer' as const,

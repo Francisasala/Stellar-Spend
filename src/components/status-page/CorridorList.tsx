@@ -11,10 +11,7 @@ export function CorridorList({ corridors }: CorridorListProps) {
       aria-labelledby="corridor-list-heading"
       className="border border-[#333] bg-[#111] p-6 space-y-4"
     >
-      <h2
-        id="corridor-list-heading"
-        className="text-sm font-semibold uppercase tracking-wider"
-      >
+      <h2 id="corridor-list-heading" className="text-sm font-semibold uppercase tracking-wider">
         Payment Corridors
       </h2>
       <ul aria-label="Payment corridors status" className="space-y-3">
@@ -45,10 +42,7 @@ export function CorridorList({ corridors }: CorridorListProps) {
                 Last tx: {formatTime(corridor.lastTransaction)}
               </span>
               <span
-                className={cn(
-                  'text-xs px-2 py-1 rounded border',
-                  getStatusColor(corridor.status),
-                )}
+                className={cn('text-xs px-2 py-1 rounded border', getStatusColor(corridor.status))}
               >
                 {getStatusText(corridor.status)}
               </span>

@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { sessionManagementService } from '@/lib/session-management';
-import {
-  authenticateApiKey,
-  checkApiKeyRateLimit,
-} from '@/lib/api-keys';
+import { authenticateApiKey, checkApiKeyRateLimit } from '@/lib/api-keys';
 import type { AuthContext, AuthToken, AuthError } from './types';
 import { extractRequestBearerToken } from './authorize';
 
@@ -198,8 +195,10 @@ export class AuthService {
     }
 
     // Use constant-time comparison to prevent timing attacks
-    return token.length === adminToken.length &&
-      Array.from(token).every((char, i) => char === adminToken[i]);
+    return (
+      token.length === adminToken.length &&
+      Array.from(token).every((char, i) => char === adminToken[i])
+    );
   }
 
   /**
@@ -208,10 +207,7 @@ export class AuthService {
    */
   static sendUnauthorized(reason?: string): NextResponse {
     const message = reason || 'Unauthorized';
-    return NextResponse.json(
-      { error: message },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: message }, { status: 401 });
   }
 
   /**
@@ -219,10 +215,7 @@ export class AuthService {
    */
   static sendForbidden(reason?: string): NextResponse {
     const message = reason || 'Forbidden';
-    return NextResponse.json(
-      { error: message },
-      { status: 403 },
-    );
+    return NextResponse.json({ error: message }, { status: 403 });
   }
 
   /**
@@ -230,10 +223,7 @@ export class AuthService {
    * Includes Retry-After header if available.
    */
   static sendRateLimited(retryAfter?: number): NextResponse {
-    const response = NextResponse.json(
-      { error: 'Rate limit exceeded' },
-      { status: 429 },
-    );
+    const response = NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
 
     if (retryAfter) {
       response.headers.set('Retry-After', String(retryAfter));
@@ -246,10 +236,7 @@ export class AuthService {
    * Attach authentication context to request headers.
    * Useful for passing auth info to downstream handlers.
    */
-  static attachContextHeaders(
-    headers: Headers,
-    context: AuthContext,
-  ): Headers {
+  static attachContextHeaders(headers: Headers, context: AuthContext): Headers {
     if (context.type === 'session' && context.session) {
       headers.set('x-auth-type', 'session');
       headers.set('x-session-id', context.session.id);

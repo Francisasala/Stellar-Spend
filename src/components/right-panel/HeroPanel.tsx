@@ -2,12 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
-import {
-  type RightPanelProps,
-  getCurrencySymbol,
-  formatFiat,
-  formatRate,
-} from './types';
+import { type RightPanelProps, getCurrencySymbol, formatFiat, formatRate } from './types';
 
 export function HeroPanel({
   isConnected,

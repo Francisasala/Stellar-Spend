@@ -4,10 +4,7 @@ import {
   getNotificationDeliveriesForTransaction,
   retryNotificationDelivery,
 } from '@/lib/notifications';
-import {
-  getNotificationPreferences,
-  upsertNotificationPreferences,
-} from '@/lib/notifications';
+import { getNotificationPreferences, upsertNotificationPreferences } from '@/lib/notifications';
 import { buildNotificationTemplate, deriveNotificationEvent } from '@/lib/notifications/templates';
 import type {
   ChannelAdapter,

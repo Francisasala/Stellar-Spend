@@ -5,15 +5,18 @@ This document summarizes the implementations for the Stellar Wave infrastructure
 ## Issue #972: Unified Authentication Service
 
 ### What Was Implemented
+
 A centralized `AuthService` in `src/lib/auth/` that consolidates all authentication logic:
 
 **Key Components:**
+
 - `service.ts` - Main AuthService class with static methods for auth validation
 - `types.ts` - TypeScript types for auth contexts and tokens
 - `factory.ts` - Factory function for dependency injection
 - `auth.test.ts` - Comprehensive unit tests
 
 **Features:**
+
 - Bearer token (session) validation via `validateBearerToken()`
 - API key authentication via `validateApiKey()`
 - Admin token verification with constant-time comparison via `verifyAdminToken()`
@@ -22,6 +25,7 @@ A centralized `AuthService` in `src/lib/auth/` that consolidates all authenticat
 - Response builders for common auth errors (401, 403, 429)
 
 **Usage Example:**
+
 ```typescript
 import { AuthService } from '@/lib/auth';
 
@@ -32,6 +36,7 @@ if (!auth.isAuthenticated) {
 ```
 
 **Test Coverage:**
+
 - Bearer token validation (valid/invalid/error handling)
 - API key validation (valid/rate-limited/invalid)
 - Token extraction from headers
@@ -43,9 +48,11 @@ if (!auth.isAuthenticated) {
 ## Issue #971: Idempotency Key Support
 
 ### Current State
+
 ✅ **Already Implemented** - `src/lib/idempotency.ts`
 
 Idempotency support is fully implemented with:
+
 - Idempotency-Key header parsing
 - Database-backed storage with TTL
 - Request hash canonicalization for duplicate detection
@@ -53,6 +60,7 @@ Idempotency support is fully implemented with:
 - Lock mechanism to prevent concurrent processing
 
 **Integration Points:**
+
 - `withIdempotency()` wrapper used in payment endpoints:
   - `/api/v1/sync/history`
   - `/api/webhooks/paycrest`
@@ -62,6 +70,7 @@ Idempotency support is fully implemented with:
   - And 10+ other endpoints
 
 **Test Coverage:**
+
 - Request hash stability for semantically identical JSON
 - Duplicate detection with different payloads
 - Response replay for identical requests
@@ -73,11 +82,13 @@ Idempotency support is fully implemented with:
 ## Issue #969: Circuit Breaker Implementation
 
 ### Current State
+
 ✅ **Already Implemented** - `src/lib/circuit-breaker.ts`
 
 Circuit breaker pattern for external Stellar infrastructure calls:
 
 **Features:**
+
 - Three-state machine: CLOSED → OPEN → HALF_OPEN
 - Configurable failure threshold and reset timeout
 - Fallback mechanism for graceful degradation
@@ -85,6 +96,7 @@ Circuit breaker pattern for external Stellar infrastructure calls:
 - Singleton instances for common RPC endpoints
 
 **Singletons Available:**
+
 ```typescript
 export const horizonBreaker = new CircuitBreaker({
   name: 'stellar-horizon',
@@ -109,18 +121,17 @@ export const allbridgeBreaker = new CircuitBreaker({
 ```
 
 **Integration Example:**
+
 ```typescript
 import { sorobanRpcBreaker } from '@/lib/circuit-breaker';
 
-const data = await sorobanRpcBreaker.execute(
-  () => fetch(rpcUrl).then(res => res.json()),
-  {
-    fallback: () => ({ error: { message: 'Soroban RPC unavailable' } })
-  }
-);
+const data = await sorobanRpcBreaker.execute(() => fetch(rpcUrl).then((res) => res.json()), {
+  fallback: () => ({ error: { message: 'Soroban RPC unavailable' } }),
+});
 ```
 
 **Test Coverage:**
+
 - CLOSED state: success and failure handling
 - CLOSED → OPEN transition at threshold
 - OPEN state: rejection and fallback invocation
@@ -134,6 +145,7 @@ const data = await sorobanRpcBreaker.execute(
 ## Issue #970: Remove Unused Environment Variables
 
 ### Changes Made
+
 Removed the following unused build-time environment variables from `.env.example`:
 
 1. **SENTRY_ORG** - Unused (Sentry source map upload during CI)
@@ -142,13 +154,17 @@ Removed the following unused build-time environment variables from `.env.example
 4. **ANALYZE** - Removed section (handled via npm script, not env var)
 
 ### Verification
+
 ✅ Confirmed no references to removed variables in:
+
 - Source code (`src/` directory)
 - Kubernetes manifests (`k8s/` directory)
 - Helm charts (`helm/` directory)
 
 ### Remaining Active Variables
+
 All other environment variables are actively used and retained:
+
 - Runtime secrets: `PAYCREST_API_KEY`, `BASE_PRIVATE_KEY`, `DATABASE_URL`
 - API endpoints: `STELLAR_SOROBAN_RPC_URL`, `STELLAR_HORIZON_URL`
 - Observability: `SENTRY_DSN`, `LOG_LEVEL`
@@ -159,17 +175,20 @@ All other environment variables are actively used and retained:
 ## Testing & Validation
 
 ### Unit Test Coverage
+
 - ✅ AuthService: 15+ test cases
 - ✅ Circuit Breaker: 20+ test cases
 - ✅ Idempotency: 10+ test cases
 
 ### Integration Points Verified
+
 - ✅ Soroban RPC calls protected by circuit breaker
 - ✅ Payment endpoints protected by idempotency wrapper
 - ✅ API key auth integrated with existing api-keys service
 - ✅ Bearer token validation uses sessionManagementService
 
 ### Error Scenarios Covered
+
 - Missing authentication tokens → 401 Unauthorized
 - Invalid API keys → 401 Unauthorized
 - Rate-limited API keys → 429 Too Many Requests
@@ -182,7 +201,9 @@ All other environment variables are actively used and retained:
 ## Migration Path for Existing Code
 
 ### For API Route Handlers
+
 Replace scattered auth checks with:
+
 ```typescript
 import { AuthService } from '@/lib/auth';
 
@@ -194,6 +215,7 @@ if (!auth.isAuthenticated) {
 ```
 
 ### For Admin Endpoints
+
 ```typescript
 const auth = AuthService.extractToken(request);
 if (auth?.type === 'bearer' && !AuthService.verifyAdminToken(auth.value)) {
@@ -202,15 +224,16 @@ if (auth?.type === 'bearer' && !AuthService.verifyAdminToken(auth.value)) {
 ```
 
 ### For External API Calls
+
 Use circuit breaker for resilience:
+
 ```typescript
 import { sorobanRpcBreaker, CircuitOpenError } from '@/lib/circuit-breaker';
 
 try {
-  const result = await sorobanRpcBreaker.execute(
-    () => callSorobanRpc(),
-    { fallback: () => cachedFallback() }
-  );
+  const result = await sorobanRpcBreaker.execute(() => callSorobanRpc(), {
+    fallback: () => cachedFallback(),
+  });
 } catch (err) {
   if (err instanceof CircuitOpenError) {
     // Handle outage gracefully
@@ -223,18 +246,21 @@ try {
 ## Acceptance Criteria ✅
 
 ### Issue #969 (Circuit Breaker)
+
 - ✅ Protective mechanism around RPC client
 - ✅ Fallback mechanisms with cached-read paths
 - ✅ Unit and integration tests with simulated RPC downtime
 - ✅ Code review passed
 
 ### Issue #970 (Clean Up Environment)
+
 - ✅ Compared .env.example against actual usage
 - ✅ Removed unused configuration entries
 - ✅ Verified no orphaned code references
 - ✅ Deployment configs (Helm/K8s) reviewed
 
 ### Issue #971 (Idempotency)
+
 - ✅ Handle Idempotency-Key headers
 - ✅ Store processed keys with TTL
 - ✅ Prevent duplicates with cached results
@@ -242,6 +268,7 @@ try {
 - ✅ Code review passed
 
 ### Issue #972 (Auth Service)
+
 - ✅ Dedicated service module in src/lib/auth
 - ✅ Unified authentication logic
 - ✅ Unit tests for edge cases
@@ -253,6 +280,7 @@ try {
 ## Related Files Modified
 
 ### New Files
+
 - `src/lib/auth/index.ts`
 - `src/lib/auth/types.ts`
 - `src/lib/auth/service.ts`
@@ -260,9 +288,11 @@ try {
 - `src/lib/auth/auth.test.ts`
 
 ### Modified Files
+
 - `.env.example` - Removed unused build-time variables
 
 ### Existing Implementations (Already Complete)
+
 - `src/lib/circuit-breaker.ts`
 - `src/lib/circuit-breaker.test.ts`
 - `src/lib/idempotency.ts`

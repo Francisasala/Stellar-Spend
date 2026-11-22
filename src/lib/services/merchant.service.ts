@@ -114,12 +114,16 @@ export class MerchantService {
   }
 
   async getMerchant(merchantId: string): Promise<MerchantAccount | null> {
-    const result = await this.db.query(`SELECT * FROM merchant_accounts WHERE id = $1`, [merchantId]);
+    const result = await this.db.query(`SELECT * FROM merchant_accounts WHERE id = $1`, [
+      merchantId,
+    ]);
     return result.rows[0] ? rowToMerchant(result.rows[0]) : null;
   }
 
   async getMerchantByUserId(userId: string): Promise<MerchantAccount | null> {
-    const result = await this.db.query(`SELECT * FROM merchant_accounts WHERE user_id = $1`, [userId]);
+    const result = await this.db.query(`SELECT * FROM merchant_accounts WHERE user_id = $1`, [
+      userId,
+    ]);
     return result.rows[0] ? rowToMerchant(result.rows[0]) : null;
   }
 
@@ -136,9 +140,10 @@ export class MerchantService {
     const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
 
     // Check idempotency — return existing if key already used
-    const existing = await this.db.query(`SELECT * FROM merchant_payouts WHERE idempotency_key = $1`, [
-      idempotencyKey,
-    ]);
+    const existing = await this.db.query(
+      `SELECT * FROM merchant_payouts WHERE idempotency_key = $1`,
+      [idempotencyKey],
+    );
     if (existing.rows[0]) return rowToPayout(existing.rows[0]);
 
     const payoutResult = await this.db.query(
@@ -179,13 +184,16 @@ export class MerchantService {
   }
 
   async getBulkPayoutStatus(payoutId: string): Promise<MerchantPayout | null> {
-    const payoutResult = await this.db.query(`SELECT * FROM merchant_payouts WHERE id = $1`, [payoutId]);
+    const payoutResult = await this.db.query(`SELECT * FROM merchant_payouts WHERE id = $1`, [
+      payoutId,
+    ]);
     if (!payoutResult.rows[0]) return null;
 
     const payout = rowToPayout(payoutResult.rows[0]);
-    const itemsResult = await this.db.query(`SELECT * FROM merchant_payout_items WHERE payout_id = $1`, [
-      payoutId,
-    ]);
+    const itemsResult = await this.db.query(
+      `SELECT * FROM merchant_payout_items WHERE payout_id = $1`,
+      [payoutId],
+    );
     payout.items = itemsResult.rows.map(rowToItem);
     return payout;
   }

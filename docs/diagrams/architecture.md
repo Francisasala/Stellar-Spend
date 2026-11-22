@@ -1,6 +1,6 @@
 # Architecture Diagrams
 
-> **Decision records:** see [`docs/adr/`](../adr/README.md) for the ADRs that explain *why*
+> **Decision records:** see [`docs/adr/`](../adr/README.md) for the ADRs that explain _why_
 > the architecture looks the way it does. The off-ramp flow is documented in
 > [ADR-0001](../adr/0001-offramp-flow.md).
 

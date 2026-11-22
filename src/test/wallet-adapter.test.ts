@@ -30,9 +30,13 @@ const SIGNED_XDR = 'signed-xdr-payload';
 // Helper: simulate Freighter window sentinel
 function setFreighterWindow(present: boolean) {
   if (present) {
-    (global as unknown as Record<string, unknown>).window = { ...(global as unknown as Record<string, unknown>).window as Record<string, unknown>, freighter: true };
+    (global as unknown as Record<string, unknown>).window = {
+      ...((global as unknown as Record<string, unknown>).window as Record<string, unknown>),
+      freighter: true,
+    };
   } else {
-    const w = (global as unknown as Record<string, unknown>).window as Record<string, unknown> ?? {};
+    const w =
+      ((global as unknown as Record<string, unknown>).window as Record<string, unknown>) ?? {};
     delete w.freighter;
     (global as unknown as Record<string, unknown>).window = w;
   }

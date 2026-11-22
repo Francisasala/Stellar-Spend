@@ -13,15 +13,8 @@ interface KYCLimitManagerProps {
 }
 
 export function KYCLimitManager({ userId }: KYCLimitManagerProps) {
-  const {
-    kycStatus,
-    limits,
-    isLoading,
-    error,
-    refetch,
-    submitKYC,
-    requestLimitIncrease,
-  } = useKYCLimits(userId);
+  const { kycStatus, limits, isLoading, error, refetch, submitKYC, requestLimitIncrease } =
+    useKYCLimits(userId);
 
   const [showKYCForm, setShowKYCForm] = useState(false);
   const [showLimitRequest, setShowLimitRequest] = useState(false);
@@ -65,10 +58,7 @@ export function KYCLimitManager({ userId }: KYCLimitManagerProps) {
         onStartKYC={() => setShowKYCForm(true)}
       >
         {showKYCForm && (
-          <KYCForm
-            onSubmit={handleSubmitKYC}
-            onCancel={() => setShowKYCForm(false)}
-          />
+          <KYCForm onSubmit={handleSubmitKYC} onCancel={() => setShowKYCForm(false)} />
         )}
       </KYCStatusCard>
 

@@ -85,8 +85,7 @@ const BOUNDARY_PATTERNS = [
   // Contract internals must never be imported from TypeScript
   {
     group: ['**/contracts/**'],
-    message:
-      'Do not import Rust contract internals from TypeScript. Use generated bindings only.',
+    message: 'Do not import Rust contract internals from TypeScript. Use generated bindings only.',
   },
 ];
 
@@ -215,8 +214,7 @@ export default [
             },
             {
               group: ['@stellar-spend/mobile', '../mobile/**', '../../packages/mobile/**'],
-              message:
-                'packages/shared must be standalone. It cannot import from packages/mobile.',
+              message: 'packages/shared must be standalone. It cannot import from packages/mobile.',
             },
           ],
         },

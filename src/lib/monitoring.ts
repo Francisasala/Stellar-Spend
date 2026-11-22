@@ -22,10 +22,12 @@ import { logger } from './logger';
  * instead of writing to the console.
  */
 const diagLogger = {
-  error: (message: string, ...args: unknown[]) => logger.error('otel.diag.error', { message, args }),
+  error: (message: string, ...args: unknown[]) =>
+    logger.error('otel.diag.error', { message, args }),
   warn: (message: string, ...args: unknown[]) => logger.warn('otel.diag.warn', { message, args }),
   info: (message: string, ...args: unknown[]) => logger.info('otel.diag.info', { message, args }),
-  debug: (message: string, ...args: unknown[]) => logger.debug('otel.diag.debug', { message, args }),
+  debug: (message: string, ...args: unknown[]) =>
+    logger.debug('otel.diag.debug', { message, args }),
   verbose: (message: string, ...args: unknown[]) =>
     logger.debug('otel.diag.verbose', { message, args }),
 };

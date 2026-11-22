@@ -303,7 +303,9 @@ describe('Key rotation procedure', () => {
     // Step 5: New key decrypts successfully
     process.env.ENCRYPTION_KEY = NEW_KEY;
     expect(decryptField(newIdentifierCipher)).toBe(plain);
-    expect(decryptField((rows[0].beneficiary as Record<string, unknown>).accountName as string)).toBe('Test Beneficiary');
+    expect(
+      decryptField((rows[0].beneficiary as Record<string, unknown>).accountName as string),
+    ).toBe('Test Beneficiary');
   });
 
   it('old key cannot decrypt after rotation', () => {
@@ -326,7 +328,9 @@ describe('Key rotation procedure', () => {
     expect(result.rotated).toBe(1);
 
     process.env.ENCRYPTION_KEY = NEW_KEY;
-    expect(decryptField((rows[0] as Record<string, unknown>).accountIdentifier as string)).toBe('plaintext_number');
+    expect(decryptField((rows[0] as Record<string, unknown>).accountIdentifier as string)).toBe(
+      'plaintext_number',
+    );
   });
 
   it('rotation fails gracefully when NEW_ENCRYPTION_KEY is not set', () => {
@@ -359,10 +363,12 @@ describe('Key rotation procedure', () => {
 
     // Spot-check: verify first and last rows with new key
     process.env.ENCRYPTION_KEY = NEW_KEY;
-    expect(decryptField((rows[0].beneficiary as Record<string, unknown>).accountIdentifier as string)).toBe('account_0');
-    expect(decryptField((rows[count - 1].beneficiary as Record<string, unknown>).accountName as string)).toBe(
-      `name_${count - 1}`,
-    );
+    expect(
+      decryptField((rows[0].beneficiary as Record<string, unknown>).accountIdentifier as string),
+    ).toBe('account_0');
+    expect(
+      decryptField((rows[count - 1].beneficiary as Record<string, unknown>).accountName as string),
+    ).toBe(`name_${count - 1}`);
   });
 });
 

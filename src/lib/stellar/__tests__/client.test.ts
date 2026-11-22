@@ -3,11 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  StellarClient,
-  _resetStellarClient,
-  getStellarClient,
-} from '../client';
+import { StellarClient, _resetStellarClient, getStellarClient } from '../client';
 import { Account, Keypair, Networks, Asset, Memo } from '@stellar/stellar-sdk';
 
 describe('StellarClient', () => {
@@ -34,7 +30,12 @@ describe('StellarClient', () => {
 
     it('should create a client with custom retry config', () => {
       const customRetry = { maxAttempts: 5, initialDelayMs: 50 };
-      const testClient = new StellarClient(mockHorizonUrl, mockRpcUrl, Networks.PUBLIC_NETWORK, customRetry);
+      const testClient = new StellarClient(
+        mockHorizonUrl,
+        mockRpcUrl,
+        Networks.PUBLIC_NETWORK,
+        customRetry,
+      );
       expect(testClient).toBeDefined();
     });
   });
@@ -42,12 +43,7 @@ describe('StellarClient', () => {
   describe('buildPaymentTransaction', () => {
     it('should build a payment transaction with native asset', () => {
       const sourceAccount = new Account(testAccountId, '12345');
-      const tx = client.buildPaymentTransaction(
-        sourceAccount,
-        testPublicKey,
-        'native',
-        '100.00',
-      );
+      const tx = client.buildPaymentTransaction(sourceAccount, testPublicKey, 'native', '100.00');
       expect(tx).toBeDefined();
       expect(tx.operations).toHaveLength(1);
     });
@@ -55,12 +51,7 @@ describe('StellarClient', () => {
     it('should build a payment transaction with custom asset', () => {
       const sourceAccount = new Account(testAccountId, '12345');
       const asset = new Asset('USDC', 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN');
-      const tx = client.buildPaymentTransaction(
-        sourceAccount,
-        testPublicKey,
-        asset,
-        '50.00',
-      );
+      const tx = client.buildPaymentTransaction(sourceAccount, testPublicKey, asset, '50.00');
       expect(tx).toBeDefined();
       expect(tx.operations).toHaveLength(1);
     });
@@ -109,7 +100,8 @@ describe('StellarClient', () => {
     });
 
     it('should retry on retryable network errors', async () => {
-      const operation = vi.fn()
+      const operation = vi
+        .fn()
         .mockRejectedValueOnce(new Error('ECONNREFUSED'))
         .mockResolvedValueOnce({ success: true });
 
@@ -119,7 +111,8 @@ describe('StellarClient', () => {
     });
 
     it('should retry on 503 Service Unavailable', async () => {
-      const operation = vi.fn()
+      const operation = vi
+        .fn()
         .mockRejectedValueOnce(new Error('HTTP 503'))
         .mockResolvedValueOnce({ data: 'success' });
 
@@ -129,7 +122,8 @@ describe('StellarClient', () => {
     });
 
     it('should retry on timeout errors', async () => {
-      const operation = vi.fn()
+      const operation = vi
+        .fn()
         .mockRejectedValueOnce(new Error('Request timeout'))
         .mockResolvedValueOnce({ recovered: true });
 
@@ -139,14 +133,13 @@ describe('StellarClient', () => {
     });
 
     it('should stop retrying after max attempts', async () => {
-      const operation = vi.fn()
-        .mockRejectedValue(new Error('HTTP 503'));
+      const operation = vi.fn().mockRejectedValue(new Error('HTTP 503'));
 
       const clientWithLowRetries = new StellarClient(
         mockHorizonUrl,
         mockRpcUrl,
         Networks.PUBLIC_NETWORK,
-        { maxAttempts: 2, initialDelayMs: 10, maxDelayMs: 50, backoffMultiplier: 2 }
+        { maxAttempts: 2, initialDelayMs: 10, maxDelayMs: 50, backoffMultiplier: 2 },
       );
 
       try {
@@ -159,7 +152,8 @@ describe('StellarClient', () => {
 
     it('should apply exponential backoff with jitter', async () => {
       const delays: number[] = [];
-      const operation = vi.fn()
+      const operation = vi
+        .fn()
         .mockRejectedValueOnce(new Error('HTTP 503'))
         .mockRejectedValueOnce(new Error('HTTP 503'))
         .mockResolvedValueOnce({ recovered: true });
@@ -193,8 +187,7 @@ describe('StellarClient', () => {
 
   describe('error handling', () => {
     it('should handle non-Error exceptions', async () => {
-      const operation = vi.fn()
-        .mockRejectedValueOnce('string error');
+      const operation = vi.fn().mockRejectedValueOnce('string error');
 
       try {
         await (client as any).withRetry(operation);
@@ -205,8 +198,7 @@ describe('StellarClient', () => {
     });
 
     it('should handle null/undefined errors', async () => {
-      const operation = vi.fn()
-        .mockRejectedValueOnce(null);
+      const operation = vi.fn().mockRejectedValueOnce(null);
 
       try {
         await (client as any).withRetry(operation);
@@ -256,7 +248,7 @@ describe('StellarClient', () => {
         mockHorizonUrl,
         mockRpcUrl,
         Networks.PUBLIC_NETWORK,
-        { maxAttempts: 5, initialDelayMs: 1000, maxDelayMs: 2000, backoffMultiplier: 2 }
+        { maxAttempts: 5, initialDelayMs: 1000, maxDelayMs: 2000, backoffMultiplier: 2 },
       );
 
       const delay = (clientWithSmallMax as any).calculateBackoffDelay(5);
@@ -264,9 +256,7 @@ describe('StellarClient', () => {
     });
 
     it('should add jitter to prevent thundering herd', () => {
-      const delays = Array.from({ length: 10 }, (_, i) =>
-        (client as any).calculateBackoffDelay(2)
-      );
+      const delays = Array.from({ length: 10 }, (_, i) => (client as any).calculateBackoffDelay(2));
 
       const uniqueDelays = new Set(delays);
       expect(uniqueDelays.size).toBeGreaterThan(1);

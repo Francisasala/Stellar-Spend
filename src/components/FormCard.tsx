@@ -45,12 +45,7 @@ const CARD_CLASSES = 'bg-[#111111] border border-[#333333] p-6 flex flex-col gap
 const GRID_CLASSES = `grid grid-cols-1 ${bpClasses.gridTwoCols} gap-4`;
 
 export function FormCard(props: FormCardProps) {
-  const {
-    isConnecting,
-    isConnected,
-    onConnect,
-    isInitialLoading,
-  } = props;
+  const { isConnecting, isConnected, onConnect, isInitialLoading } = props;
 
   const t = useTranslations('formCard');
 
@@ -191,7 +186,9 @@ export function FormCard(props: FormCardProps) {
             onBlur={() => touchField('institution')}
             loading={isInstitutionsLoading}
             disabled={!currency || !isConnected || isSubmitting}
-            placeholder={currency ? t('institutionPlaceholder') : t('institutionPlaceholderNoCurrency')}
+            placeholder={
+              currency ? t('institutionPlaceholder') : t('institutionPlaceholderNoCurrency')
+            }
             error={t('institutionError')}
             touched={touchedFields['institution']}
           />
@@ -225,9 +222,7 @@ export function FormCard(props: FormCardProps) {
           label={t('accountNameLabel')}
           value={accountName}
           loading={isVerifyingAccount}
-          placeholder={
-            accountNumber ? t('accountNameVerifying') : t('accountNamePlaceholder')
-          }
+          placeholder={accountNumber ? t('accountNameVerifying') : t('accountNamePlaceholder')}
         />
 
         {quote && (

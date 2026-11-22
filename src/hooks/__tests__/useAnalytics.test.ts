@@ -65,7 +65,9 @@ describe('useAnalytics', () => {
     renderHook(() => useAnalytics({ enabled: false, debug: true }));
     expect(logger.debug).toHaveBeenCalledWith(
       'analytics.debug',
-      expect.objectContaining({ event: expect.objectContaining({ category: 'Navigation', action: 'page_view' }) }),
+      expect.objectContaining({
+        event: expect.objectContaining({ category: 'Navigation', action: 'page_view' }),
+      }),
     );
   });
 
@@ -74,16 +76,12 @@ describe('useAnalytics', () => {
     expect(logger.debug).not.toHaveBeenCalled();
   });
 
-
   // ── Enabled mode with sendBeacon ───────────────────────────────────────────
 
   it('sends page_view event via sendBeacon on mount when enabled', () => {
     renderHook(() => useAnalytics({ enabled: true }));
 
-    expect(mockSendBeacon).toHaveBeenCalledWith(
-      '/api/monitoring/vitals',
-      expect.any(Blob),
-    );
+    expect(mockSendBeacon).toHaveBeenCalledWith('/api/monitoring/vitals', expect.any(Blob));
 
     // Confirm the Blob payload contains the page_view event
     const blobArg = mockSendBeacon.mock.calls[0][1] as Blob;

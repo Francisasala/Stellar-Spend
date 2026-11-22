@@ -159,7 +159,7 @@ const nextConfig: NextConfig = {
       config.performance = {
         hints: 'warning',
         maxEntrypointSize: 512 * 1024, // 512 KB
-        maxAssetSize: 512 * 1024,      // 512 KB
+        maxAssetSize: 512 * 1024, // 512 KB
       };
     }
     return config;

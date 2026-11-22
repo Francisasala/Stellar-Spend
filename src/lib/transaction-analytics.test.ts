@@ -7,10 +7,7 @@ vi.mock('@/lib/db/client', () => ({
 }));
 
 import { pool } from '@/lib/db';
-import {
-  buildTransactionAnalyticsReport,
-  getTransactionAnalytics,
-} from '@/lib/transactions';
+import { buildTransactionAnalyticsReport, getTransactionAnalytics } from '@/lib/transactions';
 
 describe('buildTransactionAnalyticsReport', () => {
   it('calculates transaction rates, timing, fee trends, and daily reports', () => {

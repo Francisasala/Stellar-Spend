@@ -29,8 +29,6 @@ const mockFormatUtc = datetimeModule.formatUtc as unknown as Mock;
 const mockFormatDate = datetimeModule.formatDate as unknown as Mock;
 const mockParseUtc = datetimeModule.parseUtc as unknown as Mock;
 
-
-
 describe('getCurrencySymbol', () => {
   it('returns the mapped symbol for known currencies', () => {
     expect(getCurrencySymbol('NGN')).toBe('₦');

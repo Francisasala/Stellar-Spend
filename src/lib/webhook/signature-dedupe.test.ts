@@ -23,9 +23,7 @@ describe('Single webhook signature verifier - Issue #1293', () => {
   it('re-exports the same verifier functions from webhook/security', () => {
     expect(webhookSecurity.verifyWebhookSignature).toBe(webhookVerify.verifyWebhookSignature);
     expect(webhookSecurity.verifyProviderSignature).toBe(webhookVerify.verifyProviderSignature);
-    expect(webhookSecurity.generateOutgoingSignature).toBe(
-      webhookVerify.generateOutgoingSignature,
-    );
+    expect(webhookSecurity.generateOutgoingSignature).toBe(webhookVerify.generateOutgoingSignature);
   });
 
   it('accepts a valid HMAC-SHA256 signature', async () => {

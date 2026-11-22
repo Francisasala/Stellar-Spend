@@ -84,10 +84,14 @@ describe('Schema Audit Tool', () => {
   describe('generateIndexDropScript', () => {
     it('should generate DROP INDEX statements for unused indexes', () => {
       const results = [
-        mockAuditResult('transactions', [], [
-          mockIndex('idx_old_status', ['status']),
-          mockIndex('idx_legacy_field', ['deprecated_field']),
-        ]),
+        mockAuditResult(
+          'transactions',
+          [],
+          [
+            mockIndex('idx_old_status', ['status']),
+            mockIndex('idx_legacy_field', ['deprecated_field']),
+          ],
+        ),
       ];
 
       const script = generateIndexDropScript(results);
@@ -100,9 +104,11 @@ describe('Schema Audit Tool', () => {
     it('should handle multiple tables with indexes', () => {
       const results = [
         mockAuditResult('users', [], [mockIndex('idx_users_old', ['old_field'])]),
-        mockAuditResult('transactions', [], [
-          mockIndex('idx_transactions_old', ['deprecated_field']),
-        ]),
+        mockAuditResult(
+          'transactions',
+          [],
+          [mockIndex('idx_transactions_old', ['deprecated_field'])],
+        ),
       ];
 
       const script = generateIndexDropScript(results);
@@ -148,9 +154,7 @@ describe('Schema Audit Tool', () => {
     });
 
     it('should include column type information', () => {
-      const results = [
-        mockAuditResult('users', [mockColumn('old_field', 'INTEGER')]),
-      ];
+      const results = [mockAuditResult('users', [mockColumn('old_field', 'INTEGER')])];
 
       const report = generateAuditReport(results);
 
@@ -210,15 +214,10 @@ describe('Schema Audit Tool', () => {
 
   describe('Integration scenarios', () => {
     it('should handle real-world schema cleanup scenario', () => {
-      const unusedColumns = [
-        mockColumn('insurance_status'),
-        mockColumn('insurance_amount'),
-      ];
+      const unusedColumns = [mockColumn('insurance_status'), mockColumn('insurance_amount')];
       const unusedIndexes = [mockIndex('idx_insurance_status', ['insurance_status'])];
 
-      const results = [
-        mockAuditResult('transactions', unusedColumns, unusedIndexes),
-      ];
+      const results = [mockAuditResult('transactions', unusedColumns, unusedIndexes)];
 
       const columnScript = generateColumnDropScript(results);
       const indexScript = generateIndexDropScript(results);
@@ -275,9 +274,7 @@ describe('Schema Audit Tool', () => {
     });
 
     it('should handle special characters in names safely', () => {
-      const results = [
-        mockAuditResult('user_data', [mockColumn('deprecated_column_v2')]),
-      ];
+      const results = [mockAuditResult('user_data', [mockColumn('deprecated_column_v2')])];
 
       const script = generateColumnDropScript(results);
 

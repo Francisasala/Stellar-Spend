@@ -27,8 +27,14 @@ function buildFetch(status: number, body: unknown = {}) {
 describe('EmailAdapter', () => {
   const saved = { ...process.env };
 
-  beforeEach(() => { vi.unstubAllGlobals(); process.env = { ...saved }; });
-  afterEach(() => { process.env = saved; vi.unstubAllGlobals(); });
+  beforeEach(() => {
+    vi.unstubAllGlobals();
+    process.env = { ...saved };
+  });
+  afterEach(() => {
+    process.env = saved;
+    vi.unstubAllGlobals();
+  });
 
   it('returns skipped when EMAIL_NOTIFICATION_ENDPOINT is absent', async () => {
     delete process.env.EMAIL_NOTIFICATION_ENDPOINT;
@@ -53,7 +59,11 @@ describe('EmailAdapter', () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://mail.test/send');
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
-    expect(body).toMatchObject({ to: 'recipient@x.com', subject: 'Hello', from: 'noreply@stellar-spend.io' });
+    expect(body).toMatchObject({
+      to: 'recipient@x.com',
+      subject: 'Hello',
+      from: 'noreply@stellar-spend.io',
+    });
   });
 
   it('sends Authorization header when EMAIL_NOTIFICATION_AUTH_TOKEN is set', async () => {
@@ -99,8 +109,14 @@ describe('EmailAdapter', () => {
 describe('SmsAdapter', () => {
   const saved = { ...process.env };
 
-  beforeEach(() => { vi.unstubAllGlobals(); process.env = { ...saved }; });
-  afterEach(() => { process.env = saved; vi.unstubAllGlobals(); });
+  beforeEach(() => {
+    vi.unstubAllGlobals();
+    process.env = { ...saved };
+  });
+  afterEach(() => {
+    process.env = saved;
+    vi.unstubAllGlobals();
+  });
 
   it('returns skipped when SMS_NOTIFICATION_ENABLED is not "true"', async () => {
     process.env.SMS_NOTIFICATION_ENABLED = 'false';
@@ -125,7 +141,11 @@ describe('SmsAdapter', () => {
     const fetchMock = buildFetch(200, { messageId: 'sms-1' });
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await new SmsAdapter().send('+2348000000', 'Ignored Subject', 'Your tx is done.');
+    const result = await new SmsAdapter().send(
+      '+2348000000',
+      'Ignored Subject',
+      'Your tx is done.',
+    );
 
     expect(result.status).toBe('sent');
     expect(result.providerMessageId).toBe('sms-1');
@@ -175,8 +195,14 @@ describe('SmsAdapter', () => {
 describe('PushAdapter', () => {
   const saved = { ...process.env };
 
-  beforeEach(() => { vi.unstubAllGlobals(); process.env = { ...saved }; });
-  afterEach(() => { process.env = saved; vi.unstubAllGlobals(); });
+  beforeEach(() => {
+    vi.unstubAllGlobals();
+    process.env = { ...saved };
+  });
+  afterEach(() => {
+    process.env = saved;
+    vi.unstubAllGlobals();
+  });
 
   it('returns skipped when PUSH_NOTIFICATION_ENDPOINT is absent', async () => {
     delete process.env.PUSH_NOTIFICATION_ENDPOINT;

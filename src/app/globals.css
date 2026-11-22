@@ -110,8 +110,8 @@
   --animate-scale-in: scale-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 
   /* Shared responsive breakpoint tokens - mirrors src/lib/breakpoints.ts */
-  --breakpoint-sm: 40rem;              /* 640px */
-  --breakpoint-md: 48rem;              /* 768px - form two-column layout */
+  --breakpoint-sm: 40rem; /* 640px */
+  --breakpoint-md: 48rem; /* 768px - form two-column layout */
   --breakpoint-header-collapse: 45rem; /* 720px - header collapse */
 }
 

@@ -50,16 +50,11 @@ async function handleWebhook(request: NextRequest): Promise<NextResponse> {
   });
 
   // Validate webhook using modular system
-  const verification = await webhookSystem.validateWebhook(
-    'paycrest',
-    rawBody,
-    signature,
-    {
-      'x-paycrest-timestamp': timestamp,
-      'x-paycrest-nonce': nonce,
-      ...Object.fromEntries(request.headers.entries()),
-    },
-  );
+  const verification = await webhookSystem.validateWebhook('paycrest', rawBody, signature, {
+    'x-paycrest-timestamp': timestamp,
+    'x-paycrest-nonce': nonce,
+    ...Object.fromEntries(request.headers.entries()),
+  });
 
   if (!verification.valid) {
     reqLogger.warn('webhook.invalid_signature', {
@@ -90,11 +85,11 @@ async function handleWebhook(request: NextRequest): Promise<NextResponse> {
     });
 
     // Check processing results
-    const successfulResults = results.filter(r => r.success);
-    const failedResults = results.filter(r => !r.success);
+    const successfulResults = results.filter((r) => r.success);
+    const failedResults = results.filter((r) => !r.success);
 
     if (failedResults.length > 0) {
-      const errors = failedResults.map(r => r.error).filter(Boolean);
+      const errors = failedResults.map((r) => r.error).filter(Boolean);
       reqLogger.warn('webhook.partial_failure', {
         successful: successfulResults.length,
         failed: failedResults.length,

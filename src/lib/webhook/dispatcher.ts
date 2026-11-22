@@ -16,10 +16,7 @@ export interface DeliveryAttemptResult {
 /**
  * Enqueue a new delivery record for the given payload and destination.
  */
-async function enqueue(
-  payload: WebhookPayload,
-  destination: string,
-): Promise<DeliveryRecord> {
+async function enqueue(payload: WebhookPayload, destination: string): Promise<DeliveryRecord> {
   const config = getWebhookConfig();
   return createRecord(destination, payload, config.maxAttempts);
 }

@@ -1,4 +1,4 @@
-import { randomHex } from "@/lib/crypto/ids";
+import { randomHex } from '@/lib/crypto/ids';
 /**
  * Transaction splitting — split a single USDC amount across multiple beneficiaries.
  * All amounts are in USDC (string decimals). Percentages must sum to 100.

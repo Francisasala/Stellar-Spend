@@ -2,13 +2,14 @@
 
 **Status:** Accepted  
 **Date:** 2026-08-25  
-**Deciders:** Stellar-Spend Core Team  
+**Deciders:** Stellar-Spend Core Team
 
 ---
 
 ## Context
 
 The `contracts/` directory contains four Soroban smart contracts written in Rust:
+
 1. `escrow`: Non-custodial deposit state management, release authorization, and permissionless refund timers.
 2. `fee-manager`: Flat fee calculation and emergency operational pause switch (circuit breaker).
 3. `multisig-authority`: On-chain M-of-N threshold signing and quorum verification for high-value operations.
@@ -65,14 +66,17 @@ The TypeScript integration layer in `src/lib` bridges browser wallets and backen
 ### Core Subsystems in `src/lib`
 
 1. **Wallet Adapter (`src/lib/stellar/wallet-adapter.ts`):**
+
    - Connects to browser wallet extensions (Freighter, Lobstr).
    - Requests user authorization and signature over Soroban contract transaction envelopes (XDR).
 
 2. **Resource & Fee Estimator (`src/lib/stellar/resource-fee-estimator.ts`):**
+
    - Builds transaction envelopes with `Operation.invokeContractFunction`.
    - Simulates invocations against Soroban RPC to obtain footprint reads/writes, CPU instructions, and memory limits before prompting user signing or server submission.
 
 3. **Multisig Coordinator (`src/lib/multisig-settlement.ts` & `src/lib/stellar/multisig.ts`):**
+
    - Coordinates off-chain collection and validation of M-of-N cryptographic signatures.
    - Enforces the `highValueLimit` rule: transfers below threshold proceed with a single signature, whereas high-value actions require full quorum before triggering on-chain execution.
    - Logs signature trails into PostgreSQL for compliance.
@@ -119,7 +123,7 @@ sequenceDiagram
     RPC-->>Client: { status: "PENDING", hash: "0x..." }
     RPC->>Contract: Execute transaction on-chain & persist instance storage
     Contract-->>RPC: Emit contract event (e.g. `deposit`, `release`)
-    
+
     loop Poll Transaction Status
         Client->>RPC: getTransaction(hash)
         RPC-->>Client: { status: "SUCCESS", ledger: 12345 }
@@ -187,26 +191,26 @@ sequenceDiagram
 
 The table below lists all required and optional environment variables necessary to operate each contract integration.
 
-| Contract / Subsystem | Environment Variable | Scope | Required | Default / Example | Purpose |
-| :--- | :--- | :--- | :---: | :--- | :--- |
-| **Global Stellar** | `STELLAR_SOROBAN_RPC_URL` | Server | Yes | `https://soroban-rpc.mainnet.stellar.gateway.fm` | Soroban JSON-RPC endpoint for server-side simulation & submission |
-| **Global Stellar** | `NEXT_PUBLIC_STELLAR_SOROBAN_RPC_URL` | Browser | Yes | `https://soroban-rpc.mainnet.stellar.gateway.fm` | Browser-accessible Soroban RPC for client wallet queries |
-| **Global Stellar** | `STELLAR_HORIZON_URL` | Server | Yes | `https://horizon.stellar.org` | Horizon endpoint for account balance and sequence lookups |
-| **Global Stellar** | `STELLAR_NETWORK_PASSPHRASE` | Both | No | `Public Global Stellar Network ; September 2015` | Network passphrase for transaction signature verification |
-| **Escrow** | `ESCROW_CONTRACT_ID` | Both | Yes | `C...` (56-character Soroban contract ID) | Deployed Escrow contract address |
-| **Escrow** | `STELLAR_SETTLEMENT_SECRET_KEY` | Server | Yes | `S...` (Ed25519 Secret Key) | Keypair for settlement authority authorized to call `release` |
-| **Escrow** | `DEFAULT_TIMEOUT_LEDGERS` | Server | No | `604800` (~7 days) | Default ledger duration before deposits become refundable |
-| **Fee Manager** | `FEE_MANAGER_CONTRACT_ID` | Both | Yes | `C...` | Deployed Fee Manager contract address |
-| **Fee Manager** | `STELLAR_FEE_MANAGER_ADMIN_SECRET` | Server | Yes | `S...` | Admin key to invoke `pause`, `unpause`, and `migrate` |
-| **Multisig Authority** | `MULTISIG_CONTRACT_ID` | Both | Yes | `C...` | Deployed Multisig Authority contract address |
-| **Multisig Authority** | `MULTISIG_SIGNER_KEYS` | Server | Yes | `S...,S...` (comma-separated secrets) | Active keys for authorized signing coordinators |
-| **Multisig Authority** | `MULTISIG_THRESHOLD` | Server | No | `2` | Minimum quorum count ($M$) for high-value actions |
-| **Multisig Authority** | `MULTISIG_HIGH_VALUE_LIMIT` | Server | No | `1000000000` ($100 USDC in stroops) | Threshold above which full quorum is required |
-| **Treasury** | `TREASURY_CONTRACT_ID` | Both | Yes | `C...` | Deployed Treasury contract address |
-| **Treasury** | `STELLAR_TREASURY_ADMIN_SECRET` | Server | Yes | `S...` | Admin key for updating fee schedule and treasury destination |
-| **Treasury** | `STELLAR_TREASURY_PAYOUT_ADDRESS` | Server | Yes | `G...` / `C...` | Destination address for accrued network fees |
-| **Event Indexer** | `DATABASE_URL` | Server | Yes | `postgresql://...` | Database connection string for storing `soroban_events` |
-| **Event Indexer** | `CRON_SECRET` | Server | Yes | `secret_token` | Bearer token protecting `/api/cron/soroban-event-sync` |
+| Contract / Subsystem   | Environment Variable                  | Scope   | Required | Default / Example                                | Purpose                                                           |
+| :--------------------- | :------------------------------------ | :------ | :------: | :----------------------------------------------- | :---------------------------------------------------------------- |
+| **Global Stellar**     | `STELLAR_SOROBAN_RPC_URL`             | Server  |   Yes    | `https://soroban-rpc.mainnet.stellar.gateway.fm` | Soroban JSON-RPC endpoint for server-side simulation & submission |
+| **Global Stellar**     | `NEXT_PUBLIC_STELLAR_SOROBAN_RPC_URL` | Browser |   Yes    | `https://soroban-rpc.mainnet.stellar.gateway.fm` | Browser-accessible Soroban RPC for client wallet queries          |
+| **Global Stellar**     | `STELLAR_HORIZON_URL`                 | Server  |   Yes    | `https://horizon.stellar.org`                    | Horizon endpoint for account balance and sequence lookups         |
+| **Global Stellar**     | `STELLAR_NETWORK_PASSPHRASE`          | Both    |    No    | `Public Global Stellar Network ; September 2015` | Network passphrase for transaction signature verification         |
+| **Escrow**             | `ESCROW_CONTRACT_ID`                  | Both    |   Yes    | `C...` (56-character Soroban contract ID)        | Deployed Escrow contract address                                  |
+| **Escrow**             | `STELLAR_SETTLEMENT_SECRET_KEY`       | Server  |   Yes    | `S...` (Ed25519 Secret Key)                      | Keypair for settlement authority authorized to call `release`     |
+| **Escrow**             | `DEFAULT_TIMEOUT_LEDGERS`             | Server  |    No    | `604800` (~7 days)                               | Default ledger duration before deposits become refundable         |
+| **Fee Manager**        | `FEE_MANAGER_CONTRACT_ID`             | Both    |   Yes    | `C...`                                           | Deployed Fee Manager contract address                             |
+| **Fee Manager**        | `STELLAR_FEE_MANAGER_ADMIN_SECRET`    | Server  |   Yes    | `S...`                                           | Admin key to invoke `pause`, `unpause`, and `migrate`             |
+| **Multisig Authority** | `MULTISIG_CONTRACT_ID`                | Both    |   Yes    | `C...`                                           | Deployed Multisig Authority contract address                      |
+| **Multisig Authority** | `MULTISIG_SIGNER_KEYS`                | Server  |   Yes    | `S...,S...` (comma-separated secrets)            | Active keys for authorized signing coordinators                   |
+| **Multisig Authority** | `MULTISIG_THRESHOLD`                  | Server  |    No    | `2`                                              | Minimum quorum count ($M$) for high-value actions                 |
+| **Multisig Authority** | `MULTISIG_HIGH_VALUE_LIMIT`           | Server  |    No    | `1000000000` ($100 USDC in stroops)              | Threshold above which full quorum is required                     |
+| **Treasury**           | `TREASURY_CONTRACT_ID`                | Both    |   Yes    | `C...`                                           | Deployed Treasury contract address                                |
+| **Treasury**           | `STELLAR_TREASURY_ADMIN_SECRET`       | Server  |   Yes    | `S...`                                           | Admin key for updating fee schedule and treasury destination      |
+| **Treasury**           | `STELLAR_TREASURY_PAYOUT_ADDRESS`     | Server  |   Yes    | `G...` / `C...`                                  | Destination address for accrued network fees                      |
+| **Event Indexer**      | `DATABASE_URL`                        | Server  |   Yes    | `postgresql://...`                               | Database connection string for storing `soroban_events`           |
+| **Event Indexer**      | `CRON_SECRET`                         | Server  |   Yes    | `secret_token`                                   | Bearer token protecting `/api/cron/soroban-event-sync`            |
 
 > [!WARNING]
 > Secret keys (`STELLAR_SETTLEMENT_SECRET_KEY`, `STELLAR_FEE_MANAGER_ADMIN_SECRET`, `STELLAR_TREASURY_ADMIN_SECRET`, `MULTISIG_SIGNER_KEYS`) must **never** be prefixed with `NEXT_PUBLIC_` or exposed in client bundles. `src/lib/env.ts` actively rejects builds if secret keys are exposed to the frontend.
@@ -217,18 +221,18 @@ The table below lists all required and optional environment variables necessary 
 
 All four contracts emit standard errors conforming to `stellar_spend_shared::errors::ContractError`. When invoking contracts from `src/lib`, RPC error responses decode into the following canonical error discriminants:
 
-| Error Code | Error Variant | Description | Recommended `src/lib` Action |
-| :--- | :--- | :--- | :--- |
-| `1` | `Unauthorized` | Caller lacks `require_auth` permission | Reject with HTTP 403 / alert signing key mismatch |
-| `2` | `AlreadyExists` | Deposit or proposal ID already recorded | Return duplicate state / idempotency replay |
-| `3` | `NotFound` | Specified deposit or proposal does not exist | Return HTTP 404 |
-| `4` | `Expired` | Proposal TTL or timeout passed | Invalidate cache / mark transaction expired |
-| `5` | `InvalidState` | Action invalid in current state (e.g. double release) | Invalidate optimistic state |
-| `6` | `InsufficientBalance` | Insufficient token or gas balance | Prompt user to fund account |
-| `7` | `InvalidAmount` | Zero or negative amount passed | Reject in client validation before simulation |
-| `8` | `Paused` | Fee manager or operational pause flag set | Fail fast / show system maintenance notice |
-| `9` | `Reentrant` | Reentrancy guard triggered | Abort immediately and log security warning |
-| `10` | `MigrationRequired` | Contract WASM upgraded without running `migrate` | Trigger administrative migration job |
+| Error Code | Error Variant         | Description                                           | Recommended `src/lib` Action                      |
+| :--------- | :-------------------- | :---------------------------------------------------- | :------------------------------------------------ |
+| `1`        | `Unauthorized`        | Caller lacks `require_auth` permission                | Reject with HTTP 403 / alert signing key mismatch |
+| `2`        | `AlreadyExists`       | Deposit or proposal ID already recorded               | Return duplicate state / idempotency replay       |
+| `3`        | `NotFound`            | Specified deposit or proposal does not exist          | Return HTTP 404                                   |
+| `4`        | `Expired`             | Proposal TTL or timeout passed                        | Invalidate cache / mark transaction expired       |
+| `5`        | `InvalidState`        | Action invalid in current state (e.g. double release) | Invalidate optimistic state                       |
+| `6`        | `InsufficientBalance` | Insufficient token or gas balance                     | Prompt user to fund account                       |
+| `7`        | `InvalidAmount`       | Zero or negative amount passed                        | Reject in client validation before simulation     |
+| `8`        | `Paused`              | Fee manager or operational pause flag set             | Fail fast / show system maintenance notice        |
+| `9`        | `Reentrant`           | Reentrancy guard triggered                            | Abort immediately and log security warning        |
+| `10`       | `MigrationRequired`   | Contract WASM upgraded without running `migrate`      | Trigger administrative migration job              |
 
 ---
 

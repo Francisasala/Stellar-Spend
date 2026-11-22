@@ -29,9 +29,7 @@ export interface UseSyncSettingsReturn {
  * to preserve backwards compatibility.
  */
 export function useSyncSettings(userAddress?: string): UseSyncSettingsReturn {
-  const [settings, setSettings] = useState<SyncSettings>(() =>
-    SyncStorage.getDefaultSettings(),
-  );
+  const [settings, setSettings] = useState<SyncSettings>(() => SyncStorage.getDefaultSettings());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isOnline = useOnlineStatus();
@@ -88,8 +86,7 @@ export function useSyncSettings(userAddress?: string): UseSyncSettingsReturn {
     () => ({
       lastSyncAt: settings.lastSyncAt,
       isPending: queueLength > 0,
-      formattedLastSync:
-        settings.lastSyncAt > 0 ? formatDateTime(settings.lastSyncAt) : 'Never',
+      formattedLastSync: settings.lastSyncAt > 0 ? formatDateTime(settings.lastSyncAt) : 'Never',
     }),
     [settings.lastSyncAt, queueLength],
   );

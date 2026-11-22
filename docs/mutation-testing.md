@@ -27,19 +27,19 @@ open mutation-report/index.html       # macOS
 
 ## Configuration files
 
-| File | Purpose |
-|---|---|
-| `stryker.conf.json` | Stryker configuration — mutate glob, reporters, thresholds, TypeScript checker |
-| `vitest.mutation.config.ts` | Vitest config used by Stryker — restricts to jsdom, excludes E2E tests |
+| File                        | Purpose                                                                        |
+| --------------------------- | ------------------------------------------------------------------------------ |
+| `stryker.conf.json`         | Stryker configuration — mutate glob, reporters, thresholds, TypeScript checker |
+| `vitest.mutation.config.ts` | Vitest config used by Stryker — restricts to jsdom, excludes E2E tests         |
 
 ### Thresholds (`stryker.conf.json`)
 
-| Level | Score | Effect |
-|---|---|---|
-| `break` | 55 | CI fails — do not merge below this |
-| `low` | 60 | Warning in CI output |
-| `medium` | 70 | Warning in CI output |
-| `high` | 80 | Target for green badge |
+| Level    | Score | Effect                             |
+| -------- | ----- | ---------------------------------- |
+| `break`  | 55    | CI fails — do not merge below this |
+| `low`    | 60    | Warning in CI output               |
+| `medium` | 70    | Warning in CI output               |
+| `high`   | 80    | Target for green badge             |
 
 ---
 
@@ -56,10 +56,10 @@ Once the pilot mutation score is **stable ≥ 55%**, coverage can be extended to
 
 Stryker groups related files so you can run subsets:
 
-| Group | Files |
-|---|---|
+| Group        | Files                                                                                                                                                |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `money-path` | `src/lib/cache/service.ts`, `src/lib/cache/keys.ts`, `src/lib/clients/http-client.ts`, `src/lib/clients/paycrest.ts`, `src/lib/clients/allbridge.ts` |
-| `security` | `src/lib/clients/http-client.ts` |
+| `security`   | `src/lib/clients/http-client.ts`                                                                                                                     |
 
 ```bash
 # Run only the money-path group
@@ -79,11 +79,11 @@ After a run, open `mutation-report/index.html`. The report shows:
 
 ### Target scores by layer
 
-| Layer | Target mutation score |
-|---|---|
-| `src/lib/` utilities | ≥ 80% |
-| API route handlers (`src/app/api/`) | ≥ 70% |
-| Business logic (`offramp/`, `api-keys/`) | ≥ 75% |
+| Layer                                    | Target mutation score |
+| ---------------------------------------- | --------------------- |
+| `src/lib/` utilities                     | ≥ 80%                 |
+| API route handlers (`src/app/api/`)      | ≥ 70%                 |
+| Business logic (`offramp/`, `api-keys/`) | ≥ 75%                 |
 
 ---
 
@@ -127,9 +127,9 @@ CI will fail if the mutation score drops below the `break` threshold (55%). The 
 
 ## Output files
 
-| Path | Contents |
-|---|---|
-| `mutation-report/index.html` | Interactive HTML report (git-ignored) |
-| `mutation-report/mutation-report.json` | Machine-readable JSON (git-ignored) |
+| Path                                   | Contents                              |
+| -------------------------------------- | ------------------------------------- |
+| `mutation-report/index.html`           | Interactive HTML report (git-ignored) |
+| `mutation-report/mutation-report.json` | Machine-readable JSON (git-ignored)   |
 
 Both output paths are listed in `.gitignore` — mutation reports should never be committed.

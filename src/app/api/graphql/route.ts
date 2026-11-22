@@ -1,14 +1,17 @@
-import { graphql, parse, validate, type DocumentNode, type ValidationRule, type ASTNode } from 'graphql';
+import {
+  graphql,
+  parse,
+  validate,
+  type DocumentNode,
+  type ValidationRule,
+  type ASTNode,
+} from 'graphql';
 import { schema } from '../../../../lib/graphql/schema';
 // Resolvers are now split by domain under src/lib/graphql/resolvers/
 // The re-export from resolvers.ts keeps this import path unchanged.
 import { resolvers } from '../../../../lib/graphql/resolvers';
 import { buildContext } from '../../../../lib/graphql/context';
-import {
-  MAX_DEPTH,
-  resetNodeCount,
-  GraphQLError,
-} from '../../../../lib/graphql/auth-guards';
+import { MAX_DEPTH, resetNodeCount, GraphQLError } from '../../../../lib/graphql/auth-guards';
 import { getResolverUsageReport, getUnusedResolvers } from '../../../../lib/graphql/resolver-usage';
 
 const PLAYGROUND_HTML = `<!DOCTYPE html>
@@ -69,9 +72,7 @@ function formatError(err: unknown): Record<string, unknown> {
   return {
     error: code,
     message,
-    ...(process.env.NODE_ENV !== 'production' && stack
-      ? { details: { stack } }
-      : {}),
+    ...(process.env.NODE_ENV !== 'production' && stack ? { details: { stack } } : {}),
   };
 }
 

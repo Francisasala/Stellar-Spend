@@ -26,14 +26,7 @@
  * webhookVerify, etc.) are module-level mocked so the tests are fully offline.
  */
 
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-  afterEach,
-} from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // ── env mock (must come before any module that reads env.server) ──────────────
@@ -198,10 +191,7 @@ describe('GET /api/offramp/currencies', () => {
 
   it('returns 200 with currency list on happy path (fallback path)', async () => {
     // Mock the Paycrest fetch to fail so we exercise the fallback
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockRejectedValue(new Error('network unavailable')),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network unavailable')));
 
     const { GET } = await import('@/app/api/offramp/currencies/route');
     const req = makeRequest('GET', 'http://localhost/api/offramp/currencies');
@@ -228,10 +218,7 @@ describe('GET /api/offramp/currencies', () => {
 
   it('returns invalid for an unsupported currency', async () => {
     const { GET } = await import('@/app/api/offramp/currencies/route');
-    const req = makeRequest(
-      'GET',
-      'http://localhost/api/offramp/currencies?validate=XYZ',
-    );
+    const req = makeRequest('GET', 'http://localhost/api/offramp/currencies?validate=XYZ');
     const res = await GET(req as any);
     const body = await jsonBody(res);
 
@@ -280,14 +267,9 @@ describe('GET /api/offramp/institutions/[currency]', () => {
   });
 
   it('returns fallback institutions when Paycrest is unreachable', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockRejectedValue(new Error('network error')),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network error')));
 
-    const { GET } = await import(
-      '@/app/api/offramp/institutions/[currency]/route'
-    );
+    const { GET } = await import('@/app/api/offramp/institutions/[currency]/route');
     const res = await GET(
       makeRequest('GET', 'http://localhost/api/offramp/institutions/NGN') as any,
       { params: Promise.resolve({ currency: 'NGN' }) },
@@ -304,16 +286,11 @@ describe('GET /api/offramp/institutions/[currency]', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: () =>
-          Promise.resolve([
-            { id: 'gtb', name: 'GTBank', code: 'GTB' },
-          ]),
+        json: () => Promise.resolve([{ id: 'gtb', name: 'GTBank', code: 'GTB' }]),
       }),
     );
 
-    const { GET } = await import(
-      '@/app/api/offramp/institutions/[currency]/route'
-    );
+    const { GET } = await import('@/app/api/offramp/institutions/[currency]/route');
     const res = await GET(
       makeRequest('GET', 'http://localhost/api/offramp/institutions/NGN') as any,
       { params: Promise.resolve({ currency: 'NGN' }) },
@@ -656,7 +633,10 @@ describe('POST /api/webhooks/paycrest', () => {
     vi.mocked(db.dal.getByPayoutOrderId).mockResolvedValue(null);
 
     const { POST } = await import('@/app/api/webhooks/paycrest/route');
-    const payload = JSON.stringify({ event: 'payment_order.settled', data: { id: 'unknown-order' } });
+    const payload = JSON.stringify({
+      event: 'payment_order.settled',
+      data: { id: 'unknown-order' },
+    });
     const req = new NextRequest('http://localhost/api/webhooks/paycrest', {
       method: 'POST',
       headers: { 'content-type': 'application/json', ...validHeaders },
@@ -711,4 +691,3 @@ describe('POST /api/webhooks/paycrest', () => {
     expect(res.status).toBe(400);
   });
 });
-

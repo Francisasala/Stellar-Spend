@@ -23,19 +23,14 @@ describe('Audit Logging — Completeness', () => {
       const user = makeUser();
       const tx = makeTransaction({ userAddress: user.address });
 
-      const auditLog = await auditService.logAction(
-        'CREATE',
-        'transaction',
-        'success',
-        {
-          userAddress: user.address,
-          resourceId: tx.id,
-          actionDetails: `Transaction created for ${tx.currency}`,
-          ipAddress: '192.168.1.1',
-          userAgent: 'test-agent',
-          sessionId: 'session_123',
-        },
-      );
+      const auditLog = await auditService.logAction('CREATE', 'transaction', 'success', {
+        userAddress: user.address,
+        resourceId: tx.id,
+        actionDetails: `Transaction created for ${tx.currency}`,
+        ipAddress: '192.168.1.1',
+        userAgent: 'test-agent',
+        sessionId: 'session_123',
+      });
 
       expect(auditLog).toBeDefined();
       expect(auditLog.userAddress).toBe(user.address);
@@ -48,16 +43,11 @@ describe('Audit Logging — Completeness', () => {
     it('creates an audit entry for beneficiary addition', async () => {
       const user = makeUser();
 
-      const auditLog = await auditService.logAction(
-        'CREATE',
-        'beneficiary',
-        'success',
-        {
-          userAddress: user.address,
-          resourceId: 'beneficiary_123',
-          actionDetails: 'Beneficiary added for NGN transfers',
-        },
-      );
+      const auditLog = await auditService.logAction('CREATE', 'beneficiary', 'success', {
+        userAddress: user.address,
+        resourceId: 'beneficiary_123',
+        actionDetails: 'Beneficiary added for NGN transfers',
+      });
 
       expect(auditLog.actionType).toBe('CREATE');
       expect(auditLog.resourceType).toBe('beneficiary');
@@ -67,16 +57,11 @@ describe('Audit Logging — Completeness', () => {
     it('creates an audit entry for API key generation', async () => {
       const user = makeUser();
 
-      const auditLog = await auditService.logAction(
-        'CREATE',
-        'api_key',
-        'success',
-        {
-          userAddress: user.address,
-          resourceId: 'api_key_123',
-          actionDetails: 'API key generated',
-        },
-      );
+      const auditLog = await auditService.logAction('CREATE', 'api_key', 'success', {
+        userAddress: user.address,
+        resourceId: 'api_key_123',
+        actionDetails: 'API key generated',
+      });
 
       expect(auditLog.actionType).toBe('CREATE');
       expect(auditLog.resourceType).toBe('api_key');
@@ -85,15 +70,10 @@ describe('Audit Logging — Completeness', () => {
     it('creates an audit entry for rate limit bypass request', async () => {
       const user = makeUser();
 
-      const auditLog = await auditService.logAction(
-        'REQUEST',
-        'rate_limit_bypass',
-        'success',
-        {
-          userAddress: user.address,
-          actionDetails: 'Rate limit bypass requested for premium tier',
-        },
-      );
+      const auditLog = await auditService.logAction('REQUEST', 'rate_limit_bypass', 'success', {
+        userAddress: user.address,
+        actionDetails: 'Rate limit bypass requested for premium tier',
+      });
 
       expect(auditLog.actionType).toBe('REQUEST');
       expect(auditLog.resourceType).toBe('rate_limit_bypass');
@@ -102,15 +82,10 @@ describe('Audit Logging — Completeness', () => {
     it('creates an audit entry for 2FA enable', async () => {
       const user = makeUser();
 
-      const auditLog = await auditService.logAction(
-        'UPDATE',
-        '2fa_setting',
-        'success',
-        {
-          userAddress: user.address,
-          actionDetails: '2FA enabled',
-        },
-      );
+      const auditLog = await auditService.logAction('UPDATE', '2fa_setting', 'success', {
+        userAddress: user.address,
+        actionDetails: '2FA enabled',
+      });
 
       expect(auditLog.actionType).toBe('UPDATE');
       expect(auditLog.resourceType).toBe('2fa_setting');
@@ -119,16 +94,11 @@ describe('Audit Logging — Completeness', () => {
     it('creates an audit entry for failed mutations', async () => {
       const user = makeUser();
 
-      const auditLog = await auditService.logAction(
-        'CREATE',
-        'transaction',
-        'failure',
-        {
-          userAddress: user.address,
-          resourceId: 'tx_failed_123',
-          actionDetails: 'Transaction creation failed: insufficient balance',
-        },
-      );
+      const auditLog = await auditService.logAction('CREATE', 'transaction', 'failure', {
+        userAddress: user.address,
+        resourceId: 'tx_failed_123',
+        actionDetails: 'Transaction creation failed: insufficient balance',
+      });
 
       expect(auditLog.status).toBe('failure');
       expect(auditLog.actionDetails).toContain('insufficient balance');
@@ -178,15 +148,11 @@ describe('Audit Logging — Completeness', () => {
       const adminAddress = 'G' + 'A'.repeat(55);
       const targetUser = makeUser();
 
-      const adminAction = await auditService.logAdminAction(
-        adminAddress,
-        'USER_SUSPEND',
-        {
-          targetUser: targetUser.address,
-          reason: 'Suspected fraudulent activity',
-          actionDetails: 'User account suspended',
-        },
-      );
+      const adminAction = await auditService.logAdminAction(adminAddress, 'USER_SUSPEND', {
+        targetUser: targetUser.address,
+        reason: 'Suspected fraudulent activity',
+        actionDetails: 'User account suspended',
+      });
 
       expect(adminAction.adminAddress).toBe(adminAddress);
       expect(adminAction.actionType).toBe('USER_SUSPEND');
@@ -198,14 +164,10 @@ describe('Audit Logging — Completeness', () => {
       const adminAddress = 'G' + 'B'.repeat(55);
       const targetUser = makeUser();
 
-      const adminAction = await auditService.logAdminAction(
-        adminAddress,
-        'RATE_LIMIT_OVERRIDE',
-        {
-          targetUser: targetUser.address,
-          reason: 'VIP customer',
-        },
-      );
+      const adminAction = await auditService.logAdminAction(adminAddress, 'RATE_LIMIT_OVERRIDE', {
+        targetUser: targetUser.address,
+        reason: 'VIP customer',
+      });
 
       expect(adminAction.actionType).toBe('RATE_LIMIT_OVERRIDE');
     });
@@ -214,14 +176,10 @@ describe('Audit Logging — Completeness', () => {
       const adminAddress = 'G' + 'C'.repeat(55);
       const targetUser = makeUser();
 
-      const adminAction = await auditService.logAdminAction(
-        adminAddress,
-        'USER_DELETE',
-        {
-          targetUser: targetUser.address,
-          reason: 'GDPR deletion request',
-        },
-      );
+      const adminAction = await auditService.logAdminAction(adminAddress, 'USER_DELETE', {
+        targetUser: targetUser.address,
+        reason: 'GDPR deletion request',
+      });
 
       expect(adminAction.actionType).toBe('USER_DELETE');
     });
@@ -262,15 +220,10 @@ describe('Audit Logging — Completeness', () => {
     it('computes and verifies log integrity hash', async () => {
       const user = makeUser();
 
-      const auditLog = await auditService.logAction(
-        'CREATE',
-        'transaction',
-        'success',
-        {
-          userAddress: user.address,
-          resourceId: 'tx_123',
-        },
-      );
+      const auditLog = await auditService.logAction('CREATE', 'transaction', 'success', {
+        userAddress: user.address,
+        resourceId: 'tx_123',
+      });
 
       const hash = auditService.computeLogIntegrityHash(auditLog);
       expect(hash).toBeDefined();
@@ -283,15 +236,10 @@ describe('Audit Logging — Completeness', () => {
     it('detects tampered audit logs', async () => {
       const user = makeUser();
 
-      const auditLog = await auditService.logAction(
-        'CREATE',
-        'transaction',
-        'success',
-        {
-          userAddress: user.address,
-          resourceId: 'tx_123',
-        },
-      );
+      const auditLog = await auditService.logAction('CREATE', 'transaction', 'success', {
+        userAddress: user.address,
+        resourceId: 'tx_123',
+      });
 
       const originalHash = auditService.computeLogIntegrityHash(auditLog);
 

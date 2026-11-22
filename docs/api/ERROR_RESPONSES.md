@@ -7,6 +7,7 @@ All API endpoints in Stellar-Spend follow a unified error response format. This 
 ## Standard Response Format
 
 ### Success (2xx)
+
 ```typescript
 // Route-specific success response (varies by endpoint)
 {
@@ -15,14 +16,15 @@ All API endpoints in Stellar-Spend follow a unified error response format. This 
 ```
 
 ### Error (4xx, 5xx)
+
 ```typescript
 interface StandardErrorResponse {
   /** Machine-readable error code */
   error: ErrorType;
-  
+
   /** Human-readable error description (optional) */
   message?: string;
-  
+
   /** Additional context for debugging (development only) */
   details?: unknown;
 }
@@ -32,22 +34,23 @@ interface StandardErrorResponse {
 
 ## Error Types & HTTP Status Codes
 
-| ErrorType | HTTP Status | Use Case |
-|-----------|------------|----------|
-| `validation_error` | 400 | Invalid request body, missing required fields, constraints violated |
-| `unauthorized` | 401 | Missing/invalid authentication token |
-| `forbidden` | 403 | Valid auth but insufficient permissions |
-| `not_found` | 404 | Resource does not exist |
-| `conflict` | 409 | Invalid state transition, duplicate resource |
-| `rate_limit_exceeded` | 429 | Rate limit threshold exceeded |
-| `external_service_error` | 502 | Upstream service (Paycrest, Allbridge, Stellar) unavailable |
-| `server_error` | 500 | Internal server error |
+| ErrorType                | HTTP Status | Use Case                                                            |
+| ------------------------ | ----------- | ------------------------------------------------------------------- |
+| `validation_error`       | 400         | Invalid request body, missing required fields, constraints violated |
+| `unauthorized`           | 401         | Missing/invalid authentication token                                |
+| `forbidden`              | 403         | Valid auth but insufficient permissions                             |
+| `not_found`              | 404         | Resource does not exist                                             |
+| `conflict`               | 409         | Invalid state transition, duplicate resource                        |
+| `rate_limit_exceeded`    | 429         | Rate limit threshold exceeded                                       |
+| `external_service_error` | 502         | Upstream service (Paycrest, Allbridge, Stellar) unavailable         |
+| `server_error`           | 500         | Internal server error                                               |
 
 ---
 
 ## Error Response Examples
 
 ### Validation Error (400)
+
 ```json
 {
   "error": "validation_error",
@@ -60,6 +63,7 @@ interface StandardErrorResponse {
 ```
 
 ### Unauthorized (401)
+
 ```json
 {
   "error": "unauthorized",
@@ -68,6 +72,7 @@ interface StandardErrorResponse {
 ```
 
 ### Not Found (404)
+
 ```json
 {
   "error": "not_found",
@@ -76,6 +81,7 @@ interface StandardErrorResponse {
 ```
 
 ### Conflict (409)
+
 ```json
 {
   "error": "conflict",
@@ -87,6 +93,7 @@ interface StandardErrorResponse {
 ```
 
 ### Rate Limited (429)
+
 ```json
 {
   "error": "rate_limit_exceeded",
@@ -95,12 +102,14 @@ interface StandardErrorResponse {
 ```
 
 With Retry-After header:
+
 ```
 HTTP/1.1 429 Too Many Requests
 Retry-After: 60
 ```
 
 ### External Service Error (502)
+
 ```json
 {
   "error": "external_service_error",
@@ -109,6 +118,7 @@ Retry-After: 60
 ```
 
 ### Server Error (500)
+
 ```json
 {
   "error": "server_error",
@@ -117,6 +127,7 @@ Retry-After: 60
 ```
 
 **Development mode** (NODE_ENV !== production) also includes:
+
 ```json
 {
   "error": "server_error",
@@ -141,9 +152,9 @@ import { ErrorHandler } from '@/lib/error-handler';
 export const POST = withApiErrorHandling(async (request: NextRequest) => {
   // Any thrown error automatically caught and standardized
   const data = await request.json();
-  
+
   // Process request...
-  
+
   return NextResponse.json({ success: true });
 });
 ```
@@ -157,42 +168,41 @@ import { ErrorHandler, ApiError, ErrorType } from '@/lib/error-handler';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Validation error
     if (!body.email) {
       return ErrorHandler.validation('Email is required', 'email');
     }
-    
+
     // Not found error
     const user = await db.users.findById(body.userId);
     if (!user) {
       return ErrorHandler.notFound('User');
     }
-    
+
     // Unauthorized error
     if (!user.isActive) {
       return ErrorHandler.unauthorized('User account is inactive');
     }
-    
+
     // Forbidden error
     if (user.role !== 'admin') {
       return ErrorHandler.forbidden('Only admins can perform this action');
     }
-    
+
     // Conflict error
     const existing = await db.orders.findById(body.orderId);
     if (existing) {
       return ErrorHandler.conflict('Order already exists', { orderId: body.orderId });
     }
-    
+
     // Rate limit error
     if (requestCount > LIMIT) {
       return ErrorHandler.rateLimit('Too many requests', 60); // Retry after 60s
     }
-    
+
     // Success
     return NextResponse.json({ data: result });
-    
   } catch (error) {
     return ErrorHandler.handle(error);
   }
@@ -207,37 +217,37 @@ import { withApiErrorHandling } from '@/lib/error-handler';
 
 export const POST = withApiErrorHandling(async (request: NextRequest) => {
   const body = await request.json();
-  
+
   // Throw specific error types that will be automatically caught and formatted
   if (!body.amount) {
     throw ApiError.validation('Amount is required', { field: 'amount' });
   }
-  
+
   const resource = await fetchResource(body.id);
   if (!resource) {
     throw ApiError.notFound('Resource');
   }
-  
+
   if (!isAuthorized(request)) {
     throw ApiError.unauthorized();
   }
-  
+
   if (!hasPermission(request, 'admin')) {
     throw ApiError.forbidden('Requires admin role');
   }
-  
+
   if (isDuplicate(body.id)) {
     throw ApiError.conflict('Duplicate ID', { id: body.id });
   }
-  
+
   if (isRateLimited(request)) {
     throw ApiError.rateLimit('Too many requests', 60);
   }
-  
+
   if (externalServiceFailed) {
     throw ApiError.externalService('Paycrest', 'Rate API unavailable');
   }
-  
+
   // Process...
   return NextResponse.json({ success: true });
 });
@@ -311,6 +321,7 @@ throw ApiError.server(message?: string)
 ## Best Practices
 
 ### 1. Choose the Right Error Type
+
 - Use `validation_error` for input validation failures
 - Use `not_found` for missing resources
 - Use `unauthorized` for authentication failures
@@ -320,6 +331,7 @@ throw ApiError.server(message?: string)
 - Use `server_error` only for unexpected internal failures
 
 ### 2. Prefer ApiError Over Manual ErrorHandler Calls
+
 ```typescript
 // ✅ Good - clear, throw-able error
 throw ApiError.validation('Email is required');
@@ -334,6 +346,7 @@ return NextResponse.json({ error: 'Email is required' }, { status: 400 });
 ```
 
 ### 3. Include Helpful Details (Development Only)
+
 ```typescript
 // Details are automatically stripped in production
 return ErrorHandler.conflict('Duplicate order', {
@@ -344,6 +357,7 @@ return ErrorHandler.conflict('Duplicate order', {
 ```
 
 ### 4. Use `withApiErrorHandling` Wrapper for Cleaner Code
+
 ```typescript
 // ✅ Clean - errors automatically caught and standardized
 export const POST = withApiErrorHandling(async (req) => {
@@ -361,6 +375,7 @@ export const POST = withApiErrorHandling(async (req) => {
 ```
 
 ### 5. Handle Specific Error Types
+
 ```typescript
 try {
   // Operation that might fail in specific ways
@@ -369,11 +384,11 @@ try {
   if (error instanceof TimeoutError) {
     return ErrorHandler.timeout(error);
   }
-  
+
   if (error instanceof PaycrestHttpError) {
     return ErrorHandler.handle(error);
   }
-  
+
   return ErrorHandler.serverError(error);
 }
 ```
@@ -383,6 +398,7 @@ try {
 ## Testing Error Responses
 
 ### Unit Test Example
+
 ```typescript
 import { describe, it, expect } from 'vitest';
 import { POST } from './route';
@@ -393,10 +409,10 @@ describe('POST /api/example', () => {
       method: 'POST',
       body: JSON.stringify({}),
     });
-    
+
     const res = await POST(req);
     const data = await res.json();
-    
+
     expect(res.status).toBe(400);
     expect(data.error).toBe('validation_error');
     expect(data.message).toContain('email');
@@ -407,10 +423,10 @@ describe('POST /api/example', () => {
       method: 'POST',
       body: JSON.stringify({ id: 'nonexistent' }),
     });
-    
+
     const res = await POST(req);
     const data = await res.json();
-    
+
     expect(res.status).toBe(404);
     expect(data.error).toBe('not_found');
   });
@@ -418,6 +434,7 @@ describe('POST /api/example', () => {
 ```
 
 ### Integration Test Example
+
 ```typescript
 import { describe, it, expect } from 'vitest';
 
@@ -427,11 +444,11 @@ describe('Error Response Consistency', () => {
     'GET /api/offramp/currencies',
     'POST /api/offramp/order',
   ];
-  
+
   endpoints.forEach((endpoint) => {
     it(`${endpoint} returns StandardErrorResponse on validation error`, async () => {
       const res = await request(endpoint).send({});
-      
+
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('error');
       expect(res.body).toHaveProperty('message');
@@ -447,6 +464,7 @@ describe('Error Response Consistency', () => {
 ## Migration from Ad Hoc Error Responses
 
 ### Before (Inconsistent)
+
 ```typescript
 // Different shapes across endpoints
 return NextResponse.json({ error: 'Email required' }, { status: 400 });
@@ -455,6 +473,7 @@ return NextResponse.json({ errorCode: 'NOT_FOUND' }, { status: 404 });
 ```
 
 ### After (Standardized)
+
 ```typescript
 // All endpoints use the same shape
 return ErrorHandler.validation('Email required', 'email');
@@ -471,8 +490,9 @@ A: Either works. Use `throw ApiError.*` for cleaner throw-based logic. Use `Erro
 
 **Q: How do I add custom fields to error responses?**  
 A: Use the `details` parameter (development environments only):
+
 ```typescript
-return ErrorHandler.conflict('Order exists', { 
+return ErrorHandler.conflict('Order exists', {
   existingOrderId: order.id,
   createdAt: order.createdAt,
 });
@@ -486,4 +506,3 @@ A: Use 500 (server_error). The ErrorHandler will classify unknown errors as `ser
 
 **Q: Can I customize error messages for specific locales?**  
 A: Yes, the `message` field is meant for user-facing text and can be localized by the client using the `error` code as a key.
-

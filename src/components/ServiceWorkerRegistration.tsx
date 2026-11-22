@@ -96,15 +96,17 @@ export default function ServiceWorkerRegistration() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-50">
-      <div className="rounded-lg p-4 shadow-lg backdrop-filter backdrop-blur-sm border"
-        style={{ backgroundColor: CHROME_TOKENS.surface, borderColor: CHROME_TOKENS.gold }}>
+      <div
+        className="rounded-lg p-4 shadow-lg backdrop-filter backdrop-blur-sm border"
+        style={{ backgroundColor: CHROME_TOKENS.surface, borderColor: CHROME_TOKENS.gold }}
+      >
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 text-xl">🔄</div>
           <div className="flex-1">
-            <h3 className="text-sm font-semibold mb-1"
-              style={{ color: CHROME_TOKENS.gold }}>{STRINGS.heading}</h3>
-            <p className="text-xs mb-3"
-              style={{ color: CHROME_TOKENS.textDim }}>
+            <h3 className="text-sm font-semibold mb-1" style={{ color: CHROME_TOKENS.gold }}>
+              {STRINGS.heading}
+            </h3>
+            <p className="text-xs mb-3" style={{ color: CHROME_TOKENS.textDim }}>
               {STRINGS.description}
             </p>
             <div className="flex gap-2">

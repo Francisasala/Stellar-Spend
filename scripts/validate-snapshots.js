@@ -36,7 +36,7 @@ snapshots.forEach((snapshotPath) => {
     // Validate snapshot content format
     try {
       const content = fs.readFileSync(snapshotPath, 'utf-8');
-      
+
       // Check for valid snapshot format (should contain exports)
       if (!content.includes('exports[')) {
         console.warn(`⚠️  Snapshot may be invalid format: ${snapshotPath}`);
@@ -73,8 +73,8 @@ const testFiles = globSync('src/**/*.test.{ts,tsx}').filter((file) => {
 testFiles.forEach((testFile) => {
   // Check if this test file is expected to have a snapshot
   const testContent = fs.readFileSync(testFile, 'utf-8');
-  const hasSnapshotCalls = testContent.includes('.toMatchSnapshot()') || 
-                           testContent.includes('expect().toMatchSnapshot');
+  const hasSnapshotCalls =
+    testContent.includes('.toMatchSnapshot()') || testContent.includes('expect().toMatchSnapshot');
 
   if (hasSnapshotCalls) {
     // Derive expected snapshot path

@@ -14,10 +14,9 @@ import { applyFilters } from './filters';
 import { HistoryPageHeader, ConnectWalletPrompt } from './components';
 
 // Heavy sub-components are code-split so the initial history route bundle stays small.
-const HistoryResults = dynamic(
-  () => import('./components').then((mod) => mod.HistoryResults),
-  { loading: () => <TransactionTableSkeleton rows={5} /> },
-);
+const HistoryResults = dynamic(() => import('./components').then((mod) => mod.HistoryResults), {
+  loading: () => <TransactionTableSkeleton rows={5} />,
+});
 
 const InsuranceClaimForm = dynamic(
   () => import('@/components/InsuranceClaimForm').then((mod) => mod.InsuranceClaimForm),

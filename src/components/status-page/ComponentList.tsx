@@ -46,10 +46,7 @@ export function ComponentList({ components }: ComponentListProps) {
                 {formatTime(component.lastCheck)}
               </span>
               <span
-                className={cn(
-                  'text-xs px-2 py-1 rounded border',
-                  getStatusColor(component.status),
-                )}
+                className={cn('text-xs px-2 py-1 rounded border', getStatusColor(component.status))}
               >
                 <span className="sr-only">Status: </span>
                 {getStatusText(component.status)}

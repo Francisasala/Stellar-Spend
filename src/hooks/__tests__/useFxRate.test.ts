@@ -48,11 +48,15 @@ describe('useFxRate', () => {
 
     const { result } = renderHook(() => useFxRate());
 
-    await act(async () => { await vi.runAllTicks(); });
+    await act(async () => {
+      await vi.runAllTicks();
+    });
 
     expect(result.current.flash).toBe(true);
 
-    act(() => { vi.advanceTimersByTime(600); });
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
 
     expect(result.current.flash).toBe(false);
   });
@@ -64,11 +68,15 @@ describe('useFxRate', () => {
     });
 
     const { result } = renderHook(() => useFxRate());
-    await act(async () => { await vi.runAllTicks(); });
+    await act(async () => {
+      await vi.runAllTicks();
+    });
 
     expect(result.current.secondsUntilRefresh).toBe(QUOTE_TTL_SECONDS);
 
-    act(() => { vi.advanceTimersByTime(5000); });
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
 
     expect(result.current.secondsUntilRefresh).toBe(QUOTE_TTL_SECONDS - 5);
   });
@@ -80,11 +88,15 @@ describe('useFxRate', () => {
     });
 
     const { result } = renderHook(() => useFxRate());
-    await act(async () => { await vi.runAllTicks(); });
+    await act(async () => {
+      await vi.runAllTicks();
+    });
 
     expect(result.current.isStale).toBe(false);
 
-    act(() => { vi.advanceTimersByTime(QUOTE_TTL_SECONDS * 1000); });
+    act(() => {
+      vi.advanceTimersByTime(QUOTE_TTL_SECONDS * 1000);
+    });
 
     expect(result.current.isStale).toBe(true);
   });
@@ -93,7 +105,9 @@ describe('useFxRate', () => {
     mockFetch.mockResolvedValueOnce({ ok: false });
     const { result } = renderHook(() => useFxRate());
 
-    await act(async () => { await vi.runAllTicks(); });
+    await act(async () => {
+      await vi.runAllTicks();
+    });
 
     expect(result.current.rate).toBeNull();
     // Should not throw
@@ -105,7 +119,9 @@ describe('useFxRate', () => {
 
     renderHook(() => useFxRate());
 
-    await act(async () => { await vi.runAllTicks(); });
+    await act(async () => {
+      await vi.runAllTicks();
+    });
 
     expect(mockFetch).not.toHaveBeenCalled();
   });

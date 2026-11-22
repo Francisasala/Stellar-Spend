@@ -129,9 +129,7 @@ describe('quote-aggregator fallback paths (#1209)', () => {
   });
 
   it('primary fails → aggregate records failure without throwing', async () => {
-    vi.spyOn(quoteFetcher, 'fetchPaycrestQuote').mockRejectedValue(
-      new Error('paycrest down'),
-    );
+    vi.spyOn(quoteFetcher, 'fetchPaycrestQuote').mockRejectedValue(new Error('paycrest down'));
     stubCache();
 
     const result = await aggregateQuotes('100', 'NGN', ['paycrest']);

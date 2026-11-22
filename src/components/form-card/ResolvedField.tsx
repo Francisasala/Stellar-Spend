@@ -8,12 +8,7 @@ export interface ResolvedFieldProps {
   placeholder?: string;
 }
 
-export function ResolvedField({
-  label,
-  value,
-  loading,
-  placeholder = '—',
-}: ResolvedFieldProps) {
+export function ResolvedField({ label, value, loading, placeholder = '—' }: ResolvedFieldProps) {
   const isResolved = Boolean(value) && !loading;
   const statusText = loading ? 'Resolving...' : value ? value : placeholder;
 

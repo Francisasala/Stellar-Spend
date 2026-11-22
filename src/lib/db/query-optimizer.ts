@@ -201,7 +201,9 @@ export interface IndexCandidate {
  * Best-effort parsing intended to help justify index creation.
  */
 export function extractWhereColumns(query: string): string[] {
-  const whereMatch = query.match(/\bWHERE\b([\s\S]*?)(?:\bGROUP\b|\bORDER\b|\bLIMIT\b|\bRETURNING\b|$)/i);
+  const whereMatch = query.match(
+    /\bWHERE\b([\s\S]*?)(?:\bGROUP\b|\bORDER\b|\bLIMIT\b|\bRETURNING\b|$)/i,
+  );
   if (!whereMatch) {
     return [];
   }
@@ -210,7 +212,8 @@ export function extractWhereColumns(query: string): string[] {
   const columns = new Set<string>();
 
   // Match simple column references like "col", "table.col", "col = $N", "col IN (...)"
-  const columnPattern = /\b([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?)\b(?=\s*(?:=|<|>|<=|>=|<>|!=|\bLIKE\b|\bIN\b|\bIS\b|\bBETWEEN\b))/gi;
+  const columnPattern =
+    /\b([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?)\b(?=\s*(?:=|<|>|<=|>=|<>|!=|\bLIKE\b|\bIN\b|\bIS\b|\bBETWEEN\b))/gi;
   let match: RegExpExecArray | null;
   while ((match = columnPattern.exec(whereClause)) !== null) {
     const candidate = match[1];

@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ErrorHandler } from '@/lib/error-handler';
-import {
-  getSubscription,
-  updateSubscription,
-  deleteSubscription,
-} from '@/lib/webhook';
+import { getSubscription, updateSubscription, deleteSubscription } from '@/lib/webhook';
 import type { WebhookSubscription } from '@/lib/webhook';
 import { requireApiKeyAdmin } from '@/app/api/api-keys/_utils';
 import { isSupportedSchemaVersion, SUPPORTED_SCHEMA_VERSIONS } from '@/lib/webhook';

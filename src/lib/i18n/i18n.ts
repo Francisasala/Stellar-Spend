@@ -69,10 +69,7 @@ export class I18n {
   }
 
   /** Walk a dot-separated path in a bundle, returning `undefined` when missing. */
-  private resolveKey(
-    translations: TranslationKeys | undefined,
-    key: string
-  ): string | undefined {
+  private resolveKey(translations: TranslationKeys | undefined, key: string): string | undefined {
     if (!translations) {
       return undefined;
     }

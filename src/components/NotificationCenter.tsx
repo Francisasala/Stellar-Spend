@@ -33,14 +33,8 @@ function NotificationCenterComponent({
 
   // All panel/announcement/focus state lives in the shared notification context.
   // Props remain the source of truth for backwards compatibility.
-  const {
-    isOpen,
-    focusedIndex,
-    announcement,
-    togglePanel,
-    closePanel,
-    setFocusedIndex,
-  } = useNotificationEvents({ events });
+  const { isOpen, focusedIndex, announcement, togglePanel, closePanel, setFocusedIndex } =
+    useNotificationEvents({ events });
 
   // Move focus into the panel when it opens, and restore focus to the bell
   // button when it closes (e.g. via Escape or outside click).
@@ -169,12 +163,7 @@ function NotificationCenterComponent({
        * aria-live polite region — announces new notifications to screen readers
        * without interrupting the current reading flow.
        */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className="sr-only"
-      >
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
       </div>
 

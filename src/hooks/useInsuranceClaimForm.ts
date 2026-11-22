@@ -127,44 +127,41 @@ export function useInsuranceClaimForm({
     };
   }, [handleCancel]);
 
-  const handleFileChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0] ?? null;
+  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
 
-      if (fileReaderRef.current) {
-        fileReaderRef.current.onload = null;
-        fileReaderRef.current.onerror = null;
-        if (fileReaderRef.current.readyState === FileReader.LOADING) {
-          fileReaderRef.current.abort();
-        }
-        fileReaderRef.current = null;
+    if (fileReaderRef.current) {
+      fileReaderRef.current.onload = null;
+      fileReaderRef.current.onerror = null;
+      if (fileReaderRef.current.readyState === FileReader.LOADING) {
+        fileReaderRef.current.abort();
       }
+      fileReaderRef.current = null;
+    }
 
-      setSelectedFile(file);
-      setFilePreview(null);
+    setSelectedFile(file);
+    setFilePreview(null);
 
-      if (!file) {
-        return;
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    fileReaderRef.current = reader;
+
+    reader.onload = () => {
+      if (fileReaderRef.current === reader) {
+        setFilePreview(typeof reader.result === 'string' ? reader.result : null);
       }
+    };
+    reader.onerror = () => {
+      if (fileReaderRef.current === reader) {
+        setFilePreview(null);
+      }
+    };
 
-      const reader = new FileReader();
-      fileReaderRef.current = reader;
-
-      reader.onload = () => {
-        if (fileReaderRef.current === reader) {
-          setFilePreview(typeof reader.result === 'string' ? reader.result : null);
-        }
-      };
-      reader.onerror = () => {
-        if (fileReaderRef.current === reader) {
-          setFilePreview(null);
-        }
-      };
-
-      reader.readAsDataURL(file);
-    },
-    []
-  );
+    reader.readAsDataURL(file);
+  }, []);
 
   const handleRemoveFile = useCallback(() => {
     if (fileReaderRef.current) {
@@ -222,7 +219,7 @@ export function useInsuranceClaimForm({
         setSubmitError(message);
       }
     },
-    [transactionId, selectedFile, reset, handleRemoveFile, onSuccess]
+    [transactionId, selectedFile, reset, handleRemoveFile, onSuccess],
   );
 
   return {

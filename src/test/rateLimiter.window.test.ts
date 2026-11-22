@@ -157,10 +157,10 @@ describe('SlidingWindowRateLimiter — burst limits (fake timers)', () => {
     const limiter = makeLimiter({ maxRequests: 2, windowMs: 60_000 });
 
     await limiter.check('retry-user'); // t=0
-    vi.advanceTimersByTime(10_000);    // t=10s
+    vi.advanceTimersByTime(10_000); // t=10s
     await limiter.check('retry-user'); // t=10s
 
-    vi.advanceTimersByTime(5_000);     // t=15s
+    vi.advanceTimersByTime(5_000); // t=15s
     const blocked = await limiter.check('retry-user'); // should block
 
     expect(blocked.allowed).toBe(false);

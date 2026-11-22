@@ -80,8 +80,14 @@ describe('SharingService — createShareLink', () => {
 
   it('generates different tokens on successive calls', async () => {
     const svc = new SharingService();
-    const a = await svc.createShareLink('tx_4', 'GADDR', { allowSharing: true, shareableFields: [] });
-    const b = await svc.createShareLink('tx_4', 'GADDR', { allowSharing: true, shareableFields: [] });
+    const a = await svc.createShareLink('tx_4', 'GADDR', {
+      allowSharing: true,
+      shareableFields: [],
+    });
+    const b = await svc.createShareLink('tx_4', 'GADDR', {
+      allowSharing: true,
+      shareableFields: [],
+    });
 
     expect(a.shareToken).not.toBe(b.shareToken);
   });
@@ -138,9 +144,12 @@ describe('#855 expired share-link — 410 response', () => {
     }));
 
     const request = new Request('http://localhost/api/share/tok-abc-123');
-    const response = await GET(request as Parameters<typeof GET>[0], {
-      params: { token: 'tok-abc-123' },
-    } as Parameters<typeof GET>[1]);
+    const response = await GET(
+      request as Parameters<typeof GET>[0],
+      {
+        params: { token: 'tok-abc-123' },
+      } as Parameters<typeof GET>[1],
+    );
 
     expect(response.status).toBe(410);
     vi.doUnmock('@/lib/di');
@@ -223,12 +232,15 @@ describe('#855 PII field-exposure scope', () => {
     }));
 
     const request = new Request('http://localhost/api/share/tok-abc-123');
-    const response = await GET(request as Parameters<typeof GET>[0], {
-      params: { token: 'tok-abc-123' },
-    } as Parameters<typeof GET>[1]);
+    const response = await GET(
+      request as Parameters<typeof GET>[0],
+      {
+        params: { token: 'tok-abc-123' },
+      } as Parameters<typeof GET>[1],
+    );
 
     if (response.status === 200) {
-      const body = await response.json() as Record<string, unknown>;
+      const body = (await response.json()) as Record<string, unknown>;
       const preview = body.preview as Record<string, unknown>;
 
       expect(preview).toBeDefined();
@@ -264,9 +276,12 @@ describe('#855 share-link revocation', () => {
     }));
 
     const request = new Request('http://localhost/api/share/tok-revoked');
-    const response = await GET(request as Parameters<typeof GET>[0], {
-      params: { token: 'tok-revoked' },
-    } as Parameters<typeof GET>[1]);
+    const response = await GET(
+      request as Parameters<typeof GET>[0],
+      {
+        params: { token: 'tok-revoked' },
+      } as Parameters<typeof GET>[1],
+    );
 
     // Route returns 404 when share is null
     expect(response.status).toBe(404);
@@ -282,7 +297,7 @@ describe('#855 share-link revocation', () => {
     // Spy on getShareLink to simulate a DB that returns null post-revocation
     const getShareLinkSpy = vi.spyOn(svc, 'getShareLink');
     getShareLinkSpy.mockResolvedValueOnce(makeShare()); // first call: exists
-    getShareLinkSpy.mockResolvedValueOnce(null);        // post-revoke: gone
+    getShareLinkSpy.mockResolvedValueOnce(null); // post-revoke: gone
 
     const beforeRevoke = await svc.getShareLink('tok-abc-123');
     expect(beforeRevoke).not.toBeNull();

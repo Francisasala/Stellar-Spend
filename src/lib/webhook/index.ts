@@ -1,6 +1,6 @@
 /**
  * Modular Webhook System - Main Entry Point
- * 
+ *
  * Exports all webhook system components for easy consumption.
  */
 
@@ -26,10 +26,7 @@ export { BaseWebhookProvider } from './core/base-provider';
 export { WebhookRegistryImpl } from './core/registry';
 
 // Providers
-export {
-  PaycrestWebhookProvider,
-  PaycrestWebhookConfig,
-} from './providers/paycrest-provider';
+export { PaycrestWebhookProvider, PaycrestWebhookConfig } from './providers/paycrest-provider';
 
 // Handlers
 export { BaseWebhookHandler } from './handlers/base-handler';
@@ -39,10 +36,7 @@ export {
 } from './handlers/transaction-update-handler';
 
 // Factory and Configuration
-export {
-  WebhookFactory,
-  WebhookSystemConfig,
-} from './factory';
+export { WebhookFactory, WebhookSystemConfig } from './factory';
 
 // Utility modules (re-export existing utilities)
 export { default as webhookSecurity } from './security';
@@ -54,11 +48,11 @@ export { default as webhookAlertService } from './alert-service';
 
 /**
  * Create and configure the default webhook system
- * 
+ *
  * @example
  * ```typescript
  * import { createWebhookSystem } from '@/lib/webhook';
- * 
+ *
  * const webhookSystem = createWebhookSystem();
  * const result = await webhookSystem.processWebhook('paycrest', rawBody, headers);
  * ```

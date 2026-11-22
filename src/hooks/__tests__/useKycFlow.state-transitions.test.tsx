@@ -32,22 +32,13 @@ describe('useKycFlow - State Transitions', () => {
         >
           Initialize
         </button>
-        <button
-          onClick={() => kycFlow.setKycStatus('approved')}
-          data-testid="approve-btn"
-        >
+        <button onClick={() => kycFlow.setKycStatus('approved')} data-testid="approve-btn">
           Approve
         </button>
-        <button
-          onClick={() => kycFlow.toggleKycForm()}
-          data-testid="toggle-form-btn"
-        >
+        <button onClick={() => kycFlow.toggleKycForm()} data-testid="toggle-form-btn">
           Toggle Form
         </button>
-        <button
-          onClick={() => kycFlow.toggleLimitRequest()}
-          data-testid="toggle-limit-btn"
-        >
+        <button onClick={() => kycFlow.toggleLimitRequest()} data-testid="toggle-limit-btn">
           Toggle Limit Request
         </button>
         <button
@@ -56,28 +47,16 @@ describe('useKycFlow - State Transitions', () => {
         >
           Update Form
         </button>
-        <button
-          onClick={() => kycFlow.setRequestedTier('tier2')}
-          data-testid="set-tier-btn"
-        >
+        <button onClick={() => kycFlow.setRequestedTier('tier2')} data-testid="set-tier-btn">
           Set Tier
         </button>
-        <button
-          onClick={() => kycFlow.resetForm()}
-          data-testid="reset-btn"
-        >
+        <button onClick={() => kycFlow.resetForm()} data-testid="reset-btn">
           Reset
         </button>
-        <button
-          onClick={() => kycFlow.setLoading(true)}
-          data-testid="set-loading-btn"
-        >
+        <button onClick={() => kycFlow.setLoading(true)} data-testid="set-loading-btn">
           Set Loading
         </button>
-        <button
-          onClick={() => kycFlow.setError('Test error')}
-          data-testid="set-error-btn"
-        >
+        <button onClick={() => kycFlow.setError('Test error')} data-testid="set-error-btn">
           Set Error
         </button>
       </div>
@@ -101,10 +80,7 @@ describe('useKycFlow - State Transitions', () => {
 
     it('should transition from unverified to pending', async () => {
       const states: any[] = [];
-      render(
-        <TestComponent onStateChange={(s) => states.push({ ...s })} />,
-        { wrapper: Wrapper },
-      );
+      render(<TestComponent onStateChange={(s) => states.push({ ...s })} />, { wrapper: Wrapper });
 
       const initBtn = screen.getByTestId('init-btn');
       initBtn.click();
@@ -177,10 +153,7 @@ describe('useKycFlow - State Transitions', () => {
   describe('Form Field Updates', () => {
     it('should update form fields individually', () => {
       const states: any[] = [];
-      render(
-        <TestComponent onStateChange={(s) => states.push({ ...s })} />,
-        { wrapper: Wrapper },
-      );
+      render(<TestComponent onStateChange={(s) => states.push({ ...s })} />, { wrapper: Wrapper });
 
       const updateBtn = screen.getByTestId('update-form-btn');
       updateBtn.click();
@@ -217,10 +190,7 @@ describe('useKycFlow - State Transitions', () => {
   describe('Tier Management', () => {
     it('should update requested tier', () => {
       const states: any[] = [];
-      render(
-        <TestComponent onStateChange={(s) => states.push({ ...s })} />,
-        { wrapper: Wrapper },
-      );
+      render(<TestComponent onStateChange={(s) => states.push({ ...s })} />, { wrapper: Wrapper });
 
       const setTierBtn = screen.getByTestId('set-tier-btn');
       setTierBtn.click();
@@ -231,10 +201,7 @@ describe('useKycFlow - State Transitions', () => {
 
     it('should update user limits', () => {
       const states: any[] = [];
-      render(
-        <TestComponent onStateChange={(s) => states.push({ ...s })} />,
-        { wrapper: Wrapper },
-      );
+      render(<TestComponent onStateChange={(s) => states.push({ ...s })} />, { wrapper: Wrapper });
 
       const initBtn = screen.getByTestId('init-btn');
       initBtn.click();
@@ -268,10 +235,7 @@ describe('useKycFlow - State Transitions', () => {
 
     it('should reset form data on reset', () => {
       const states: any[] = [];
-      render(
-        <TestComponent onStateChange={(s) => states.push({ ...s })} />,
-        { wrapper: Wrapper },
-      );
+      render(<TestComponent onStateChange={(s) => states.push({ ...s })} />, { wrapper: Wrapper });
 
       const updateBtn = screen.getByTestId('update-form-btn');
       updateBtn.click();
@@ -286,10 +250,7 @@ describe('useKycFlow - State Transitions', () => {
 
     it('should clear error on reset', () => {
       const states: any[] = [];
-      render(
-        <TestComponent onStateChange={(s) => states.push({ ...s })} />,
-        { wrapper: Wrapper },
-      );
+      render(<TestComponent onStateChange={(s) => states.push({ ...s })} />, { wrapper: Wrapper });
 
       const setErrorBtn = screen.getByTestId('set-error-btn');
       setErrorBtn.click();
@@ -346,10 +307,9 @@ describe('useKycFlow - State Transitions', () => {
   describe('Status Transitions', () => {
     it('should transition through all KYC statuses', () => {
       const states: any[] = [];
-      render(
-        <TestComponent onStateChange={(s) => states.push({ status: s.status })} />,
-        { wrapper: Wrapper },
-      );
+      render(<TestComponent onStateChange={(s) => states.push({ status: s.status })} />, {
+        wrapper: Wrapper,
+      });
 
       const initBtn = screen.getByTestId('init-btn');
       initBtn.click();
@@ -398,10 +358,7 @@ describe('useKycFlow - State Transitions', () => {
   describe('Complex State Transitions', () => {
     it('should handle multiple concurrent state changes', () => {
       const states: any[] = [];
-      render(
-        <TestComponent onStateChange={(s) => states.push({ ...s })} />,
-        { wrapper: Wrapper },
-      );
+      render(<TestComponent onStateChange={(s) => states.push({ ...s })} />, { wrapper: Wrapper });
 
       const initBtn = screen.getByTestId('init-btn');
       initBtn.click();

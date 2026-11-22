@@ -25,7 +25,9 @@ const batchRequestSchema = z
     (data) => {
       if (data.action === 'cancel' || data.action === 'execute') return Boolean(data.batchId);
       if (!data.action) {
-        return Boolean(data.userId) && Array.isArray(data.transactions) && data.transactions.length > 0;
+        return (
+          Boolean(data.userId) && Array.isArray(data.transactions) && data.transactions.length > 0
+        );
       }
       return true;
     },

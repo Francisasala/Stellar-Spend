@@ -7,12 +7,14 @@ This document provides guidance on migrating duplicate type definitions to the c
 ## Motivation
 
 Previously, API response types were defined in multiple places:
+
 - `src/lib/offramp/types/index.ts`
 - `src/lib/onramp/types/index.ts`
 - `src/app/api/*/route.ts` files
 - Various service files
 
 This created:
+
 - **Maintenance burden**: Changes must be made in multiple locations
 - **Inconsistency**: Types could diverge between implementations
 - **Poor DX**: Developers must find the correct type definition
@@ -21,6 +23,7 @@ This created:
 ## Solution
 
 All API response types are now consolidated in `packages/shared/src/types/api-responses.ts`, which is:
+
 - **Exported from** `packages/shared`
 - **Used by** both frontend and backend code
 - **Single source of truth** for all request/response shapes
@@ -33,18 +36,16 @@ All API response types are now consolidated in `packages/shared/src/types/api-re
 Replace imports of types from scattered locations with imports from `packages/shared`:
 
 **Before:**
+
 ```typescript
 import { QuoteRequest, QuoteResponse } from '@/lib/offramp/types';
 import { BeneficiaryInfo } from '@/lib/offramp/adapters/paycrest-adapter';
 ```
 
 **After:**
+
 ```typescript
-import {
-  QuoteRequest,
-  QuoteResponse,
-  BeneficiaryInfo,
-} from '@stellar-spend/shared';
+import { QuoteRequest, QuoteResponse, BeneficiaryInfo } from '@stellar-spend/shared';
 ```
 
 ### Step 2: Remove Duplicate Definitions
@@ -64,6 +65,7 @@ rm src/lib/offramp/types/index.ts
 For service files that defined their own types:
 
 **Before (src/lib/services/quote.service.ts):**
+
 ```typescript
 export interface QuoteRequest {
   sourceToken: TokenInfo;
@@ -91,6 +93,7 @@ export class QuoteService {
 ```
 
 **After:**
+
 ```typescript
 import { QuoteRequest, QuoteResponse } from '@stellar-spend/shared';
 
@@ -106,6 +109,7 @@ export class QuoteService {
 For API route handlers, import consolidated types:
 
 **Before (src/app/api/offramp/quote/route.ts):**
+
 ```typescript
 import { QuoteRequest, QuoteResponse } from '@/lib/offramp/types';
 
@@ -121,6 +125,7 @@ export async function POST(request: NextRequest) {
 ```
 
 **After:**
+
 ```typescript
 import { QuoteRequest, QuoteResponse } from '@stellar-spend/shared';
 
@@ -138,37 +143,44 @@ export async function POST(request: NextRequest) {
 ## Consolidated Types Reference
 
 ### Core API Types
+
 - `ApiResponse<T>` - Generic API response wrapper
 - `ApiError` - Error response format
 - `PaginatedResponse<T>` - Paginated list responses
 - `ErrorResponse` - Standardized error responses
 
 ### Quote/Exchange Types
+
 - `QuoteRequest` - Request for price quotes
 - `QuoteResponse` - Quote with fees and rates
 - `ExchangeRate` - Exchange rate information
 
 ### Trade/Payout Types
+
 - `ExecuteRequest` - Trade/payout execution request
 - `ExecuteResponse` - Execution confirmation
 - `TradeStatus` - Trade status tracking
 - `BeneficiaryInfo` - Bank account information
 
 ### Transaction Types
+
 - `OnChainTransaction` - Blockchain transaction
 - `TransactionStatus` - Transaction state enum
 
 ### Bridge Types
+
 - `BridgeTransferRequest` - Bridge transfer initiation
 - `BridgeTransferResponse` - Bridge transfer confirmation
 - `BridgeStatus` - Bridge operation status enum
 
 ### Payout Types
+
 - `PayoutOrderRequest` - Payout order creation
 - `PayoutOrderResponse` - Payout order confirmation
 - `PayoutStatus` - Payout status enum
 
 ### Supporting Types
+
 - `TokenInfo` - Crypto token information
 - `CurrencyInfo` - Fiat currency information
 - `WalletInfo` - Wallet/account information
@@ -177,6 +189,7 @@ export async function POST(request: NextRequest) {
 ## Key Improvements
 
 ### Type Safety
+
 ```typescript
 // Before: Types could be imported from wrong locations
 const quote: QuoteResponse = data; // Might be using old definition
@@ -187,12 +200,15 @@ const quote: QuoteResponse = data; // Always correct definition
 ```
 
 ### Consistency
+
 All API routes now use the same type definitions, ensuring:
+
 - Consistent field names and types
 - Aligned serialization (dates as ISO 8601 strings)
 - Matching error response structures
 
 ### Discoverability
+
 ```typescript
 // Easy to find all available types
 import * as SharedTypes from '@stellar-spend/shared';
@@ -204,6 +220,7 @@ import * as SharedTypes from '@stellar-spend/shared';
 ### Pattern 1: Simple Type Re-export
 
 **Before:**
+
 ```typescript
 // src/lib/services/quote.service.ts
 export interface QuoteResponse {
@@ -213,6 +230,7 @@ export interface QuoteResponse {
 ```
 
 **After:**
+
 ```typescript
 // src/lib/services/quote.service.ts
 export { QuoteResponse } from '@stellar-spend/shared';
@@ -221,6 +239,7 @@ export { QuoteResponse } from '@stellar-spend/shared';
 ### Pattern 2: Service that Returns Shared Types
 
 **Before:**
+
 ```typescript
 import { QuoteResponse } from '@/lib/offramp/types';
 
@@ -232,6 +251,7 @@ export class QuoteAggregator {
 ```
 
 **After:**
+
 ```typescript
 import { QuoteResponse } from '@stellar-spend/shared';
 
@@ -245,6 +265,7 @@ export class QuoteAggregator {
 ### Pattern 3: Request/Response in Route Handler
 
 **Before:**
+
 ```typescript
 import type { QuoteRequest, QuoteResponse } from '@/lib/offramp/types';
 
@@ -265,6 +286,7 @@ export async function POST(request: NextRequest) {
 ```
 
 **After:**
+
 ```typescript
 import { QuoteRequest, QuoteResponse } from '@stellar-spend/shared';
 
@@ -298,6 +320,7 @@ When adding new API endpoints:
 4. **Never redefine types** in service or route files
 
 Example:
+
 ```typescript
 // Add to packages/shared/src/types/api-responses.ts
 export interface NewEndpointRequest {

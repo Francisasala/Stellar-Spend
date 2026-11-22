@@ -9,7 +9,12 @@ describe('StatusPage Subcomponents', () => {
   describe('ComponentList', () => {
     it('renders list of system components', () => {
       const components = [
-        { name: 'API Server', status: 'operational' as const, lastCheck: Date.now(), responseTime: 25 },
+        {
+          name: 'API Server',
+          status: 'operational' as const,
+          lastCheck: Date.now(),
+          responseTime: 25,
+        },
       ];
       render(<ComponentList components={components} />);
 
@@ -22,7 +27,12 @@ describe('StatusPage Subcomponents', () => {
   describe('CorridorList', () => {
     it('renders payment corridors and providers', () => {
       const corridors = [
-        { corridor: 'USDC → NGN', provider: 'Paycrest', status: 'operational' as const, lastTransaction: Date.now() - 60000 },
+        {
+          corridor: 'USDC → NGN',
+          provider: 'Paycrest',
+          status: 'operational' as const,
+          lastTransaction: Date.now() - 60000,
+        },
       ];
       render(<CorridorList corridors={corridors} />);
 

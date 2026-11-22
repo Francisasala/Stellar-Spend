@@ -18,12 +18,7 @@ export interface PremiumBreakdownProps {
   timeLeft: number | null;
 }
 
-export function PremiumBreakdown({
-  quote,
-  amount,
-  enabled,
-  timeLeft,
-}: PremiumBreakdownProps) {
+export function PremiumBreakdown({ quote, amount, enabled, timeLeft }: PremiumBreakdownProps) {
   const { t } = useI18n();
   const riskBand = getRiskBand(quote.riskScore);
   const riskInfo = RISK_LABELS[riskBand];

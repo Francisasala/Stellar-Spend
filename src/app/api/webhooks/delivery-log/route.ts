@@ -16,9 +16,7 @@ export async function GET(request: NextRequest) {
     const logs = await getDeliveryLogs(subscriptionId ?? undefined, limit + 1, offset);
     const { data } = trimLookahead(logs, limit);
 
-    return NextResponse.json(
-      createPaginatedResponse(data, offset, limit, offset + logs.length),
-    );
+    return NextResponse.json(createPaginatedResponse(data, offset, limit, offset + logs.length));
   } catch (error) {
     return ErrorHandler.serverError(error);
   }

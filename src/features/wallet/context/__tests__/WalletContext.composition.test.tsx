@@ -219,20 +219,17 @@ describe('WalletContext - Provider Composition', () => {
     let renderCount = 0;
 
     const Provider = ({ children }: { children: ReactNode }) => {
-      const value = useMemo<WalletContextValue>(
-        () => {
-          renderCount++;
-          return {
-            isConnected: true,
-            isConnecting: false,
-            walletAddress: 'GB111...',
-            walletType: 'Freighter',
-            onConnect: () => {},
-            onDisconnect: () => {},
-          };
-        },
-        [],
-      );
+      const value = useMemo<WalletContextValue>(() => {
+        renderCount++;
+        return {
+          isConnected: true,
+          isConnecting: false,
+          walletAddress: 'GB111...',
+          walletType: 'Freighter',
+          onConnect: () => {},
+          onDisconnect: () => {},
+        };
+      }, []);
 
       return <WalletProvider value={value}>{children}</WalletProvider>;
     };

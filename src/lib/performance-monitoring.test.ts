@@ -98,7 +98,7 @@ describe('Performance Monitoring - Web Vitals (#1114)', () => {
     it('calculates current SLO value based on recent metrics', () => {
       // Record 10 metrics, 8 successful
       for (let i = 0; i < 10; i++) {
-        const value = i < 8 ? 0.98 : 0.80; // 8 good, 2 bad
+        const value = i < 8 ? 0.98 : 0.8; // 8 good, 2 bad
         performanceMonitor.recordMetric('dashboard_load_time', value);
       }
 
@@ -109,7 +109,7 @@ describe('Performance Monitoring - Web Vitals (#1114)', () => {
     it('calculates burn rate correctly', () => {
       // Record failing metrics to increase burn rate
       for (let i = 0; i < 20; i++) {
-        const value = i < 10 ? 1.0 : 0.80; // Half good, half bad
+        const value = i < 10 ? 1.0 : 0.8; // Half good, half bad
         performanceMonitor.recordMetric('dashboard_load_time', value);
       }
 
@@ -120,7 +120,7 @@ describe('Performance Monitoring - Web Vitals (#1114)', () => {
     it('determines warning status when burn rate exceeds threshold', () => {
       // Record metrics to trigger warning status
       for (let i = 0; i < 30; i++) {
-        const value = i < 15 ? 1.0 : 0.70; // Half bad
+        const value = i < 15 ? 1.0 : 0.7; // Half bad
         performanceMonitor.recordMetric('dashboard_load_time', value);
       }
 
@@ -234,7 +234,7 @@ describe('Performance Monitoring - Web Vitals (#1114)', () => {
 
       // Record degraded performance
       for (let i = 0; i < 10; i++) {
-        performanceMonitor.recordMetric('dashboard_load_time', 0.70);
+        performanceMonitor.recordMetric('dashboard_load_time', 0.7);
       }
 
       const degradedStatus = performanceMonitor.getSLOStatus('dashboard_load_time');
@@ -246,7 +246,7 @@ describe('Performance Monitoring - Web Vitals (#1114)', () => {
     it('identifies specific slow routes', () => {
       // Dashboard is slow
       for (let i = 0; i < 5; i++) {
-        performanceMonitor.recordMetric('dashboard_load_time', 0.70);
+        performanceMonitor.recordMetric('dashboard_load_time', 0.7);
       }
 
       // API is fast
@@ -262,7 +262,7 @@ describe('Performance Monitoring - Web Vitals (#1114)', () => {
 
     it('tracks performance trends over time', () => {
       // Simulate degrading performance
-      const trends = [0.95, 0.93, 0.90, 0.85, 0.80];
+      const trends = [0.95, 0.93, 0.9, 0.85, 0.8];
 
       for (const value of trends) {
         for (let i = 0; i < 5; i++) {
@@ -335,7 +335,7 @@ describe('Performance Monitoring - Web Vitals (#1114)', () => {
     });
 
     it('measures transaction list route performance', () => {
-      const txMetrics = [0.92, 0.91, 0.93, 0.90, 0.94];
+      const txMetrics = [0.92, 0.91, 0.93, 0.9, 0.94];
 
       for (const metric of txMetrics) {
         performanceMonitor.recordMetric('transaction_page_tti', metric);
@@ -387,9 +387,9 @@ describe('Performance Monitoring - Web Vitals (#1114)', () => {
   describe('Performance SLA Compliance', () => {
     it('verifies compliance with target SLAs', () => {
       const slas = {
-        dashboard_load_time: { target: 0.95, critical: 0.80 },
-        api_latency: { target: 0.95, critical: 0.80 },
-        transaction_page_tti: { target: 0.90, critical: 0.70 },
+        dashboard_load_time: { target: 0.95, critical: 0.8 },
+        api_latency: { target: 0.95, critical: 0.8 },
+        transaction_page_tti: { target: 0.9, critical: 0.7 },
       };
 
       for (const [sloName, sla] of Object.entries(slas)) {

@@ -34,9 +34,7 @@ import {
   upsertNotificationPreferences,
   getTransactionNotificationDeliveries,
 } from '@/lib/notifications';
-import type {
-  NotificationPreferences,
-} from '@/lib/notifications';
+import type { NotificationPreferences } from '@/lib/notifications';
 
 // Cast to mocked function type for easy mock setup
 const mockGetOrCreate = getOrCreateNotificationPreferences as ReturnType<typeof vi.fn>;
@@ -213,9 +211,9 @@ describe('useNotifications', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
-      await expect(
-        result.current.updatePreferences({ emailEnabled: false }),
-      ).rejects.toThrow('Save failed');
+      await expect(result.current.updatePreferences({ emailEnabled: false })).rejects.toThrow(
+        'Save failed',
+      );
     });
 
     expect(result.current.error).toBe('Save failed');
@@ -312,8 +310,15 @@ describe('useNotifications', () => {
     const { result } = renderHook(() => useNotifications(TEST_ADDRESS));
 
     const required = [
-      'preferences', 'deliveries', 'loading', 'error', 'unreadCount',
-      'updatePreferences', 'markAsRead', 'groupedDeliveries', 'refresh',
+      'preferences',
+      'deliveries',
+      'loading',
+      'error',
+      'unreadCount',
+      'updatePreferences',
+      'markAsRead',
+      'groupedDeliveries',
+      'refresh',
     ];
 
     for (const key of required) {

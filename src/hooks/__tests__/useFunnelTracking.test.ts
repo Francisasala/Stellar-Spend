@@ -39,7 +39,9 @@ describe('useFunnelTracking', () => {
   it('should create a new session when the step is "wallet_connect"', async () => {
     const { result } = renderHook(() => useFunnelTracking());
 
-    act(() => { result.current.trackStep('wallet_connect'); });
+    act(() => {
+      result.current.trackStep('wallet_connect');
+    });
 
     const stored = sessionStorage.getItem('funnel_session');
     expect(stored).not.toBeNull();
@@ -85,10 +87,14 @@ describe('useFunnelTracking', () => {
 
     const { result } = renderHook(() => useFunnelTracking());
 
-    act(() => { result.current.trackStep('wallet_connect'); });
+    act(() => {
+      result.current.trackStep('wallet_connect');
+    });
 
     // fetch is called async (fire-and-forget)
-    await act(async () => { await vi.runAllTicks(); });
+    await act(async () => {
+      await vi.runAllTicks();
+    });
 
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/monitoring/vitals',

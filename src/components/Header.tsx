@@ -189,14 +189,8 @@ export const Header = memo(function Header({
     }
   }, [isConnected, isModalOpen]);
 
-  const usdcBalanceText = useMemo(
-    () => `${stellarUsdcBalance ?? '—'} USDC`,
-    [stellarUsdcBalance],
-  );
-  const xlmBalanceText = useMemo(
-    () => `${stellarXlmBalance ?? '—'} XLM`,
-    [stellarXlmBalance],
-  );
+  const usdcBalanceText = useMemo(() => `${stellarUsdcBalance ?? '—'} USDC`, [stellarUsdcBalance]);
+  const xlmBalanceText = useMemo(() => `${stellarXlmBalance ?? '—'} XLM`, [stellarXlmBalance]);
 
   return (
     <>
@@ -229,12 +223,7 @@ export const Header = memo(function Header({
         </div>
 
         {/* Right: notifications + wallet button + balances */}
-        <div
-          className={cn(
-            'flex flex-col items-end gap-2',
-            bpClasses.headerCollapseItemsStart,
-          )}
-        >
+        <div className={cn('flex flex-col items-end gap-2', bpClasses.headerCollapseItemsStart)}>
           <div className="flex items-center gap-2">
             <LanguageSelector />
             <button
@@ -258,7 +247,11 @@ export const Header = memo(function Header({
                 aria-hidden="true"
                 focusable="false"
               >
-                <circle cx={HELP_ICON_CIRCLE_RADIUS} cy={HELP_ICON_CIRCLE_RADIUS} r={HELP_ICON_CIRCLE_RADIUS - 2}></circle>
+                <circle
+                  cx={HELP_ICON_CIRCLE_RADIUS}
+                  cy={HELP_ICON_CIRCLE_RADIUS}
+                  r={HELP_ICON_CIRCLE_RADIUS - 2}
+                ></circle>
                 <path d="M12 16v-4"></path>
                 <path d="M12 8h.01"></path>
               </svg>
@@ -289,10 +282,7 @@ export const Header = memo(function Header({
 
           {isConnected && (
             <div
-              className={cn(
-                'flex flex-col items-end gap-0.5',
-                bpClasses.headerCollapseItemsStart,
-              )}
+              className={cn('flex flex-col items-end gap-0.5', bpClasses.headerCollapseItemsStart)}
               data-testid="header-balances"
             >
               {isBalanceLoading ? (

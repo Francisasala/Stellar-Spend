@@ -46,10 +46,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ orderId
         });
       }
 
-      return ErrorHandler.handle(
-        ApiError.externalService('Paycrest', errorMessage),
-        res.status,
-      );
+      return ErrorHandler.handle(ApiError.externalService('Paycrest', errorMessage), res.status);
     }
 
     const data = await res.json();

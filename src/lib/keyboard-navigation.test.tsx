@@ -142,9 +142,7 @@ describe('useKeyboardShortcuts', () => {
 
   it('requires ctrl when the shortcut declares it', () => {
     const action = vi.fn();
-    renderHook(() =>
-      useKeyboardShortcuts([{ key: 's', ctrl: true, action, description: 'save' }]),
-    );
+    renderHook(() => useKeyboardShortcuts([{ key: 's', ctrl: true, action, description: 'save' }]));
 
     fireKey({ key: 's' });
     expect(action).not.toHaveBeenCalled();
@@ -207,7 +205,9 @@ describe('focus helpers', () => {
   it('getFocusableElements returns only focusable controls', () => {
     render(<Group />);
     const group = screen.getByTestId('group');
-    const names = getFocusableElements(group).map((el) => el.textContent || el.getAttribute('aria-label'));
+    const names = getFocusableElements(group).map(
+      (el) => el.textContent || el.getAttribute('aria-label'),
+    );
     expect(names).toEqual(['a', 'b', 'c']);
   });
 

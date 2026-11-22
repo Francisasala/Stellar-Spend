@@ -60,9 +60,9 @@ export function VirtualizedList<T>({
   return (
     <>
       {startIndex > 0 && renderSpacer(startIndex * itemHeight)}
-      {items.slice(startIndex, endIndex).map((item, offset) =>
-        renderItem(item, startIndex + offset),
-      )}
+      {items
+        .slice(startIndex, endIndex)
+        .map((item, offset) => renderItem(item, startIndex + offset))}
       {bottomHeight > 0 && renderSpacer(bottomHeight)}
     </>
   );

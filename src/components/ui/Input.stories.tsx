@@ -66,15 +66,15 @@ export const Interactive: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const input = canvas.getByPlaceholderText(/type something/i);
-    
+
     // Test focus interaction
     await userEvent.click(input);
     await expect(input).toHaveFocus();
-    
+
     // Test typing
     await userEvent.type(input, 'Hello, Stellar!');
     await expect(input).toHaveValue('Hello, Stellar!');
-    
+
     // Test blur
     await userEvent.tab();
     await expect(input).not.toHaveFocus();

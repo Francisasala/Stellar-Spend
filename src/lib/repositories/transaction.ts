@@ -36,10 +36,7 @@ export interface TransactionRepository extends BaseRepository<Transaction> {
  * Kept narrow so the repository can be unit-tested with a mocked pool.
  */
 export interface Queryable {
-  query<T = any>(
-    text: string,
-    values?: unknown[]
-  ): Promise<{ rows: T[]; rowCount: number | null }>;
+  query<T = any>(text: string, values?: unknown[]): Promise<{ rows: T[]; rowCount: number | null }>;
 }
 
 const TABLE = 'transactions';
@@ -126,7 +123,7 @@ export class DatabaseTransactionRepository implements TransactionRepository {
            .map((c) => `${c} = EXCLUDED.${c}`)
            .join(', ')}
        RETURNING *`,
-      values
+      values,
     );
 
     if (!result.rows || result.rows.length === 0) {
@@ -135,10 +132,7 @@ export class DatabaseTransactionRepository implements TransactionRepository {
     return rowToTransaction(result.rows[0]);
   }
 
-  async update(
-    id: string,
-    patch: Partial<Transaction>
-  ): Promise<Transaction | null> {
+  async update(id: string, patch: Partial<Transaction>): Promise<Transaction | null> {
     const current = await this.getById(id);
     if (!current) {
       return null;
@@ -157,10 +151,7 @@ export class DatabaseTransactionRepository implements TransactionRepository {
   }
 
   async getById(id: string): Promise<Transaction | null> {
-    const result = await this.db.query(
-      `SELECT * FROM ${TABLE} WHERE id = $1 LIMIT 1`,
-      [id]
-    );
+    const result = await this.db.query(`SELECT * FROM ${TABLE} WHERE id = $1 LIMIT 1`, [id]);
     if (!result.rows || result.rows.length === 0) {
       return null;
     }
@@ -171,17 +162,14 @@ export class DatabaseTransactionRepository implements TransactionRepository {
     if (!ids || ids.length === 0) {
       return [];
     }
-    const result = await this.db.query(
-      `SELECT * FROM ${TABLE} WHERE id = ANY($1::text[])`,
-      [ids]
-    );
+    const result = await this.db.query(`SELECT * FROM ${TABLE} WHERE id = ANY($1::text[])`, [ids]);
     return (result.rows ?? []).map(rowToTransaction);
   }
 
   async getByUser(userAddress: string): Promise<Transaction[]> {
     const result = await this.db.query(
       `SELECT * FROM ${TABLE} WHERE user_address = $1 ORDER BY timestamp DESC`,
-      [userAddress]
+      [userAddress],
     );
     return (result.rows ?? []).map(rowToTransaction);
   }
@@ -189,7 +177,7 @@ export class DatabaseTransactionRepository implements TransactionRepository {
   async getByPayoutOrderId(orderId: string): Promise<Transaction | null> {
     const result = await this.db.query(
       `SELECT * FROM ${TABLE} WHERE payout_order_id = $1 LIMIT 1`,
-      [orderId]
+      [orderId],
     );
     if (!result.rows || result.rows.length === 0) {
       return null;

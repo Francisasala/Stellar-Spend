@@ -30,16 +30,16 @@ This guide provides an end-to-end walkthrough for setting up and running the com
 
 Before beginning, ensure you have the following installed on your development machine:
 
-| Component | Required Version | Purpose | Installation |
-|-----------|------------------|---------|--------------|
-| **Node.js** | `>= 20.x` (LTS recommended) | Next.js frontend & backend API routes | [nodejs.org](https://nodejs.org) or `nvm install 20` |
-| **npm** | `>= 10.x` | Node package manager | Bundled with Node.js |
-| **Rust** | Stable toolchain (`>= 1.79.0`) | Compiling Soroban smart contracts | [rustup.rs](https://rustup.rs) (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \| sh`) |
-| **wasm32 Target** | `wasm32-unknown-unknown` | Compiling Rust contracts to WebAssembly | `rustup target add wasm32-unknown-unknown` |
-| **Stellar CLI** | `>= 21.0.0` (Soroban CLI) | Contract building, deployment, and simulation | `cargo install --locked stellar-cli` or via Homebrew / binary |
-| **PostgreSQL** | `>= 14.x` (or Docker) | Transaction records, idempotency keys, API keys | [postgresql.org](https://postgresql.org) or `docker compose` |
-| **Git** | `>= 2.30` | Version control | [git-scm.com](https://git-scm.com) |
-| **Stellar Wallet** | Browser extension | Freighter or Lobstr wallet for transaction signing | [Freighter](https://freighter.app) / [Lobstr](https://lobstr.co) |
+| Component          | Required Version               | Purpose                                            | Installation                                                                                       |
+| ------------------ | ------------------------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Node.js**        | `>= 20.x` (LTS recommended)    | Next.js frontend & backend API routes              | [nodejs.org](https://nodejs.org) or `nvm install 20`                                               |
+| **npm**            | `>= 10.x`                      | Node package manager                               | Bundled with Node.js                                                                               |
+| **Rust**           | Stable toolchain (`>= 1.79.0`) | Compiling Soroban smart contracts                  | [rustup.rs](https://rustup.rs) (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \| sh`) |
+| **wasm32 Target**  | `wasm32-unknown-unknown`       | Compiling Rust contracts to WebAssembly            | `rustup target add wasm32-unknown-unknown`                                                         |
+| **Stellar CLI**    | `>= 21.0.0` (Soroban CLI)      | Contract building, deployment, and simulation      | `cargo install --locked stellar-cli` or via Homebrew / binary                                      |
+| **PostgreSQL**     | `>= 14.x` (or Docker)          | Transaction records, idempotency keys, API keys    | [postgresql.org](https://postgresql.org) or `docker compose`                                       |
+| **Git**            | `>= 2.30`                      | Version control                                    | [git-scm.com](https://git-scm.com)                                                                 |
+| **Stellar Wallet** | Browser extension              | Freighter or Lobstr wallet for transaction signing | [Freighter](https://freighter.app) / [Lobstr](https://lobstr.co)                                   |
 
 ---
 
@@ -63,6 +63,7 @@ npm install
 ```
 
 Verify Node.js version compatibility:
+
 ```bash
 node -v   # Must output >= v20.0.0
 npm -v    # Must output >= 10.0.0
@@ -73,6 +74,7 @@ npm -v    # Must output >= 10.0.0
 ### Step 3: Rust & Soroban Toolchain Setup
 
 1. **Install Rust and WebAssembly compilation target:**
+
    ```bash
    # Install Rust stable if not installed
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -86,6 +88,7 @@ npm -v    # Must output >= 10.0.0
    ```
 
 2. **Install the Stellar CLI (formerly Soroban CLI):**
+
    ```bash
    cargo install --locked stellar-cli --features opt
    ```
@@ -180,6 +183,7 @@ PAYCREST_WEBHOOK_SECRET=dev_webhook_secret
 ### Step 6: Build & Test Soroban Contracts
 
 The project contains four Soroban contracts in the `contracts/` directory:
+
 1. `escrow` — USDC escrow during bridge operations
 2. `fee-manager` — Calculation and collection of protocol fees
 3. `treasury` — Protocol fee accumulation and payouts
@@ -212,6 +216,7 @@ npm run dev
 ```
 
 Open your browser:
+
 - **Application UI**: [http://localhost:3001](http://localhost:3001)
 - **Interactive Swagger OpenAPI Docs**: [http://localhost:3001/api/docs](http://localhost:3001/api/docs)
 - **Health check endpoint**: `curl http://localhost:3001/api/health`
@@ -279,6 +284,7 @@ npm run storybook
 ### Rust & Soroban Build Errors
 
 #### 1. `error[E0512]: cannot transmute between types of different sizes` (`ethnum` mismatch)
+
 - **Cause**: An outdated dependency pulled in an older `ethnum` version when `soroban-sdk` versions are mismatched.
 - **Fix**: Stellar-Spend workspace pins `soroban-sdk` to version `22`. Ensure all `contracts/*/Cargo.toml` files specify `soroban-sdk = "22"` and run:
   ```bash
@@ -286,6 +292,7 @@ npm run storybook
   ```
 
 #### 2. `error: target 'wasm32-unknown-unknown' not found`
+
 - **Cause**: The WebAssembly target is not installed in your Rust toolchain.
 - **Fix**:
   ```bash
@@ -293,6 +300,7 @@ npm run storybook
   ```
 
 #### 3. `ContractError::MigrationRequired` or `ContractError::SchemaVersionUnsupported`
+
 - **Cause**: The deployed contract schema version does not match the expected `SCHEMA_VERSION` in the code.
 - **Fix**: When modifying contract storage layouts:
   1. Call `migrate()` on the contract instance using admin authorization.
@@ -303,6 +311,7 @@ npm run storybook
 ### Stellar RPC & Horizon Errors
 
 #### 1. `tx_bad_seq` (Bad Sequence Number)
+
 - **Cause**: The account sequence number used in `TransactionBuilder` is out of date because another transaction was submitted concurrently or cached.
 - **Fix**: Always query the latest sequence number from Horizon immediately before building the transaction:
   ```ts
@@ -311,6 +320,7 @@ npm run storybook
   ```
 
 #### 2. `op_underfunded` / `Simulation failed: resulting balance is not within the allowed range`
+
 - **Cause**: The Stellar account does not hold sufficient XLM to cover the base reserve (minimum 2 XLM + 0.5 XLM per sub-entry/trustline) plus the transaction fee, or USDC balance is lower than the transfer amount.
 - **Fix**:
   - Fund the testnet account via Friendbot: `curl "https://friendbot.stellar.org?addr=<PUBLIC_KEY>"`
@@ -318,6 +328,7 @@ npm run storybook
   - Switch fee payment method from `native` (XLM) to `stablecoin` (USDC) if XLM is low.
 
 #### 3. `HostError: Error(Value, InvalidInput)` during `simulateTransaction`
+
 - **Cause**: Soroban contract invocation arguments (`ScVal`) are malformed or invalid types.
 - **Fix**:
   - Verify parameter order matches the contract function signature.
@@ -325,6 +336,7 @@ npm run storybook
   - For integers (`i128`), use `nativeToScVal(BigInt(amount), { type: 'i128' })`.
 
 #### 4. `rpc.Api.isSimulationError(simResult)` (Resource Footprint Missing)
+
 - **Cause**: Submitting a transaction without assembling the simulation result.
 - **Fix**: Always assemble the transaction with simulation data before sending:
   ```ts
@@ -338,12 +350,14 @@ npm run storybook
 ### Wallet & Browser Extension Issues
 
 #### 1. `Freighter is set to Testnet. Please switch to Mainnet.` (or vice versa)
+
 - **Cause**: The active network in Freighter does not match the network passphrase configured in the app.
 - **Fix**:
   - Open the Freighter browser extension → Settings → Network.
   - Select the network matching your `.env.local` (`Mainnet` or `Testnet`).
 
 #### 2. `Freighter extension is not installed` / `Lobstr provider not on window`
+
 - **Cause**: Browser extension is locked, not installed, or origin is not HTTPS/localhost.
 - **Fix**:
   - Unlock Freighter/Lobstr extension.
@@ -354,12 +368,14 @@ npm run storybook
 ### Database & Environment Issues
 
 #### 1. `Error: Invalid environment configuration`
+
 - **Cause**: Required environment variables are missing from `.env.local` or fail schema validation in `src/lib/env.ts`.
 - **Fix**:
   - Compare your `.env.local` against `.env.example`.
   - Ensure all required keys (e.g., `PAYCREST_API_KEY`, `BASE_PRIVATE_KEY`, `STELLAR_SOROBAN_RPC_URL`) are populated.
 
 #### 2. `ECONNREFUSED 127.0.0.1:5432` (PostgreSQL Connection Error)
+
 - **Cause**: PostgreSQL service is not running or port 5432 is blocked.
 - **Fix**:
   - If using Docker: `docker compose up -d postgres`

@@ -135,7 +135,8 @@ describe('Quality Gate — Dependency Pinning', () => {
     const content = fs.readFileSync(renovatePath, 'utf-8');
     // Renovate config should reference at least one of the known range-allowed packages
     // (or use a broad packageRules that covers them) — this is a smoke check.
-    const hasPackageRules = content.includes('packageRules') || content.includes('matchPackageNames');
+    const hasPackageRules =
+      content.includes('packageRules') || content.includes('matchPackageNames');
     const hasBroadRule = content.includes('"*"') || content.includes("'*'");
     expect(
       hasPackageRules || hasBroadRule,

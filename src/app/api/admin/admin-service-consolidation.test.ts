@@ -109,9 +109,7 @@ describe('Admin Service Consolidation - Issue #1125', () => {
         };
       };
 
-      const request = new NextRequest(
-        'http://localhost/api/admin/test?limit=50&offset=100&page=2',
-      );
+      const request = new NextRequest('http://localhost/api/admin/test?limit=50&offset=100&page=2');
 
       const pagination = extractPaginationParams(request);
       expect(pagination.limit).toBe(50);
@@ -158,9 +156,7 @@ describe('Admin Service Consolidation - Issue #1125', () => {
         };
       };
 
-      const results = paginationRoutes.map((route) =>
-        testPaginationEndpoint(route, 50, 100),
-      );
+      const results = paginationRoutes.map((route) => testPaginationEndpoint(route, 50, 100));
 
       results.forEach((result) => {
         expect(result.limit).toBe(50);
@@ -176,9 +172,7 @@ describe('Admin Service Consolidation - Issue #1125', () => {
         return { cursor, limit };
       };
 
-      const request = new NextRequest(
-        'http://localhost/api/admin/test?cursor=abc123&limit=25',
-      );
+      const request = new NextRequest('http://localhost/api/admin/test?cursor=abc123&limit=25');
 
       const pagination = parseCursorPagination(request);
       expect(pagination.cursor).toBe('abc123');
@@ -257,7 +251,9 @@ describe('Admin Service Consolidation - Issue #1125', () => {
     });
 
     it('should consolidate filter validation for admin routes', () => {
-      const validateFilters = (filters: Record<string, unknown>): { valid: boolean; errors?: string[] } => {
+      const validateFilters = (
+        filters: Record<string, unknown>,
+      ): { valid: boolean; errors?: string[] } => {
         const errors: string[] = [];
 
         if (filters.limit && (typeof filters.limit !== 'number' || filters.limit < 1)) {
@@ -291,9 +287,7 @@ describe('Admin Service Consolidation - Issue #1125', () => {
 
   describe('Route consolidation patterns', () => {
     it('should demonstrate consolidated authorization pattern', () => {
-      const adminRouteMiddleware = (
-        handler: (request: NextRequest) => Promise<NextResponse>,
-      ) => {
+      const adminRouteMiddleware = (handler: (request: NextRequest) => Promise<NextResponse>) => {
         return async (request: NextRequest) => {
           const apiKey = request.headers.get('x-api-key');
           if (!apiKey?.startsWith('admin-')) {
@@ -310,9 +304,7 @@ describe('Admin Service Consolidation - Issue #1125', () => {
     });
 
     it('should demonstrate consolidated pagination pattern', () => {
-      const paginatedRoute = (
-        fetchData: (limit: number, offset: number) => Promise<unknown[]>,
-      ) => {
+      const paginatedRoute = (fetchData: (limit: number, offset: number) => Promise<unknown[]>) => {
         return async (request: NextRequest) => {
           const limit = Math.min(Number(request.nextUrl.searchParams.get('limit')) || 100, 1000);
           const offset = Number(request.nextUrl.searchParams.get('offset')) || 0;

@@ -3,11 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  webhookQueries,
-  webhookMutations,
-  webhookSubscriptions,
-} from '@/lib/graphql';
+import { webhookQueries, webhookMutations, webhookSubscriptions } from '@/lib/graphql';
 import type { GraphQLContext } from '@/lib/graphql';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

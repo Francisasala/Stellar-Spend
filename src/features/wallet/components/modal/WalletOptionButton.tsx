@@ -14,10 +14,7 @@ export interface WalletOptionButtonProps {
 }
 
 export const WalletOptionButton = forwardRef<HTMLButtonElement, WalletOptionButtonProps>(
-  function WalletOptionButton(
-    { wallet, isConnecting, connectingWallet, onConnect },
-    ref,
-  ) {
+  function WalletOptionButton({ wallet, isConnecting, connectingWallet, onConnect }, ref) {
     const isThisConnecting = isConnecting && connectingWallet === wallet.type;
     const isOtherConnecting = isConnecting && connectingWallet !== wallet.type;
 
@@ -44,18 +41,14 @@ export const WalletOptionButton = forwardRef<HTMLButtonElement, WalletOptionButt
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-white tracking-wide">
-              {wallet.name}
-            </span>
+            <span className="text-sm font-semibold text-white tracking-wide">{wallet.name}</span>
             {isThisConnecting && (
               <span className="text-[10px] text-[#c9a962] tracking-widest uppercase animate-pulse">
                 Connecting…
               </span>
             )}
           </div>
-          <p className="text-[11px] text-[#777777] mt-0.5 leading-relaxed">
-            {wallet.description}
-          </p>
+          <p className="text-[11px] text-[#777777] mt-0.5 leading-relaxed">{wallet.description}</p>
         </div>
 
         {!isThisConnecting && (

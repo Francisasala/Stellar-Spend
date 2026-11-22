@@ -129,9 +129,7 @@ describe('useFormCardState - Validation Flow', () => {
 
   describe('Currency Loading and Selection', () => {
     it('should load currencies on mount', async () => {
-      const { result } = renderHook(() =>
-        useFormCardState({ onCurrencyChange: vi.fn() }),
-      );
+      const { result } = renderHook(() => useFormCardState({ onCurrencyChange: vi.fn() }));
 
       await waitFor(() => {
         expect(result.current.currencies).toHaveLength(2);
@@ -141,9 +139,7 @@ describe('useFormCardState - Validation Flow', () => {
     });
 
     it('should set default currency to NGN if available', async () => {
-      const { result } = renderHook(() =>
-        useFormCardState({ onCurrencyChange: vi.fn() }),
-      );
+      const { result } = renderHook(() => useFormCardState({ onCurrencyChange: vi.fn() }));
 
       await waitFor(() => {
         expect(result.current.currency).toBe('NGN');
@@ -151,13 +147,9 @@ describe('useFormCardState - Validation Flow', () => {
     });
 
     it('should handle currency loading error gracefully', async () => {
-      vi.mocked(formCardServices.fetchCurrencies).mockRejectedValueOnce(
-        new Error('Fetch failed'),
-      );
+      vi.mocked(formCardServices.fetchCurrencies).mockRejectedValueOnce(new Error('Fetch failed'));
 
-      const { result } = renderHook(() =>
-        useFormCardState({ onCurrencyChange: vi.fn() }),
-      );
+      const { result } = renderHook(() => useFormCardState({ onCurrencyChange: vi.fn() }));
 
       await waitFor(() => {
         expect(result.current.isCurrenciesLoading).toBe(false);
@@ -168,9 +160,7 @@ describe('useFormCardState - Validation Flow', () => {
 
     it('should load institutions when currency changes', async () => {
       const onCurrencyChange = vi.fn();
-      const { result } = renderHook(() =>
-        useFormCardState({ onCurrencyChange }),
-      );
+      const { result } = renderHook(() => useFormCardState({ onCurrencyChange }));
 
       await waitFor(() => {
         expect(result.current.currency).toBe('NGN');
@@ -275,9 +265,7 @@ describe('useFormCardState - Validation Flow', () => {
     });
 
     it('should handle quote fetch error', async () => {
-      vi.mocked(formCardServices.fetchQuote).mockRejectedValueOnce(
-        new Error('Quote error'),
-      );
+      vi.mocked(formCardServices.fetchQuote).mockRejectedValueOnce(new Error('Quote error'));
 
       const onQuoteChange = vi.fn();
       const { result } = renderHook(() =>
@@ -432,8 +420,7 @@ describe('useFormCardState - Validation Flow', () => {
 
     it('should clear errors on reset', async () => {
       const { result, rerender } = renderHook(
-        ({ resetKey }: { resetKey: number }) =>
-          useFormCardState({ resetKey }),
+        ({ resetKey }: { resetKey: number }) => useFormCardState({ resetKey }),
         { initialProps: { resetKey: 0 } },
       );
 
@@ -450,8 +437,7 @@ describe('useFormCardState - Validation Flow', () => {
 
     it('should reset touched fields', async () => {
       const { result, rerender } = renderHook(
-        ({ resetKey }: { resetKey: number }) =>
-          useFormCardState({ resetKey }),
+        ({ resetKey }: { resetKey: number }) => useFormCardState({ resetKey }),
         { initialProps: { resetKey: 0 } },
       );
 
@@ -477,9 +463,7 @@ describe('useFormCardState - Validation Flow', () => {
     });
 
     it('should handle gas fees loading error', async () => {
-      vi.mocked(formCardServices.fetchGasFees).mockRejectedValueOnce(
-        new Error('Gas fees error'),
-      );
+      vi.mocked(formCardServices.fetchGasFees).mockRejectedValueOnce(new Error('Gas fees error'));
 
       const { result } = renderHook(() => useFormCardState({}));
 

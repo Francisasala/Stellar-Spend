@@ -278,7 +278,8 @@ export function NotificationProvider({
     if (typeof window === 'undefined') return [];
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return (JSON.parse(raw) as NotificationEvent[]).sort((a, b) => b.createdAt - a.createdAt);
+      if (raw)
+        return (JSON.parse(raw) as NotificationEvent[]).sort((a, b) => b.createdAt - a.createdAt);
     } catch (err) {
       logger.error('notification_provider.load_failed', {}, err);
     }

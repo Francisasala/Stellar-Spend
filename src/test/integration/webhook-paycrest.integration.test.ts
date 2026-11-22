@@ -101,9 +101,7 @@ describe('POST /api/webhooks/paycrest (integration)', () => {
   beforeEach(() => {
     vi.mocked(dal.getByPayoutOrderId).mockReset().mockResolvedValue(null);
     vi.mocked(dal.update).mockReset().mockResolvedValue(undefined);
-    vi.mocked(dal.getById)
-      .mockReset()
-      .mockResolvedValue(FAKE_TRANSACTION);
+    vi.mocked(dal.getById).mockReset().mockResolvedValue(FAKE_TRANSACTION);
     vi.mocked(enqueue).mockReset().mockResolvedValue(undefined);
     vi.mocked(notifyTransactionStatusUpdate).mockReset().mockResolvedValue(undefined);
     consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -152,7 +150,11 @@ describe('POST /api/webhooks/paycrest (integration)', () => {
   });
 
   it('updates transaction to completed on payment_order.settled', async () => {
-    vi.mocked(dal.getByPayoutOrderId)      .mockResolvedValue(FAKE_TRANSACTION as Parameters<typeof dal.getByPayoutOrderId>[0] extends string ? Awaited<ReturnType<typeof dal.getByPayoutOrderId>> : never);
+    vi.mocked(dal.getByPayoutOrderId).mockResolvedValue(
+      FAKE_TRANSACTION as Parameters<typeof dal.getByPayoutOrderId>[0] extends string
+        ? Awaited<ReturnType<typeof dal.getByPayoutOrderId>>
+        : never,
+    );
     const body = JSON.stringify({
       event: 'payment_order.settled',
       data: { id: 'order-settled-1' },

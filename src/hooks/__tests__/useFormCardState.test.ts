@@ -99,8 +99,8 @@ describe('useFormCardState', () => {
     mockFetchInstitutions.mockResolvedValue(INSTITUTIONS);
     mockFetchQuote.mockResolvedValue(MOCK_QUOTE as any);
     mockVerifyAccount.mockResolvedValue('John Doe');
-    mockValidateAmount.mockImplementation((v: string) =>
-      /^\d+(\.\d+)?$/.test(v) && parseFloat(v) > 0,
+    mockValidateAmount.mockImplementation(
+      (v: string) => /^\d+(\.\d+)?$/.test(v) && parseFloat(v) > 0,
     );
     mockValidateAccountNumber.mockImplementation((v: string) => v.length >= 6);
   });
@@ -133,9 +133,7 @@ describe('useFormCardState', () => {
 
   it('auto-selects NGN when currencies contain it', async () => {
     const onCurrencyChange = vi.fn();
-    const { result } = renderHook(() =>
-      useFormCardState({ ...defaultProps, onCurrencyChange }),
-    );
+    const { result } = renderHook(() => useFormCardState({ ...defaultProps, onCurrencyChange }));
 
     await act(async () => {
       await vi.runAllTicks();
@@ -151,9 +149,7 @@ describe('useFormCardState', () => {
       { code: 'KES', name: 'Kenyan Shilling', symbol: 'KSh' },
     ]);
     const onCurrencyChange = vi.fn();
-    const { result } = renderHook(() =>
-      useFormCardState({ ...defaultProps, onCurrencyChange }),
-    );
+    const { result } = renderHook(() => useFormCardState({ ...defaultProps, onCurrencyChange }));
 
     await act(async () => {
       await vi.runAllTicks();
@@ -204,8 +200,8 @@ describe('useFormCardState', () => {
   it('clears all fields when resetKey increments', async () => {
     const onQuoteChange = vi.fn();
     let resetKey = 0;
-    const { result, rerender } = renderHook(({ rk }) =>
-      useFormCardState({ ...defaultProps, resetKey: rk, onQuoteChange }),
+    const { result, rerender } = renderHook(
+      ({ rk }) => useFormCardState({ ...defaultProps, resetKey: rk, onQuoteChange }),
       { initialProps: { rk: resetKey } },
     );
 
@@ -283,9 +279,7 @@ describe('useFormCardState', () => {
 
   it('calls onAmountChange with new value', () => {
     const onAmountChange = vi.fn();
-    const { result } = renderHook(() =>
-      useFormCardState({ ...defaultProps, onAmountChange }),
-    );
+    const { result } = renderHook(() => useFormCardState({ ...defaultProps, onAmountChange }));
 
     act(() => {
       result.current.handleAmountChange('50');
@@ -383,9 +377,7 @@ describe('useFormCardState', () => {
 
   it('calls onCurrencyChange and fetches institutions on currency change', async () => {
     const onCurrencyChange = vi.fn();
-    const { result } = renderHook(() =>
-      useFormCardState({ ...defaultProps, onCurrencyChange }),
-    );
+    const { result } = renderHook(() => useFormCardState({ ...defaultProps, onCurrencyChange }));
 
     act(() => {
       result.current.handleCurrencyChange('KES');

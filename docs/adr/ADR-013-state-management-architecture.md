@@ -2,13 +2,14 @@
 
 **Status:** Accepted  
 **Date:** 2026-08-25  
-**Deciders:** Stellar-Spend Core Team  
+**Deciders:** Stellar-Spend Core Team
 
 ---
 
 ## Context
 
 In building the Stellar-Spend frontend (Next.js 15 App Router, React 19, TypeScript), state management requirements span several distinct domains:
+
 1. **Global Application State:** Locale/i18n, theme preference (light/dark/system), and transient UI notifications (toasts).
 2. **Web3 / Wallet State:** Connected wallet type (Freighter, Lobstr), active account public key, network passphrase, and wallet connection lifecycle.
 3. **Transaction & Off-ramp Flow State:** Currency conversion inputs, live FX quotes, bridge status, Paycrest payout progress, and KYC verification step.
@@ -24,6 +25,7 @@ This ADR records the architectural decision to use **React Context for low-frequ
 ## Decision
 
 We adopt a **tiered state management strategy** using native React 19 primitives:
+
 - **React Context (`src/contexts/`):** Reserved exclusively for low-frequency global state that spans the entire component tree (Theme, Toast, I18n).
 - **Domain Custom Hooks (`src/hooks/`):** Encapsulate business logic, wallet integration, polling, and local persistence into reusable, self-contained units (e.g., `useStellarWallet`, `useTransactionHistory`, `usePollBridgeStatus`).
 - **Local Component State (`useState`, `useReducer`):** Used for localized component interactions (form fields, modal open/close, toggle states).
@@ -84,20 +86,22 @@ export function AppProviders({ children }: AppProvidersProps) {
 
 ## Tradeoff Analysis: Context + Hooks vs Alternatives
 
-| Criteria | React Context + Scoped Hooks (Chosen) | Zustand / Jotai | Redux Toolkit (RTK) |
-| :--- | :--- | :--- | :--- |
-| **Bundle Size Overhead** | **0 KB** (Built into React 19) | +3 KB to +8 KB | +30 KB to +45 KB (Redux + RTK + React-Redux) |
-| **Next.js 15 / RSC Compatibility** | Native. Clear boundary between server and `'use client'` contexts. | Requires store initialization wrappers for SSR hydration. | High complexity for SSR; store re-hydration boilerplate required. |
-| **Re-render Performance** | High for low-frequency state. Scoped hooks prevent global re-renders. | Fine-grained selector-based subscription. | Fine-grained selector-based subscription. |
-| **Architecture Complexity & Boilerplate** | Low. Standard React patterns known to all React developers. | Low-Medium. Requires creating custom store hooks. | High. Actions, reducers, slices, dispatchers, and selectors. |
-| **Testing Ergonomics** | Simple. Render hook with standard `@testing-library/react`. | Requires mock store instances or reset between tests. | Requires mock root store and provider fixtures. |
-| **Separation of Concerns** | Strong domain isolation per hook (`useStellarWallet`, `useFxRate`). | Risks creating a bloated "catch-all" global state object. | Tendency toward centralized monolithic store. |
+| Criteria                                  | React Context + Scoped Hooks (Chosen)                                 | Zustand / Jotai                                           | Redux Toolkit (RTK)                                               |
+| :---------------------------------------- | :-------------------------------------------------------------------- | :-------------------------------------------------------- | :---------------------------------------------------------------- |
+| **Bundle Size Overhead**                  | **0 KB** (Built into React 19)                                        | +3 KB to +8 KB                                            | +30 KB to +45 KB (Redux + RTK + React-Redux)                      |
+| **Next.js 15 / RSC Compatibility**        | Native. Clear boundary between server and `'use client'` contexts.    | Requires store initialization wrappers for SSR hydration. | High complexity for SSR; store re-hydration boilerplate required. |
+| **Re-render Performance**                 | High for low-frequency state. Scoped hooks prevent global re-renders. | Fine-grained selector-based subscription.                 | Fine-grained selector-based subscription.                         |
+| **Architecture Complexity & Boilerplate** | Low. Standard React patterns known to all React developers.           | Low-Medium. Requires creating custom store hooks.         | High. Actions, reducers, slices, dispatchers, and selectors.      |
+| **Testing Ergonomics**                    | Simple. Render hook with standard `@testing-library/react`.           | Requires mock store instances or reset between tests.     | Requires mock root store and provider fixtures.                   |
+| **Separation of Concerns**                | Strong domain isolation per hook (`useStellarWallet`, `useFxRate`).   | Risks creating a bloated "catch-all" global state object. | Tendency toward centralized monolithic store.                     |
 
 ### Why Not Redux Toolkit?
+
 1. **Excessive Overhead:** Stellar-Spend is a focused financial off-ramp, not a multi-tenant enterprise dashboard with thousands of interdependent state mutations. Redux introduces significant boilerplate (actions, reducers, thunks, middleware) without tangible architectural benefits.
 2. **Hydration Friction:** Next.js Server Components and streaming SSR require elaborate store synchronization logic when using Redux.
 
 ### Why Not Zustand / Jotai?
+
 1. **Premature Dependency:** Our application state is naturally compartmentalized:
    - Wallet state is only needed by transaction-initiation surfaces.
    - Quote and rate data are short-lived and fetched per flow.
@@ -119,12 +123,14 @@ export function AppProviders({ children }: AppProvidersProps) {
 ## Consequences
 
 **Positive:**
+
 - Zero additional client bundle weight.
 - Clear separation between UI concerns (`src/contexts/`), business logic (`src/hooks/`), and view components (`src/components/`).
 - Full compatibility with Next.js 15 App Router and React Server Components.
 - Intuitive onboarding for new engineers familiar with idiomatic React.
 
 **Negative / Trade-offs:**
+
 - Sharing state between two deeply nested sibling trees that cannot share a common parent component requires lifting state up or using a dedicated scoped Context provider.
 - Context consumers re-render when the provided context value changes (mitigated by memoizing context values with `useMemo` and separating distinct contexts).
 

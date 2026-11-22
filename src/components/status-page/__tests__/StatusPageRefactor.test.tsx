@@ -10,7 +10,12 @@ describe('StatusPage Component Tree Refactoring - Admin/User Reuse', () => {
     describe('ComponentList - Shared Across Admin and User Views', () => {
       it('renders as a reusable component for both admin and user contexts', () => {
         const components: ComponentStatus[] = [
-          { name: 'API Gateway', status: 'operational' as const, lastCheck: Date.now(), responseTime: 15 },
+          {
+            name: 'API Gateway',
+            status: 'operational' as const,
+            lastCheck: Date.now(),
+            responseTime: 15,
+          },
           { name: 'Payment Processor', status: 'degraded' as const, lastCheck: Date.now() - 5000 },
           { name: 'Database', status: 'down' as const, lastCheck: Date.now() - 10000 },
         ];
@@ -43,8 +48,18 @@ describe('StatusPage Component Tree Refactoring - Admin/User Reuse', () => {
 
       it('includes response time metric when available', () => {
         const components: ComponentStatus[] = [
-          { name: 'Fast Service', status: 'operational' as const, lastCheck: Date.now(), responseTime: 8 },
-          { name: 'Slow Service', status: 'operational' as const, lastCheck: Date.now(), responseTime: 250 },
+          {
+            name: 'Fast Service',
+            status: 'operational' as const,
+            lastCheck: Date.now(),
+            responseTime: 8,
+          },
+          {
+            name: 'Slow Service',
+            status: 'operational' as const,
+            lastCheck: Date.now(),
+            responseTime: 250,
+          },
         ];
 
         render(<ComponentList components={components} />);
@@ -55,7 +70,11 @@ describe('StatusPage Component Tree Refactoring - Admin/User Reuse', () => {
 
       it('omits response time when not provided', () => {
         const components: ComponentStatus[] = [
-          { name: 'Service Without Metrics', status: 'operational' as const, lastCheck: Date.now() },
+          {
+            name: 'Service Without Metrics',
+            status: 'operational' as const,
+            lastCheck: Date.now(),
+          },
         ];
 
         render(<ComponentList components={components} />);
@@ -66,8 +85,18 @@ describe('StatusPage Component Tree Refactoring - Admin/User Reuse', () => {
     describe('CorridorList - Shared Across Admin and User Views', () => {
       it('renders payment corridors consistently for both views', () => {
         const corridors: CorridorStatus[] = [
-          { corridor: 'USDC → NGN', provider: 'Paycrest', status: 'operational' as const, lastTransaction: Date.now() - 60000 },
-          { corridor: 'USDC → GHS', provider: 'Mazzuma', status: 'degraded' as const, lastTransaction: Date.now() - 120000 },
+          {
+            corridor: 'USDC → NGN',
+            provider: 'Paycrest',
+            status: 'operational' as const,
+            lastTransaction: Date.now() - 60000,
+          },
+          {
+            corridor: 'USDC → GHS',
+            provider: 'Mazzuma',
+            status: 'degraded' as const,
+            lastTransaction: Date.now() - 120000,
+          },
         ];
 
         render(<CorridorList corridors={corridors} />);
@@ -86,7 +115,12 @@ describe('StatusPage Component Tree Refactoring - Admin/User Reuse', () => {
 
       it('renders provider information for each corridor', () => {
         const corridors: CorridorStatus[] = [
-          { corridor: 'USDC → KES', provider: 'African Fintech Co', status: 'operational' as const, lastTransaction: Date.now() },
+          {
+            corridor: 'USDC → KES',
+            provider: 'African Fintech Co',
+            status: 'operational' as const,
+            lastTransaction: Date.now(),
+          },
         ];
 
         render(<CorridorList corridors={corridors} />);
@@ -97,9 +131,7 @@ describe('StatusPage Component Tree Refactoring - Admin/User Reuse', () => {
 
     describe('UptimeSection - Shared Layout', () => {
       it('renders uptime metrics consistently', () => {
-        render(
-          <UptimeSection uptime={{ day: 99.99, week: 99.95, month: 99.9 }} />
-        );
+        render(<UptimeSection uptime={{ day: 99.99, week: 99.95, month: 99.9 }} />);
 
         expect(screen.getByText('99.99%')).toBeInTheDocument();
         expect(screen.getByText('99.95%')).toBeInTheDocument();
@@ -107,9 +139,7 @@ describe('StatusPage Component Tree Refactoring - Admin/User Reuse', () => {
       });
 
       it('includes time period labels', () => {
-        render(
-          <UptimeSection uptime={{ day: 100, week: 99.5, month: 98.5 }} />
-        );
+        render(<UptimeSection uptime={{ day: 100, week: 99.5, month: 98.5 }} />);
 
         expect(screen.getByText('24 hours')).toBeInTheDocument();
         expect(screen.getByText('7 days')).toBeInTheDocument();
@@ -117,18 +147,14 @@ describe('StatusPage Component Tree Refactoring - Admin/User Reuse', () => {
       });
 
       it('handles perfect uptime display', () => {
-        render(
-          <UptimeSection uptime={{ day: 100, week: 100, month: 100 }} />
-        );
+        render(<UptimeSection uptime={{ day: 100, week: 100, month: 100 }} />);
 
         const percentages = screen.getAllByText('100%');
         expect(percentages.length).toBeGreaterThanOrEqual(1);
       });
 
       it('handles degraded uptime display', () => {
-        render(
-          <UptimeSection uptime={{ day: 95, week: 92, month: 90 }} />
-        );
+        render(<UptimeSection uptime={{ day: 95, week: 92, month: 90 }} />);
 
         expect(screen.getByText('95%')).toBeInTheDocument();
       });
@@ -138,8 +164,18 @@ describe('StatusPage Component Tree Refactoring - Admin/User Reuse', () => {
   describe('Admin vs User View Reuse', () => {
     it('ComponentList can be reused in admin dashboard without modification', () => {
       const adminComponents: ComponentStatus[] = [
-        { name: 'Internal API', status: 'operational' as const, lastCheck: Date.now(), responseTime: 5 },
-        { name: 'Admin Panel Database', status: 'operational' as const, lastCheck: Date.now(), responseTime: 12 },
+        {
+          name: 'Internal API',
+          status: 'operational' as const,
+          lastCheck: Date.now(),
+          responseTime: 5,
+        },
+        {
+          name: 'Admin Panel Database',
+          status: 'operational' as const,
+          lastCheck: Date.now(),
+          responseTime: 12,
+        },
       ];
 
       const { container } = render(<ComponentList components={adminComponents} />);
@@ -149,7 +185,12 @@ describe('StatusPage Component Tree Refactoring - Admin/User Reuse', () => {
 
     it('ComponentList can be reused in user-facing status page', () => {
       const userComponents: ComponentStatus[] = [
-        { name: 'Payment Processing', status: 'operational' as const, lastCheck: Date.now(), responseTime: 20 },
+        {
+          name: 'Payment Processing',
+          status: 'operational' as const,
+          lastCheck: Date.now(),
+          responseTime: 20,
+        },
       ];
 
       const { container } = render(<ComponentList components={userComponents} />);
@@ -159,7 +200,12 @@ describe('StatusPage Component Tree Refactoring - Admin/User Reuse', () => {
 
     it('CorridorList is reusable across different context configurations', () => {
       const corridors: CorridorStatus[] = [
-        { corridor: 'USDC → USD', provider: 'Circle', status: 'operational' as const, lastTransaction: Date.now() },
+        {
+          corridor: 'USDC → USD',
+          provider: 'Circle',
+          status: 'operational' as const,
+          lastTransaction: Date.now(),
+        },
       ];
 
       const { rerender } = render(<CorridorList corridors={corridors} />);
@@ -167,7 +213,12 @@ describe('StatusPage Component Tree Refactoring - Admin/User Reuse', () => {
       expect(screen.getByText('USDC → USD')).toBeInTheDocument();
 
       const updatedCorridors: CorridorStatus[] = [
-        { corridor: 'USDC → EUR', provider: 'Stripe', status: 'operational' as const, lastTransaction: Date.now() },
+        {
+          corridor: 'USDC → EUR',
+          provider: 'Stripe',
+          status: 'operational' as const,
+          lastTransaction: Date.now(),
+        },
       ];
 
       rerender(<CorridorList corridors={updatedCorridors} />);

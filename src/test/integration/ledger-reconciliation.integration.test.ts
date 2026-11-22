@@ -120,7 +120,10 @@ function buildQueryMock() {
 
       // Enforce UNIQUE constraint on entry_hash (mirrors DB constraint)
       if (seenHashes.has(entryHash)) {
-        const err = new Error('unique constraint violation') as Error & { code: string; constraint: string };
+        const err = new Error('unique constraint violation') as Error & {
+          code: string;
+          constraint: string;
+        };
         err.code = '23505';
         err.constraint = 'ledger_entries_entry_hash_key';
         throw err;

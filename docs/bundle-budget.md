@@ -4,12 +4,12 @@
 
 ## Budget
 
-| Metric | Limit | Notes |
-|--------|-------|-------|
-| Total `.next/` directory | 150 MB | Enforced in CI (`ci.yml`) |
-| Total JS static assets | 350 KB | Enforced in CI (`ci.yml`) |
-| Max entrypoint size | 512 KB | Enforced via Webpack `performance.hints` |
-| Max asset size | 512 KB | Enforced via Webpack `performance.hints` |
+| Metric                   | Limit  | Notes                                    |
+| ------------------------ | ------ | ---------------------------------------- |
+| Total `.next/` directory | 150 MB | Enforced in CI (`ci.yml`)                |
+| Total JS static assets   | 350 KB | Enforced in CI (`ci.yml`)                |
+| Max entrypoint size      | 512 KB | Enforced via Webpack `performance.hints` |
+| Max asset size           | 512 KB | Enforced via Webpack `performance.hints` |
 
 ## How to Check
 
@@ -26,13 +26,13 @@ find .next/static -name "*.js" | xargs wc -c | tail -1
 
 ## Known Heavy Dependencies
 
-| Package | Approx. Size | Mitigation |
-|---------|-------------|------------|
-| `@stellar/stellar-sdk` | ~2 MB | Server-only via `serverExternalPackages` + `optimizePackageImports` |
-| `@allbridge/bridge-core-sdk` | ~1.5 MB | Server-only via `serverExternalPackages` + `optimizePackageImports` |
-| `viem` | ~800 KB | `optimizePackageImports` enables tree-shaking |
-| `@sentry/nextjs` | ~400 KB | `optimizePackageImports` + lazy tunnel |
-| `xlsx` | ~750 KB | Dynamic import via `await import('xlsx')` in `src/lib/export.ts` |
+| Package                      | Approx. Size | Mitigation                                                          |
+| ---------------------------- | ------------ | ------------------------------------------------------------------- |
+| `@stellar/stellar-sdk`       | ~2 MB        | Server-only via `serverExternalPackages` + `optimizePackageImports` |
+| `@allbridge/bridge-core-sdk` | ~1.5 MB      | Server-only via `serverExternalPackages` + `optimizePackageImports` |
+| `viem`                       | ~800 KB      | `optimizePackageImports` enables tree-shaking                       |
+| `@sentry/nextjs`             | ~400 KB      | `optimizePackageImports` + lazy tunnel                              |
+| `xlsx`                       | ~750 KB      | Dynamic import via `await import('xlsx')` in `src/lib/export.ts`    |
 
 ## Import Guidelines
 
