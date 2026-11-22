@@ -46,27 +46,31 @@
       "eslint --fix --max-warnings 50",
       "prettier --write"
     ],
-    "*.{json,md,css,scss,yml,yaml,html}": ["prettier --write"]
+    "*.{json,md,css,scss,yml,yaml,html}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "3.758.0",
+    "@hookform/resolvers": "^7.0.8",
     "@sentry/nextjs": "^10.46.0",
+    "@stellar-spend/shared": "*",
     "@stellar/freighter-api": "^6.0.1",
     "@stellar/stellar-sdk": "^14.6.1",
-    "@stellar-spend/shared": "*",
     "@zxing/browser": "^0.2.0",
     "class-variance-authority": "^0.7.1",
     "dompurify": "^3.2.4",
     "next": "^15.5.14",
     "pg": "^8.21.0",
     "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "react-hook-form": "^7.92.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
     "@chromatic-com/storybook": "^5.2.1",
     "@next/bundle-analyzer": "^16.2.1",
-    "@types/dompurify": "^3.0.5",
     "@playwright/test": "^1.58.2",
     "@storybook/addon-a11y": "^10.4.6",
     "@storybook/addon-docs": "^10.4.6",
@@ -79,6 +83,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/dompurify": "^3.0.5",
     "@types/node": "22.13.5",
     "@types/react": "19.0.8",
     "@types/react-dom": "19.0.3",
@@ -98,10 +103,10 @@
     "playwright": "^1.61.1",
     "prettier": "^3.4.2",
     "storybook": "^10.4.6",
-    "xlsx": "^0.18.5",
     "type-coverage": "^2.29.7",
     "typescript": "5.7.3",
     "vite": "^8.1.0",
-    "vitest": "^4.1.1"
+    "vitest": "^4.1.1",
+    "xlsx": "^0.18.5"
   }
 }
