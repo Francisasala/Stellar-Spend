@@ -21,3 +21,7 @@ crate-type = ["cdylib", "rlib"]
 [[test]]
 name = "dispute"
 path = "tests/dispute.rs"
+
+[[test]]
+name = "network_integration"
+path = "tests/network_integration.rs"
