@@ -110,12 +110,22 @@ export default function PWAInstallPrompt() {
         style={{ backgroundColor: CHROME_TOKENS.surface, borderColor: CHROME_TOKENS.border }}
       >
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 text-xl" aria-hidden="true">{PWA_INSTALL_COPY.icon}</div>
+          <div className="flex-shrink-0 text-xl" aria-hidden="true">
+            {PWA_INSTALL_COPY.icon}
+          </div>
           <div className="flex-1">
-            <h3 id="pwa-install-title" className="text-sm font-semibold mb-1"
-              style={{ color: CHROME_TOKENS.gold }}>{PWA_INSTALL_COPY.title}</h3>
-            <p id="pwa-install-description" className="text-xs mb-3"
-              style={{ color: CHROME_TOKENS.textDim }}>
+            <h3
+              id="pwa-install-title"
+              className="text-sm font-semibold mb-1"
+              style={{ color: CHROME_TOKENS.gold }}
+            >
+              {PWA_INSTALL_COPY.title}
+            </h3>
+            <p
+              id="pwa-install-description"
+              className="text-xs mb-3"
+              style={{ color: CHROME_TOKENS.textDim }}
+            >
               {PWA_INSTALL_COPY.description}
             </p>
             <div className="flex gap-2">

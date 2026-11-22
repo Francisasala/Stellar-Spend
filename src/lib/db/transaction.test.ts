@@ -40,10 +40,10 @@ describe('Database Transaction Wrapper', () => {
   it('should rollback transaction on error', async () => {
     try {
       await withTransaction(async (client) => {
-        await client.query(
-          'INSERT INTO transaction_test (value, created_at) VALUES ($1, $2)',
-          ['rollback_test', Date.now()],
-        );
+        await client.query('INSERT INTO transaction_test (value, created_at) VALUES ($1, $2)', [
+          'rollback_test',
+          Date.now(),
+        ]);
         throw new Error('Intentional test error');
       });
     } catch {

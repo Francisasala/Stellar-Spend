@@ -115,26 +115,35 @@ describe('OptionSummary (PremiumBreakdown Pricing Logic) — Issue #1100', () =>
 
     it('applies correct provider tier badge styling', () => {
       const quotes = [
-        { ...{
-          premium: 5,
-          coverage: 100,
-          provider: 'default' as const,
-          riskScore: 45,
-          expiresAt: Date.now() + 60000,
-        } },
-        { ...{
-          premium: 3,
-          coverage: 11000,
-          provider: 'enterprise' as const,
-          riskScore: 35,
-          expiresAt: Date.now() + 60000,
-        } },
+        {
+          ...{
+            premium: 5,
+            coverage: 100,
+            provider: 'default' as const,
+            riskScore: 45,
+            expiresAt: Date.now() + 60000,
+          },
+        },
+        {
+          ...{
+            premium: 3,
+            coverage: 11000,
+            provider: 'enterprise' as const,
+            riskScore: 35,
+            expiresAt: Date.now() + 60000,
+          },
+        },
       ];
 
       quotes.forEach((quote) => {
         const { unmount } = render(
           <I18nProvider>
-            <PremiumBreakdown quote={quote} amount={quote.coverage / 1.1} enabled={false} timeLeft={null} />
+            <PremiumBreakdown
+              quote={quote}
+              amount={quote.coverage / 1.1}
+              enabled={false}
+              timeLeft={null}
+            />
           </I18nProvider>,
         );
         unmount();

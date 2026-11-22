@@ -1,10 +1,5 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
-import type {
-  TransactionStatus,
-  Transaction,
-  Quote,
-  QuoteFees,
-} from './transaction';
+import type { TransactionStatus, Transaction, Quote, QuoteFees } from './transaction';
 
 describe('Transaction types', () => {
   it('TransactionStatus includes all valid statuses', () => {

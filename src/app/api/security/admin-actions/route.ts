@@ -9,14 +9,15 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const adminAddress = searchParams.get('adminAddress') || undefined;
-    const { offset, limit } = parsePaginationQuery(searchParams, { defaultLimit: 100, maxLimit: 1000 });
+    const { offset, limit } = parsePaginationQuery(searchParams, {
+      defaultLimit: 100,
+      maxLimit: 1000,
+    });
 
     const actions = await auditLoggingService.getAdminActions(adminAddress, limit + 1, offset);
     const { data } = trimLookahead(actions, limit);
 
-    return NextResponse.json(
-      createPaginatedResponse(data, offset, limit, offset + actions.length),
-    );
+    return NextResponse.json(createPaginatedResponse(data, offset, limit, offset + actions.length));
   } catch (error) {
     logger.error('Failed to fetch admin actions', { error });
     return ErrorHandler.handle(

@@ -362,7 +362,7 @@ Key architectural decisions are documented as ADRs in [`docs/adr/`](./docs/adr/)
 | [ADR-011](./docs/adr/ADR-011-feature-flag-approach.md)               | Feature Flag Approach                                  | 2026-06-27 | Accepted |
 | [ADR-012](./docs/adr/ADR-012-contract-architecture.md)               | Soroban Contract Architecture — Separation of Concerns | 2026-07-24 | Accepted |
 | [ADR-013](./docs/adr/ADR-013-state-management-architecture.md)       | State Management Architecture — React Context & Hooks  | 2026-08-25 | Accepted |
-| [Contract Integration](./docs/adr/contract-integration.md)            | Stellar Contract Integration Architecture              | 2026-08-25 | Accepted |
+| [Contract Integration](./docs/adr/contract-integration.md)           | Stellar Contract Integration Architecture              | 2026-08-25 | Accepted |
 
 ---
 
@@ -482,11 +482,14 @@ New to the project? Start with **[`docs/developer-setup.md`](./docs/developer-se
 ## TypeScript Configuration
 
 ### Base Config
+
 The project uses a shared TypeScript base config (`tsconfig.base.json`) that is extended by:
+
 - Root `tsconfig.json` (app)
 - `packages/shared/tsconfig.json` (shared package)
 
 ### Verifying Configs
+
 ```bash
 # Verify all TypeScript configs
 npm run verify:tsconfig
@@ -501,3 +504,4 @@ bash scripts/verify-tsconfig.sh
 
 <!-- handsoff-issue-1176 -->
 - #1176: [Frontend] Consolidate duplicate styling in `components/ui` via design tokens
+```

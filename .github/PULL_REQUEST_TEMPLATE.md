@@ -74,6 +74,7 @@ Closes #<!-- issue number(s) -->
 <!-- List any PRs this depends on, or follow-up issues to be filed. -->
 
 ### Code Quality Checklist
+
 - [ ] No commented-out code blocks
 - [ ] No console.log statements (except in development)
 - [ ] No TODO comments without linked issues

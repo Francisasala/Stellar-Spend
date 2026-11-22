@@ -33,10 +33,7 @@ vi.mock('@/lib/notifications/delivery-store', () => ({
 import { notifyTransactionStatusUpdate } from '@/lib/notifications';
 import type { ChannelAdapter, DeliveryResult, NotificationPreferences } from '@/lib/notifications';
 import { getNotificationPreferences } from '@/lib/notifications';
-import {
-  createNotificationDelivery,
-  retryNotificationDelivery,
-} from '@/lib/notifications';
+import { createNotificationDelivery, retryNotificationDelivery } from '@/lib/notifications';
 
 // ── Typed mocks ───────────────────────────────────────────────────────────────
 
@@ -87,7 +84,11 @@ function makeAdapter(
   const single = Array.isArray(results) ? null : results;
 
   const send = queue
-    ? vi.fn().mockImplementation(() => Promise.resolve(queue.shift() ?? { status: 'failed', errorMessage: 'no more results' }))
+    ? vi
+        .fn()
+        .mockImplementation(() =>
+          Promise.resolve(queue.shift() ?? { status: 'failed', errorMessage: 'no more results' }),
+        )
     : vi.fn().mockResolvedValue(single);
 
   return { channel, send };
@@ -102,7 +103,11 @@ describe('#854 partial-channel failure', () => {
     // Each createNotificationDelivery call returns a record with a unique id
     let deliveryCallCount = 0;
     mockCreateDelivery.mockImplementation(() =>
-      Promise.resolve({ id: `delivery-${++deliveryCallCount}` } as ReturnType<typeof mockCreateDelivery> extends Promise<infer R> ? R : never),
+      Promise.resolve({ id: `delivery-${++deliveryCallCount}` } as ReturnType<
+        typeof mockCreateDelivery
+      > extends Promise<infer R>
+        ? R
+        : never),
     );
     mockRetryDelivery.mockResolvedValue(undefined);
   });
@@ -188,7 +193,11 @@ describe('#854 retry / no-retry spec', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    mockCreateDelivery.mockResolvedValue({ id: 'delivery-1' } as ReturnType<typeof mockCreateDelivery> extends Promise<infer R> ? R : never);
+    mockCreateDelivery.mockResolvedValue({ id: 'delivery-1' } as ReturnType<
+      typeof mockCreateDelivery
+    > extends Promise<infer R>
+      ? R
+      : never);
     mockRetryDelivery.mockResolvedValue(undefined);
   });
 
@@ -217,7 +226,11 @@ describe('#854 retry / no-retry spec', () => {
     const adapter = makeAdapter('email', { status: 'sent', providerMessageId: 'ok' });
 
     const p = notifyTransactionStatusUpdate(
-      { transaction: { ...completedTx, userAddress: 'GRETRYTESTER' }, previousStatus: 'pending', source: 'webhook' },
+      {
+        transaction: { ...completedTx, userAddress: 'GRETRYTESTER' },
+        previousStatus: 'pending',
+        source: 'webhook',
+      },
       [adapter],
     );
     await vi.runAllTimersAsync();
@@ -234,7 +247,11 @@ describe('#854 retry / no-retry spec', () => {
     const adapter = makeAdapter('email', { status: 'skipped', errorMessage: 'endpoint missing' });
 
     const p = notifyTransactionStatusUpdate(
-      { transaction: { ...completedTx, userAddress: 'GRETRYTESTER' }, previousStatus: 'pending', source: 'webhook' },
+      {
+        transaction: { ...completedTx, userAddress: 'GRETRYTESTER' },
+        previousStatus: 'pending',
+        source: 'webhook',
+      },
       [adapter],
     );
     await vi.runAllTimersAsync();
@@ -247,11 +264,17 @@ describe('#854 retry / no-retry spec', () => {
 
   it('fails all MAX_ATTEMPTS (3) → 2 retry calls, final status failed', async () => {
     mockGetPrefs.mockResolvedValue(emailOnlyPrefs());
-    const alwaysFail = vi.fn().mockResolvedValue({ status: 'failed', errorMessage: 'permanent error' });
+    const alwaysFail = vi
+      .fn()
+      .mockResolvedValue({ status: 'failed', errorMessage: 'permanent error' });
     const adapter: ChannelAdapter = { channel: 'email', send: alwaysFail };
 
     const p = notifyTransactionStatusUpdate(
-      { transaction: { ...completedTx, userAddress: 'GRETRYTESTER' }, previousStatus: 'pending', source: 'webhook' },
+      {
+        transaction: { ...completedTx, userAddress: 'GRETRYTESTER' },
+        previousStatus: 'pending',
+        source: 'webhook',
+      },
       [adapter],
     );
     await vi.runAllTimersAsync();
@@ -260,11 +283,7 @@ describe('#854 retry / no-retry spec', () => {
     expect(alwaysFail).toHaveBeenCalledTimes(3); // initial + 2 retries = MAX_ATTEMPTS
     expect(mockRetryDelivery).toHaveBeenCalledTimes(2);
 
-    const lastRetryArgs = mockRetryDelivery.mock.calls[1] as [
-      string,
-      DeliveryResult,
-      number,
-    ];
+    const lastRetryArgs = mockRetryDelivery.mock.calls[1] as [string, DeliveryResult, number];
     expect(lastRetryArgs[1].status).toBe('failed');
     expect(lastRetryArgs[2]).toBe(3); // attempt count
   });
@@ -280,7 +299,11 @@ describe('#854 retry / no-retry spec', () => {
     const adapter: ChannelAdapter = { channel: 'email', send: sendMock };
 
     const p = notifyTransactionStatusUpdate(
-      { transaction: { ...completedTx, userAddress: 'GRETRYTESTER' }, previousStatus: 'pending', source: 'webhook' },
+      {
+        transaction: { ...completedTx, userAddress: 'GRETRYTESTER' },
+        previousStatus: 'pending',
+        source: 'webhook',
+      },
       [adapter],
     );
     await vi.runAllTimersAsync();

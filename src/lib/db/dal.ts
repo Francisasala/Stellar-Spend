@@ -220,7 +220,10 @@ export const dal: DAL = {
       const result = await timedQuery(sql, [ids]);
       return result.rows.map(rowToTransaction);
     } catch (err) {
-      throw new DatabaseError(`Failed to get ${ids.length} transactions: ${(err as Error).message}`, err);
+      throw new DatabaseError(
+        `Failed to get ${ids.length} transactions: ${(err as Error).message}`,
+        err,
+      );
     }
   },
 

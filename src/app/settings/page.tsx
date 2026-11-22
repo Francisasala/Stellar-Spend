@@ -32,14 +32,14 @@ function SectionFallback() {
 // ---------------------------------------------------------------------------
 // Lazy-loaded heavy settings sections (#1437)
 // ---------------------------------------------------------------------------
-const SecuritySettings = dynamic(
-  () => import('./components').then((mod) => mod.SecuritySettings),
-  { ssr: false, loading: () => <SectionFallback /> }
-);
+const SecuritySettings = dynamic(() => import('./components').then((mod) => mod.SecuritySettings), {
+  ssr: false,
+  loading: () => <SectionFallback />,
+});
 
 const PrivacySyncSettings = dynamic(
   () => import('./components').then((mod) => mod.PrivacySyncSettings),
-  { ssr: false, loading: () => <SectionFallback /> }
+  { ssr: false, loading: () => <SectionFallback /> },
 );
 
 // ---------------------------------------------------------------------------

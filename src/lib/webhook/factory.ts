@@ -1,6 +1,6 @@
 /**
  * Webhook Factory and Configuration System
- * 
+ *
  * Provides factory methods for creating and configuring the webhook system.
  */
 
@@ -23,33 +23,33 @@ export interface WebhookSystemConfig {
 
 export class WebhookFactory {
   private registry: WebhookRegistryImpl;
-  
+
   constructor(private config: WebhookSystemConfig = {}) {
     this.registry = new WebhookRegistryImpl();
     this.initialize();
   }
-  
+
   /**
    * Initialize the webhook system
    */
   private initialize(): void {
     // Register configured providers
     this.registerProviders();
-    
+
     // Register configured handlers
     this.registerHandlers();
-    
+
     // Register default handlers if requested
     if (this.config.registerDefaultHandlers !== false) {
       this.registerDefaultHandlers();
     }
-    
+
     logger.info('webhook.system.initialized', {
       providers: this.registry.getProviderIds(),
       eventTypes: this.registry.getEventTypes(),
     });
   }
-  
+
   /**
    * Register all configured providers
    */
@@ -63,7 +63,7 @@ export class WebhookFactory {
         displayName: paycrestProvider.displayName,
       });
     }
-    
+
     // Register additional providers
     for (const provider of this.config.providers || []) {
       this.registry.registerProvider(provider);
@@ -73,7 +73,7 @@ export class WebhookFactory {
       });
     }
   }
-  
+
   /**
    * Register all configured handlers
    */
@@ -86,7 +86,7 @@ export class WebhookFactory {
       });
     }
   }
-  
+
   /**
    * Register default webhook handlers
    */
@@ -100,30 +100,26 @@ export class WebhookFactory {
       TransactionUpdateHandler.createPaycrestHandler('payment_order.failed', 0),
       TransactionUpdateHandler.createPaycrestHandler('payment_order.cancelled', 0),
     ];
-    
+
     for (const handler of defaultHandlers) {
       this.registry.registerHandler(handler);
     }
   }
-  
+
   /**
    * Get the webhook registry
    */
   getRegistry(): WebhookRegistryImpl {
     return this.registry;
   }
-  
+
   /**
    * Process webhook for a specific provider
    */
-  async processWebhook(
-    providerId: string,
-    rawBody: string,
-    headers: Record<string, string>,
-  ) {
+  async processWebhook(providerId: string, rawBody: string, headers: Record<string, string>) {
     return this.registry.processWebhook(providerId, rawBody, headers);
   }
-  
+
   /**
    * Validate webhook signature for a provider
    */
@@ -137,20 +133,20 @@ export class WebhookFactory {
     if (!provider) {
       return { valid: false, reason: `Provider not found: ${providerId}` };
     }
-    
+
     // Special case for Paycrest provider
     if (providerId === 'paycrest' && provider instanceof PaycrestWebhookProvider) {
       const paycrestProvider = provider as PaycrestWebhookProvider;
       return paycrestProvider.validateWebhook(rawBody, signature, headers);
     }
-    
+
     // Generic signature validation for other providers
     try {
       const secret = this.getProviderSecret(providerId);
       if (!secret) {
         return { valid: false, reason: 'No webhook secret configured' };
       }
-      
+
       const isValid = await provider.validateSignature(rawBody, signature, secret);
       return { valid: isValid, reason: isValid ? undefined : 'Invalid signature' };
     } catch (error) {
@@ -160,7 +156,7 @@ export class WebhookFactory {
       };
     }
   }
-  
+
   /**
    * Get webhook secret for a provider
    */
@@ -172,7 +168,7 @@ export class WebhookFactory {
         return undefined;
     }
   }
-  
+
   /**
    * Create default webhook system configuration
    */
@@ -186,7 +182,7 @@ export class WebhookFactory {
       registerDefaultHandlers: true,
     };
   }
-  
+
   /**
    * Create a webhook system with default configuration
    */
@@ -194,7 +190,7 @@ export class WebhookFactory {
     const config = this.createDefaultConfig();
     return new WebhookFactory(config);
   }
-  
+
   /**
    * Create a webhook system from environment variables
    */
@@ -202,20 +198,20 @@ export class WebhookFactory {
     const config = this.createDefaultConfig(process.env);
     return new WebhookFactory(config);
   }
-  
+
   /**
    * Check if all required configuration is present
    */
   validateConfiguration(): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
+
     // Check Paycrest configuration
     if (this.config.paycrest) {
       if (!this.config.paycrest.webhookSecret) {
         errors.push('Paycrest webhook secret is required');
       }
     }
-    
+
     return {
       valid: errors.length === 0,
       errors,

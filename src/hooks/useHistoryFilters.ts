@@ -85,7 +85,10 @@ export function useHistoryFilters(
 
   const resetFilters = () => setFilters({ ...DEFAULT_HISTORY_FILTERS, ...initialFilters });
 
-  const filtered = useMemo(() => applyHistoryFilters(transactions, filters), [transactions, filters]);
+  const filtered = useMemo(
+    () => applyHistoryFilters(transactions, filters),
+    [transactions, filters],
+  );
 
   return {
     filters,

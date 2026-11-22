@@ -162,10 +162,7 @@ describe('Skeleton Consolidation - Shared Primitive Pattern', () => {
 
   describe('Accessibility of Consolidated Primitive', () => {
     it('all skeleton variants inherit aria-busy and role from SkeletonBase', () => {
-      const variants = [
-        <FormCardSkeleton key="form" />,
-        <WalletConnectionSkeleton key="wallet" />,
-      ];
+      const variants = [<FormCardSkeleton key="form" />, <WalletConnectionSkeleton key="wallet" />];
 
       variants.forEach((variant) => {
         const { container } = render(variant);

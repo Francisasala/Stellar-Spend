@@ -1,4 +1,4 @@
-import { randomHex } from "@/lib/crypto/ids";
+import { randomHex } from '@/lib/crypto/ids';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '../logger';
 import { ERROR_CODES, ERROR_MESSAGES, getStatusCode } from './error-codes';

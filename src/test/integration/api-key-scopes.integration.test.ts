@@ -11,12 +11,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import {
-  getRequiredScope,
-  hasRequiredScope,
-  SCOPE_CATALOG,
-  type Scope,
-} from '@/lib/api-keys';
+import { getRequiredScope, hasRequiredScope, SCOPE_CATALOG, type Scope } from '@/lib/api-keys';
 import { enforceScope } from '@/lib/middleware';
 import type { ApiKeyRecord, ApiKeyScope } from '@/lib/api-keys/types';
 import { NextRequest } from 'next/server';

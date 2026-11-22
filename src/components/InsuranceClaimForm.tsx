@@ -5,9 +5,7 @@ import { useForm } from '@/hooks/useForm';
 import { randomHexUpper } from '@/lib/crypto/ids';
 import { apiPatch } from '@/lib/api/client';
 import { useTranslations } from '@/hooks/useTranslations';
-import {
-  type InsuranceClaimFormProps,
-} from './insurance-claim/types';
+import { type InsuranceClaimFormProps } from './insurance-claim/types';
 import { ClaimFormHeader } from './insurance-claim/ClaimFormHeader';
 import { EligibilityState } from './insurance-claim/EligibilityState';
 import { ClaimFormFields } from './insurance-claim/ClaimFormFields';
@@ -57,9 +55,7 @@ export function InsuranceClaimForm({
 
       if (insuranceId.startsWith(MOCK_INSURANCE_ID_PREFIX)) {
         await new Promise((r) => setTimeout(r, MOCK_SUBMIT_DELAY_MS));
-        onSuccess(
-          `CLAIM-${Date.now()}-${randomHexUpper(CLAIM_ID_RANDOM_LENGTH)}`,
-        );
+        onSuccess(`CLAIM-${Date.now()}-${randomHexUpper(CLAIM_ID_RANDOM_LENGTH)}`);
         return;
       }
 
@@ -72,8 +68,7 @@ export function InsuranceClaimForm({
         },
       );
 
-      const claimId =
-        data?.claim?.claim_id ?? data?.claim?.id ?? CLAIM_ID_FALLBACK;
+      const claimId = data?.claim?.claim_id ?? data?.claim?.id ?? CLAIM_ID_FALLBACK;
       onSuccess(claimId);
     },
   });
@@ -145,8 +140,8 @@ export function InsuranceClaimForm({
 
       <div className="relative z-10 w-full max-w-md border border-[#333333] bg-[#0a0a0a] p-6 flex flex-col gap-5 shadow-2xl">
         <p id="claim-form-description" className="sr-only">
-          File an insurance claim for this transaction. Use Tab to move between
-          fields and Escape to cancel.
+          File an insurance claim for this transaction. Use Tab to move between fields and Escape to
+          cancel.
         </p>
         <ClaimFormHeader coverage={coverage} onCancel={onCancel} />
 

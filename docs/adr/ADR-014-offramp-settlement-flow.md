@@ -30,6 +30,7 @@ The offramp settlement flow follows a strict linear pipeline with compensating b
 
 **Stage 1 — Quote (`POST /api/offramp/quote`):**
 The client submits `{ amount, currency, feeMethod, sourceAddress }`. The server:
+
 1. Validates the currency via `isSupportedCurrency`.
 2. Optionally screens the source address via `screenAddress`.
 3. Calculates the bridge amount using `calculateBridgeAmount` (applying the `STABLECOIN_FEE` of `0.5` for stablecoin fee methods).
@@ -41,6 +42,7 @@ The quote is valid for 300 seconds and is the basis for the next stage. The quot
 
 **Stage 2 — Execute Payout (`POST /api/offramp/execute-payout`):**
 The client submits `{ userAddress, amount, currency, beneficiary, receiveAmount, feeMethod }`. The server:
+
 1. Wraps the entire handler in `withIdempotency` to protect against duplicate execution on network retries.
 2. Validates the body against `executePayoutSchema`.
 3. Checks KYC limits via `KYCLimitService.canTransact`.
@@ -60,6 +62,7 @@ Once the bridge completes, the server creates a Paycrest payout order via `POST 
 
 **Stage 5 — Reconciliation (`POST /api/offramp/reconciliation`):**
 The reconciliation pipeline (`src/lib/reconciliation.ts`) cross-references the transaction's `stellarTxHash`, `baseTxHash`, and `paycrestOrderId` against their respective external systems:
+
 - `fetchStellarTransaction` queries the Stellar Horizon API.
 - `fetchBaseTransaction` queries the Base EVM RPC.
 - `fetchPaycrestOrder` queries the Paycrest API.
@@ -96,19 +99,20 @@ The system has three distinct compensation paths, each with its own entry point 
 
 **Timeout thresholds** (from `src/lib/transaction-timeout.ts`):
 
-| Stage | Timeout |
-|---|---|
-| `draft` | 10 minutes |
-| `quoted` | 10 minutes |
-| `source_tx_submitted` | 15 minutes |
-| `bridge_pending` | 60 minutes (`BRIDGE_TIMEOUT_MS`) |
-| `bridge_completed` | 5 minutes |
-| `payout_order_created` | 10 minutes |
-| `destination_tx_submitted` | 15 minutes |
-| `payout_pending` | 45 minutes (`PAYCREST_TIMEOUT_MS`) |
-| Standard (default) | 30 minutes (`TRANSACTION_TIMEOUT_MS`) |
+| Stage                      | Timeout                               |
+| -------------------------- | ------------------------------------- |
+| `draft`                    | 10 minutes                            |
+| `quoted`                   | 10 minutes                            |
+| `source_tx_submitted`      | 15 minutes                            |
+| `bridge_pending`           | 60 minutes (`BRIDGE_TIMEOUT_MS`)      |
+| `bridge_completed`         | 5 minutes                             |
+| `payout_order_created`     | 10 minutes                            |
+| `destination_tx_submitted` | 15 minutes                            |
+| `payout_pending`           | 45 minutes (`PAYCREST_TIMEOUT_MS`)    |
+| Standard (default)         | 30 minutes (`TRANSACTION_TIMEOUT_MS`) |
 
 **Behavior:**
+
 - `cancelTimedOutTransaction(transactionId)` sets the transaction `status: 'failed'` with error `"Transaction timed out"`, then calls `processRefund(transactionId, 'timeout')`.
 - `checkAndCancelTimedOutTransactions(userAddress)` scans all pending transactions for a user and cancels each timed-out one.
 - **Stall detection** (`isStageStalled` / `handleStall`): If a transaction is stalled at a `SAFE_STAGES` stage (`draft`, `quoted`, `source_tx_submitted`, `bridge_pending`), it is auto-retried. If stalled at an `UNSAFE_STAGES` stage (`bridge_completed`, `payout_order_created`, `destination_tx_submitted`, `payout_pending`), it is flagged for manual intervention.
@@ -121,11 +125,13 @@ The system has three distinct compensation paths, each with its own entry point 
 **Trigger:** A transaction is eligible for refund — either manually requested by the user or automatically triggered by a timeout.
 
 **Eligibility** (from `isRefundEligible`):
+
 - `status === 'failed'` → eligible
 - `payoutStatus === 'expired'` or `payoutStatus === 'refunded'` → eligible
 - `status === 'completed'` → **not** eligible
 
 **Behavior:**
+
 - `processRefund(transactionId, reason, partial)` validates eligibility, calculates the refund amount (full by default; partial deducts 0.5% processing fee), sets `status: 'failed'` and `payoutStatus: 'refunded'`, emits a notification, and transitions the compensation state machine `pending` → `completed`.
 - `processEligibleRefunds(userAddress)` bulk-processes all eligible refunds for a user.
 - The endpoint is wrapped in `withIdempotency` to prevent duplicate refund processing.
@@ -137,11 +143,13 @@ The system has three distinct compensation paths, each with its own entry point 
 **Trigger:** A completed transaction requires reversal (e.g., dispute, error). This is a **manual, approval-required** path.
 
 **Eligibility:**
+
 - `TransactionStorage.isReversalEligible(tx)` requires `status === 'completed'` and no existing reversal.
 - The reversal must be within a 24-hour window (`REVERSAL_WINDOW_MS`).
 - The reversal amount must be positive and ≤ the transaction amount.
 
 **Behavior:**
+
 - A reversal request is created with `status: 'pending'`, a 1% reversal fee (`REVERSAL_FEE_RATE = 0.01`) is calculated, and `TransactionStorage.reverse()` sets the transaction's `reversal` field and changes `status` to `reversed` (full) or `partially_reversed` (partial).
 - The request must be reviewed and approved via `PATCH /api/offramp/reverse` with `{ requestId, action: 'approve' | 'reject' }`.
 - Approval transitions the compensation state machine through `pending` → `approved` → `completed`. Rejection transitions `pending` → `rejected`.
@@ -156,13 +164,13 @@ The system has three distinct compensation paths, each with its own entry point 
 
 All three compensation paths share a single state vocabulary defined in `src/lib/compensation-state-machine.ts`:
 
-| Status | Reversal | Refund | Timeout |
-|---|---|---|---|
-| `pending` | Initial state | Initial state | Initial state |
-| `approved` | Required intermediate | N/A | N/A |
-| `rejected` | Terminal | N/A | N/A |
-| `completed` | Terminal (after approval) | Terminal | Terminal |
-| `failed` | Terminal | Terminal (on error) | Terminal (on refund failure) |
+| Status      | Reversal                  | Refund              | Timeout                      |
+| ----------- | ------------------------- | ------------------- | ---------------------------- |
+| `pending`   | Initial state             | Initial state       | Initial state                |
+| `approved`  | Required intermediate     | N/A                 | N/A                          |
+| `rejected`  | Terminal                  | N/A                 | N/A                          |
+| `completed` | Terminal (after approval) | Terminal            | Terminal                     |
+| `failed`    | Terminal                  | Terminal (on error) | Terminal (on refund failure) |
 
 ### 4. Sequence Diagram
 
@@ -297,6 +305,7 @@ All mutating endpoints that could produce duplicate side effects are wrapped in 
 - `POST /api/offramp/reconciliation/manual` — prevents duplicate manual actions.
 
 When a client retries with the same idempotency key:
+
 - If the key is in-progress (`status = 'in_progress'`), the server returns `409 Conflict`.
 - If the key is complete, the server replays the stored response with `Idempotency-Status: replayed`.
 - `5xx` responses are **not** cached, so clients can safely retry after transient failures.
@@ -332,18 +341,18 @@ Reconciliation (`src/lib/reconciliation.ts`) operates as the final consistency c
 
 #### 5e. Known failure modes and their handling
 
-| Failure mode | Detection | Resolution |
-|---|---|---|
-| Bridge tx timeout | `isTransactionTimedOut` → `bridge` type | Auto-timeout → `processRefund('timeout')` → compensation `pending→completed` |
-| Paycrest order timeout | `isTransactionTimedOut` → `paycrest` type | Auto-timeout → `processRefund('timeout')` → compensation `pending→completed` |
-| Duplicate execute-payout | Idempotency key replay | Returns stored `{ id, status: 'pending' }` without creating new record |
-| Duplicate Paycrest order | Idempotency key replay | Returns stored Paycrest order response |
-| Bridge stalls at safe stage | `handleStall` → `SAFE_STAGES` | Auto-retry with `status: 'pending'` and error note |
-| Bridge stalls at unsafe stage | `handleStall` → `UNSAFE_STAGES` | Flagged for manual intervention |
-| Reconciliation mismatch | `generateReconciliationReport` → discrepancy types | Operator uses `POST /api/offramp/reconciliation/manual` with `retry`, `mark_resolved`, or `investigate` |
-| Reversal outside 24h window | `isWithinReversalWindow` check | Returns validation error: "Outside 24-hour reversal window" |
-| Reversal of non-completed tx | `isReversalEligible` check | Returns validation error: "Transaction is not eligible for reversal" |
-| Refund of completed tx | `isRefundEligible` check | Returns `"Transaction not eligible for refund"` |
+| Failure mode                  | Detection                                          | Resolution                                                                                              |
+| ----------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Bridge tx timeout             | `isTransactionTimedOut` → `bridge` type            | Auto-timeout → `processRefund('timeout')` → compensation `pending→completed`                            |
+| Paycrest order timeout        | `isTransactionTimedOut` → `paycrest` type          | Auto-timeout → `processRefund('timeout')` → compensation `pending→completed`                            |
+| Duplicate execute-payout      | Idempotency key replay                             | Returns stored `{ id, status: 'pending' }` without creating new record                                  |
+| Duplicate Paycrest order      | Idempotency key replay                             | Returns stored Paycrest order response                                                                  |
+| Bridge stalls at safe stage   | `handleStall` → `SAFE_STAGES`                      | Auto-retry with `status: 'pending'` and error note                                                      |
+| Bridge stalls at unsafe stage | `handleStall` → `UNSAFE_STAGES`                    | Flagged for manual intervention                                                                         |
+| Reconciliation mismatch       | `generateReconciliationReport` → discrepancy types | Operator uses `POST /api/offramp/reconciliation/manual` with `retry`, `mark_resolved`, or `investigate` |
+| Reversal outside 24h window   | `isWithinReversalWindow` check                     | Returns validation error: "Outside 24-hour reversal window"                                             |
+| Reversal of non-completed tx  | `isReversalEligible` check                         | Returns validation error: "Transaction is not eligible for reversal"                                    |
+| Refund of completed tx        | `isRefundEligible` check                           | Returns `"Transaction not eligible for refund"`                                                         |
 
 ---
 

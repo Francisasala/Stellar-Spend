@@ -336,7 +336,9 @@ describe('daily-reconciliation cron route (#1203)', () => {
   it('is a thin wrapper that imports runReconciliation', async () => {
     const routePath = require.resolve('../../app/api/cron/daily-reconciliation/route.ts');
     const src = require('fs').readFileSync(routePath, 'utf8');
-    expect(src).toMatch(/import\s+\{[^}]*runReconciliation[^}]*\}\s+from\s+['"]@\/lib\/reconciliation['"]/);
+    expect(src).toMatch(
+      /import\s+\{[^}]*runReconciliation[^}]*\}\s+from\s+['"]@\/lib\/reconciliation['"]/,
+    );
   });
 
   it('runReconciliation defaults windowEnd to now and windowStart to 24h earlier', async () => {

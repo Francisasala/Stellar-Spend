@@ -23,9 +23,7 @@ describe('command-registry – ICommandRegistry interface (#1182)', () => {
 
   it('registry is testable without a hook (plain object satisfies ICommandRegistry)', () => {
     const stub: ICommandRegistry = {
-      getCommands: () => [
-        { id: 'test-cmd', label: 'Test', action: vi.fn() },
-      ],
+      getCommands: () => [{ id: 'test-cmd', label: 'Test', action: vi.fn() }],
     };
     expect(stub.getCommands()).toHaveLength(1);
     expect(stub.getCommands()[0].id).toBe('test-cmd');

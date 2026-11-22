@@ -1,9 +1,5 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
-import type {
-  QRCodeData,
-  QRCodeOptions,
-  GeneratedQRCode,
-} from './qrcode';
+import type { QRCodeData, QRCodeOptions, GeneratedQRCode } from './qrcode';
 
 describe('QRCode types', () => {
   it('QRCodeData has all required fields', () => {

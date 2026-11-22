@@ -159,7 +159,9 @@ test.describe('Wallet connect flow', () => {
 
     // Verify error message or that system still allows local disconnect
     const errorMessage = page.getByRole('alert');
-    const stillConnectedOrClear = page.getByText(/GBBD...FLA5/i).or(page.getByText(/connection.*error|failed.*disconnect/i));
+    const stillConnectedOrClear = page
+      .getByText(/GBBD...FLA5/i)
+      .or(page.getByText(/connection.*error|failed.*disconnect/i));
 
     // Should show either error or be disconnected (depending on implementation)
     await expect(stillConnectedOrClear.or(errorMessage)).toBeTruthy();

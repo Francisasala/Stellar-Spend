@@ -349,7 +349,6 @@ export async function applyRateLimit(
   return null;
 }
 
-
 // ── Endpoint-based rate limiting (compatibility with old rate-limiting.ts) ───
 
 /**
@@ -415,7 +414,9 @@ export const RATE_LIMIT_CONFIGS: Record<string, { windowMs: number; maxRequests:
 /**
  * Get rate limit config for an endpoint
  */
-export function getRateLimitConfig(endpoint: string): { windowMs: number; maxRequests: number } | null {
+export function getRateLimitConfig(
+  endpoint: string,
+): { windowMs: number; maxRequests: number } | null {
   // Exact match
   if (RATE_LIMIT_CONFIGS[endpoint]) {
     return RATE_LIMIT_CONFIGS[endpoint];

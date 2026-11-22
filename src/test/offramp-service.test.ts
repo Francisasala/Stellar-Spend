@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fetchPaycrestQuote, buildQuote, calculateBridgeAmount } from '@/lib/offramp/utils/quote-fetcher';
+import {
+  fetchPaycrestQuote,
+  buildQuote,
+  calculateBridgeAmount,
+} from '@/lib/offramp/utils/quote-fetcher';
 
 describe('Offramp Service - Quote Fetcher', () => {
   beforeEach(() => {
@@ -75,27 +79,39 @@ describe('Offramp Service - Quote Fetcher', () => {
     });
 
     it('throws error if quote contains NaN values', () => {
-      expect(() => buildQuote('NaN', 450, 'NGN')).toThrow('Invalid quote: NaN or negative values detected');
+      expect(() => buildQuote('NaN', 450, 'NGN')).toThrow(
+        'Invalid quote: NaN or negative values detected',
+      );
     });
 
     it('throws error if quote contains negative destination amount', () => {
-      expect(() => buildQuote('-100', 450, 'NGN')).toThrow('Invalid quote: NaN or negative values detected');
+      expect(() => buildQuote('-100', 450, 'NGN')).toThrow(
+        'Invalid quote: NaN or negative values detected',
+      );
     });
 
     it('throws error if quote contains negative rate', () => {
-      expect(() => buildQuote('100', -450, 'NGN')).toThrow('Invalid quote: NaN or negative values detected');
+      expect(() => buildQuote('100', -450, 'NGN')).toThrow(
+        'Invalid quote: NaN or negative values detected',
+      );
     });
 
     it('throws error if quote contains negative bridge fee', () => {
-      expect(() => buildQuote('100', 450, 'NGN', '-10')).toThrow('Invalid quote: NaN or negative values detected');
+      expect(() => buildQuote('100', 450, 'NGN', '-10')).toThrow(
+        'Invalid quote: NaN or negative values detected',
+      );
     });
 
     it('throws error if quote contains negative payout fee', () => {
-      expect(() => buildQuote('100', 450, 'NGN', '10', '-5')).toThrow('Invalid quote: NaN or negative values detected');
+      expect(() => buildQuote('100', 450, 'NGN', '10', '-5')).toThrow(
+        'Invalid quote: NaN or negative values detected',
+      );
     });
 
     it('throws error if rate is zero', () => {
-      expect(() => buildQuote('100', 0, 'NGN')).toThrow('Invalid quote: NaN or negative values detected');
+      expect(() => buildQuote('100', 0, 'NGN')).toThrow(
+        'Invalid quote: NaN or negative values detected',
+      );
     });
 
     it('accepts very large decimal values', () => {
@@ -127,7 +143,9 @@ describe('Offramp Service - Quote Fetcher', () => {
     });
 
     it('throws error when receiveAmount is NaN', async () => {
-      await expect(fetchPaycrestQuote('not-a-number', 'NGN')).rejects.toThrow('Invalid receiveAmount');
+      await expect(fetchPaycrestQuote('not-a-number', 'NGN')).rejects.toThrow(
+        'Invalid receiveAmount',
+      );
     });
   });
 
@@ -178,8 +196,9 @@ describe('Offramp Service - Quote Fetcher', () => {
 
       testCases.forEach(({ error, isValidationError }) => {
         expect(
-          (error.includes('Invalid') || error.includes('less than') || error.includes('required'))
-            === isValidationError,
+          (error.includes('Invalid') ||
+            error.includes('less than') ||
+            error.includes('required')) === isValidationError,
         ).toBe(true);
       });
     });

@@ -46,7 +46,9 @@
       "eslint --fix --max-warnings 50",
       "prettier --write"
     ],
-    "*.{json,md,css,scss,yml,yaml,html}": ["prettier --write"]
+    "*.{json,md,css,scss,yml,yaml,html}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "3.758.0",

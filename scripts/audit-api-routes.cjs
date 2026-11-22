@@ -36,9 +36,7 @@ function toRoutePath(routeFile) {
     '/' +
     rel
       .split('/')
-      .map((segment) =>
-        segment.startsWith('[') && segment.endsWith(']') ? ':param' : segment,
-      )
+      .map((segment) => (segment.startsWith('[') && segment.endsWith(']') ? ':param' : segment))
       .join('/')
   );
 }
@@ -109,8 +107,7 @@ function isReferenced(routePath) {
     .join('/');
   const re = new RegExp(`/${pattern}(?![\\w-])`);
   return sourceContents.some(
-    ({ file, content }) =>
-      !file.includes(path.join('src', 'app', 'api')) && re.test(content),
+    ({ file, content }) => !file.includes(path.join('src', 'app', 'api')) && re.test(content),
   );
 }
 
@@ -146,7 +143,9 @@ if (undocumented.length > 0) {
       '  webhooks, admin tooling) before treating any of these as dead code:\n',
   );
   for (const r of undocumented) {
-    console.log(`  ${r.routePath.padEnd(50)} [${r.methods.join(', ') || 'no exported method'}]  ${r.file}`);
+    console.log(
+      `  ${r.routePath.padEnd(50)} [${r.methods.join(', ') || 'no exported method'}]  ${r.file}`,
+    );
   }
   console.log('');
 } else {
@@ -172,7 +171,9 @@ if (candidatesForRemoval.length > 0) {
       '  (cron, webhooks, admin tooling, third-party clients) before deleting:\n',
   );
   for (const r of candidatesForRemoval) {
-    console.log(`  ${r.routePath.padEnd(50)} [${r.methods.join(', ') || 'no exported method'}]  ${r.file}`);
+    console.log(
+      `  ${r.routePath.padEnd(50)} [${r.methods.join(', ') || 'no exported method'}]  ${r.file}`,
+    );
   }
   console.log('');
 } else {

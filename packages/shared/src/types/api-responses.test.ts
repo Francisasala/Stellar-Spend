@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  TradeState,
-  BridgeStatus,
-  PayoutStatus,
-  TransactionStatus,
-} from './api-responses';
+import { TradeState, BridgeStatus, PayoutStatus, TransactionStatus } from './api-responses';
 import type {
   ApiResponse,
   ApiError,
@@ -248,8 +243,20 @@ describe('TradeStatus type', () => {
 
 describe('BridgeTransferRequest type', () => {
   it('has all required fields', () => {
-    const sourceToken: TokenInfo = { symbol: 'USDC', name: 'USD Coin', decimals: 7, contract: 'G1', chain: 'STELLAR' };
-    const destinationToken: TokenInfo = { symbol: 'USDC', name: 'USD Coin', decimals: 6, contract: '0x1', chain: 'BASE' };
+    const sourceToken: TokenInfo = {
+      symbol: 'USDC',
+      name: 'USD Coin',
+      decimals: 7,
+      contract: 'G1',
+      chain: 'STELLAR',
+    };
+    const destinationToken: TokenInfo = {
+      symbol: 'USDC',
+      name: 'USD Coin',
+      decimals: 6,
+      contract: '0x1',
+      chain: 'BASE',
+    };
     const req: BridgeTransferRequest = {
       amount: '100',
       sourceToken,
@@ -280,7 +287,12 @@ describe('PayoutOrderRequest type', () => {
       token: 'USDC',
       network: 'BASE',
       rate: 1582,
-      recipient: { institution: 'GTB', accountIdentifier: '0123456789', accountName: 'John Doe', currency: 'NGN' },
+      recipient: {
+        institution: 'GTB',
+        accountIdentifier: '0123456789',
+        accountName: 'John Doe',
+        currency: 'NGN',
+      },
       reference: 'ref_001',
       returnAddress: '0xAAAA',
     };
@@ -384,8 +396,12 @@ describe('FeeStructure type', () => {
 describe('AvailableCurrencies type', () => {
   it('has all required fields', () => {
     const available: AvailableCurrencies = {
-      fiatCurrencies: [{ code: 'NGN', name: 'Nigerian Naira', symbol: '₦', decimals: 2, isStablecoin: false }],
-      cryptoTokens: [{ symbol: 'USDC', name: 'USD Coin', decimals: 7, contract: 'G1', chain: 'STELLAR' }],
+      fiatCurrencies: [
+        { code: 'NGN', name: 'Nigerian Naira', symbol: '₦', decimals: 2, isStablecoin: false },
+      ],
+      cryptoTokens: [
+        { symbol: 'USDC', name: 'USD Coin', decimals: 7, contract: 'G1', chain: 'STELLAR' },
+      ],
       supportedPairs: [{ source: 'USDC', destination: 'NGN' }],
     };
     expect(available.fiatCurrencies).toHaveLength(1);

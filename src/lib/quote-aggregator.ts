@@ -46,9 +46,7 @@ export function getOrderedProviders(
   requested: QuoteProvider[] = [...PROVIDER_FALLBACK_ORDER],
 ): QuoteProvider[] {
   const requestedSet = new Set(requested);
-  return PROVIDER_FALLBACK_ORDER.filter(
-    (p) => requestedSet.has(p) && PROVIDER_CONFIGS[p].enabled,
-  );
+  return PROVIDER_FALLBACK_ORDER.filter((p) => requestedSet.has(p) && PROVIDER_CONFIGS[p].enabled);
 }
 
 type QuoteStrategy = (receiveAmount: string, currency: string) => Promise<ProviderQuote>;

@@ -61,10 +61,7 @@ export const NotificationPanel = forwardRef<HTMLDivElement, NotificationPanelPro
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#333333]">
-          <h3
-            id={titleId}
-            className="text-sm font-semibold text-white tracking-wide"
-          >
+          <h3 id={titleId} className="text-sm font-semibold text-white tracking-wide">
             NOTIFICATIONS
           </h3>
           {events.length > 0 && (
@@ -94,9 +91,7 @@ export const NotificationPanel = forwardRef<HTMLDivElement, NotificationPanelPro
               <ListEmptyState
                 title="No notifications yet"
                 description="Stay tuned for updates on your transactions"
-                icon={
-                  <Icon name="bell" size={32} strokeWidth={1.5} />
-                }
+                icon={<Icon name="bell" size={32} strokeWidth={1.5} />}
               />
             }
           >

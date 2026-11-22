@@ -59,8 +59,12 @@ describe('useTheme', () => {
   it('should toggle from dark to light', () => {
     const { result } = renderHook(() => useTheme());
 
-    act(() => { result.current.setTheme('dark'); });
-    act(() => { result.current.toggleTheme(); });
+    act(() => {
+      result.current.setTheme('dark');
+    });
+    act(() => {
+      result.current.toggleTheme();
+    });
 
     expect(result.current.theme).toBe('light');
     expect(localStorage.getItem('theme')).toBe('light');
@@ -69,8 +73,12 @@ describe('useTheme', () => {
   it('should toggle from light to dark', () => {
     const { result } = renderHook(() => useTheme());
 
-    act(() => { result.current.setTheme('light'); });
-    act(() => { result.current.toggleTheme(); });
+    act(() => {
+      result.current.setTheme('light');
+    });
+    act(() => {
+      result.current.toggleTheme();
+    });
 
     expect(result.current.theme).toBe('dark');
   });
@@ -79,7 +87,9 @@ describe('useTheme', () => {
     mockMatchMedia(true); // system prefers dark
     const { result } = renderHook(() => useTheme());
 
-    act(() => { result.current.setTheme('system'); });
+    act(() => {
+      result.current.setTheme('system');
+    });
 
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
@@ -88,7 +98,9 @@ describe('useTheme', () => {
     mockMatchMedia(false); // system prefers light
     const { result } = renderHook(() => useTheme());
 
-    act(() => { result.current.setTheme('system'); });
+    act(() => {
+      result.current.setTheme('system');
+    });
 
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });

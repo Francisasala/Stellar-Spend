@@ -18,13 +18,7 @@ describe('NotificationCenter Refactor - Presentational Component Separation', ()
     };
 
     it('renders notification without data-fetching', () => {
-      render(
-        <NotificationItem
-          event={mockEvent}
-          onClick={vi.fn()}
-          onRemove={vi.fn()}
-        />,
-      );
+      render(<NotificationItem event={mockEvent} onClick={vi.fn()} onRemove={vi.fn()} />);
 
       expect(screen.getByText('Transaction Complete')).toBeInTheDocument();
       expect(screen.getByText('Your payment has been processed')).toBeInTheDocument();
@@ -32,13 +26,7 @@ describe('NotificationCenter Refactor - Presentational Component Separation', ()
 
     it('calls onClick with event data on click', () => {
       const onClick = vi.fn();
-      render(
-        <NotificationItem
-          event={mockEvent}
-          onClick={onClick}
-          onRemove={vi.fn()}
-        />,
-      );
+      render(<NotificationItem event={mockEvent} onClick={onClick} onRemove={vi.fn()} />);
 
       fireEvent.click(screen.getByText('Transaction Complete'));
       expect(onClick).toHaveBeenCalledWith(mockEvent);
@@ -46,13 +34,7 @@ describe('NotificationCenter Refactor - Presentational Component Separation', ()
 
     it('calls onRemove with event id on remove click', () => {
       const onRemove = vi.fn();
-      render(
-        <NotificationItem
-          event={mockEvent}
-          onClick={vi.fn()}
-          onRemove={onRemove}
-        />,
-      );
+      render(<NotificationItem event={mockEvent} onClick={vi.fn()} onRemove={onRemove} />);
 
       fireEvent.click(screen.getByLabelText(/remove notification/i));
       expect(onRemove).toHaveBeenCalledWith('evt-1');
@@ -90,25 +72,13 @@ describe('NotificationCenter Refactor - Presentational Component Separation', ()
         link: { label: 'View Details', href: '/tx/123' },
       };
 
-      render(
-        <NotificationItem
-          event={eventWithLink}
-          onClick={vi.fn()}
-          onRemove={vi.fn()}
-        />,
-      );
+      render(<NotificationItem event={eventWithLink} onClick={vi.fn()} onRemove={vi.fn()} />);
 
       expect(screen.getByText('View Details')).toBeInTheDocument();
     });
 
     it('does not render link button when event has no link', () => {
-      render(
-        <NotificationItem
-          event={mockEvent}
-          onClick={vi.fn()}
-          onRemove={vi.fn()}
-        />,
-      );
+      render(<NotificationItem event={mockEvent} onClick={vi.fn()} onRemove={vi.fn()} />);
 
       expect(screen.queryByText('View Details')).not.toBeInTheDocument();
     });
@@ -124,22 +94,12 @@ describe('NotificationCenter Refactor - Presentational Component Separation', ()
       };
 
       const { rerender } = render(
-        <NotificationItem
-          event={mockEvent}
-          onClick={vi.fn()}
-          onRemove={vi.fn()}
-        />,
+        <NotificationItem event={mockEvent} onClick={vi.fn()} onRemove={vi.fn()} />,
       );
 
       expect(screen.getByText('Transaction Complete')).toBeInTheDocument();
 
-      rerender(
-        <NotificationItem
-          event={priceAlertEvent}
-          onClick={vi.fn()}
-          onRemove={vi.fn()}
-        />,
-      );
+      rerender(<NotificationItem event={priceAlertEvent} onClick={vi.fn()} onRemove={vi.fn()} />);
 
       expect(screen.getByText('Price Alert')).toBeInTheDocument();
     });
@@ -288,11 +248,7 @@ describe('NotificationCenter Refactor - Presentational Component Separation', ()
 
     it('displays unread badge for unread notifications', () => {
       const { container } = render(
-        <NotificationItem
-          event={unreadEvent}
-          onClick={vi.fn()}
-          onRemove={vi.fn()}
-        />,
+        <NotificationItem event={unreadEvent} onClick={vi.fn()} onRemove={vi.fn()} />,
       );
 
       const li = container.querySelector('li');
@@ -302,11 +258,7 @@ describe('NotificationCenter Refactor - Presentational Component Separation', ()
 
     it('does not display unread badge for read notifications', () => {
       const { container } = render(
-        <NotificationItem
-          event={readEvent}
-          onClick={vi.fn()}
-          onRemove={vi.fn()}
-        />,
+        <NotificationItem event={readEvent} onClick={vi.fn()} onRemove={vi.fn()} />,
       );
 
       const li = container.querySelector('li');
@@ -362,13 +314,7 @@ describe('NotificationCenter Refactor - Presentational Component Separation', ()
       const onClick = vi.fn();
       const onRemove = vi.fn();
 
-      render(
-        <NotificationItem
-          event={mockEvent}
-          onClick={onClick}
-          onRemove={onRemove}
-        />,
-      );
+      render(<NotificationItem event={mockEvent} onClick={onClick} onRemove={onRemove} />);
 
       expect(onClick).not.toHaveBeenCalled();
       expect(onRemove).not.toHaveBeenCalled();
@@ -428,22 +374,12 @@ describe('NotificationCenter Refactor - Presentational Component Separation', ()
       };
 
       const { rerender } = render(
-        <NotificationItem
-          event={event1}
-          onClick={vi.fn()}
-          onRemove={vi.fn()}
-        />,
+        <NotificationItem event={event1} onClick={vi.fn()} onRemove={vi.fn()} />,
       );
 
       expect(screen.getByText('Transaction 1')).toBeInTheDocument();
 
-      rerender(
-        <NotificationItem
-          event={event2}
-          onClick={vi.fn()}
-          onRemove={vi.fn()}
-        />,
-      );
+      rerender(<NotificationItem event={event2} onClick={vi.fn()} onRemove={vi.fn()} />);
 
       expect(screen.getByText('Alert 2')).toBeInTheDocument();
     });
@@ -549,13 +485,7 @@ describe('NotificationCenter Refactor - Presentational Component Separation', ()
 
       const originalEvent = JSON.stringify(mockEvent);
 
-      render(
-        <NotificationItem
-          event={mockEvent}
-          onClick={vi.fn()}
-          onRemove={vi.fn()}
-        />,
-      );
+      render(<NotificationItem event={mockEvent} onClick={vi.fn()} onRemove={vi.fn()} />);
 
       expect(JSON.stringify(mockEvent)).toBe(originalEvent);
     });

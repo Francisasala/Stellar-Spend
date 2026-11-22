@@ -12,10 +12,9 @@ const ToastContainer = dynamic(
   { ssr: false },
 );
 
-const ServiceWorkerRegistration = dynamic(
-  () => import('@/components/ServiceWorkerRegistration'),
-  { ssr: false },
-);
+const ServiceWorkerRegistration = dynamic(() => import('@/components/ServiceWorkerRegistration'), {
+  ssr: false,
+});
 
 const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), {
   ssr: false,

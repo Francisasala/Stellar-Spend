@@ -32,9 +32,15 @@ import { renderHook } from '@testing-library/react';
 const _store: Record<string, string> = {};
 const localStorageMock = {
   getItem: (key: string): string | null => _store[key] ?? null,
-  setItem: (key: string, value: string) => { _store[key] = value; },
-  removeItem: (key: string) => { delete _store[key]; },
-  clear: () => { Object.keys(_store).forEach(k => delete _store[k]); },
+  setItem: (key: string, value: string) => {
+    _store[key] = value;
+  },
+  removeItem: (key: string) => {
+    delete _store[key];
+  },
+  clear: () => {
+    Object.keys(_store).forEach((k) => delete _store[k]);
+  },
 };
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
@@ -151,7 +157,7 @@ describe('useKeyboardShortcuts', () => {
   it('initialises with existing overrides from localStorage', () => {
     localStorage.setItem(
       'stellar_spend_shortcut_overrides',
-      JSON.stringify({ 'existing-id': { key: 'x' } })
+      JSON.stringify({ 'existing-id': { key: 'x' } }),
     );
 
     const { result } = renderHook(() => useShortcutCustomizer());

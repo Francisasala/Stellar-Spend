@@ -26,9 +26,7 @@ import { describe, it, expect } from 'vitest';
 // ---------------------------------------------------------------------------
 
 // DataTable snapshot (src/test/__snapshots__/DataTable.test.tsx.snap)
-const dataTableSnaps = await import(
-  /* @vite-ignore */ '../__snapshots__/DataTable.test.tsx.snap'
-);
+const dataTableSnaps = await import(/* @vite-ignore */ '../__snapshots__/DataTable.test.tsx.snap');
 
 // Formatters snapshot (src/lib/__snapshots__/formatters.test.ts.snap)
 const formattersSnaps = await import(
@@ -209,9 +207,7 @@ describe('Formatter snapshot value-level checks', () => {
 
   it('formatRange snapshot contains both start and end of range', () => {
     const val =
-      formattersSnaps[
-        'DateFormatter > formatRange > snapshot: formats range consistently 1'
-      ];
+      formattersSnaps['DateFormatter > formatRange > snapshot: formats range consistently 1'];
     const str = String(val);
     expect(str).toContain('Jul 20, 2025');
     expect(str).toContain('Jul 25, 2025');
@@ -237,9 +233,7 @@ describe('Snapshot files are non-trivially populated', () => {
   });
 
   it('DataTable snapshot value has substantial length (> 500 chars)', () => {
-    const val = String(
-      dataTableSnaps['DataTable > matches the snapshot for a basic render 1']
-    );
+    const val = String(dataTableSnaps['DataTable > matches the snapshot for a basic render 1']);
     expect(val.length).toBeGreaterThan(500);
   });
 });

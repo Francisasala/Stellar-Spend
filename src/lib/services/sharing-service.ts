@@ -1,4 +1,4 @@
-import { randomHex } from "@/lib/crypto/ids";
+import { randomHex } from '@/lib/crypto/ids';
 import { ShareableTransaction, ShareSettings } from '@stellar-spend/shared';
 
 export class SharingService {
@@ -46,9 +46,7 @@ export class SharingService {
   }
 
   private generateShareToken(): string {
-    return (
-      randomHex(24)
-    );
+    return randomHex(24);
   }
 
   generateShareUrl(shareToken: string, baseUrl: string): string {

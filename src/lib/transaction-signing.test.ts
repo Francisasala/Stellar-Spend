@@ -639,7 +639,11 @@ describe('TransactionSigningService', () => {
       const validSignature = 'a'.repeat(128);
       const validPublicKey = 'b'.repeat(64);
 
-      const result = (service as unknown as VerifyService).verifySignatureData(validSignature, validPublicKey, 'rsa');
+      const result = (service as unknown as VerifyService).verifySignatureData(
+        validSignature,
+        validPublicKey,
+        'rsa',
+      );
 
       expect(result).toBe(false);
     });
@@ -648,7 +652,11 @@ describe('TransactionSigningService', () => {
       const validSignature = 'a'.repeat(128);
       const validPublicKey = 'b'.repeat(64);
 
-      const result = (service as unknown as VerifyService).verifySignatureData(validSignature, validPublicKey, '');
+      const result = (service as unknown as VerifyService).verifySignatureData(
+        validSignature,
+        validPublicKey,
+        '',
+      );
 
       expect(result).toBe(false);
     });

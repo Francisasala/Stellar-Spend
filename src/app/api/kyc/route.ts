@@ -67,7 +67,13 @@ export async function POST(req: NextRequest) {
       if (!documentType || !documentId) {
         return ErrorHandler.validation('documentType and documentId are required');
       }
-      const upload = kycService.uploadDocument(userId, documentType, documentId, fileName, mimeType);
+      const upload = kycService.uploadDocument(
+        userId,
+        documentType,
+        documentId,
+        fileName,
+        mimeType,
+      );
       return NextResponse.json({ success: true, upload, kyc: kycService.getKYC(userId) });
     }
 

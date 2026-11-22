@@ -26,19 +26,25 @@ src/lib/webhook/
 ## Core Concepts
 
 ### WebhookProvider
+
 Responsible for:
+
 - Validating webhook signatures
 - Parsing raw webhook data into standardized events
 - Handling webhook events (or delegating to handlers)
 
 ### WebhookHandler
+
 Responsible for:
+
 - Processing specific event types
 - Applying business logic to webhook events
 - Returning processing results
 
 ### WebhookRegistry
+
 Central registry that:
+
 - Manages registered providers and handlers
 - Routes webhooks to appropriate providers
 - Coordinates event processing through handlers
@@ -60,19 +66,10 @@ const webhookSystem = createWebhookSystem({
 });
 
 // Process a webhook
-const results = await webhookSystem.processWebhook(
-  'paycrest',
-  rawBody,
-  headers
-);
+const results = await webhookSystem.processWebhook('paycrest', rawBody, headers);
 
 // Validate a webhook
-const validation = await webhookSystem.validateWebhook(
-  'paycrest',
-  rawBody,
-  signature,
-  headers
-);
+const validation = await webhookSystem.validateWebhook('paycrest', rawBody, signature, headers);
 ```
 
 ### Creating a Custom Provider
@@ -114,7 +111,7 @@ export class EmailNotificationHandler extends BaseWebhookHandler {
     try {
       const userData = event.data as { email: string; name: string };
       await sendWelcomeEmail(userData.email, userData.name);
-      
+
       return {
         success: true,
         metadata: { emailSent: true },
@@ -132,10 +129,10 @@ export class EmailNotificationHandler extends BaseWebhookHandler {
 ### Advanced Configuration
 
 ```typescript
-import { 
-  createWebhookSystem, 
+import {
+  createWebhookSystem,
   PaycrestWebhookProvider,
-  TransactionUpdateHandler 
+  TransactionUpdateHandler,
 } from '@/lib/webhook';
 
 // Create a custom webhook system
@@ -148,21 +145,19 @@ const customSystem = createWebhookSystem({
       requireNonce: false,
     }),
   ],
-  
+
   // Configure custom handlers
   handlers: [
     TransactionUpdateHandler.createPaycrestHandler('payment_order.settled', 0),
     TransactionUpdateHandler.createPaycrestHandler('payment_order.refunded', 0),
   ],
-  
+
   // Disable default handlers if needed
   registerDefaultHandlers: false,
 });
 
 // Register additional handlers dynamically
-customSystem.getRegistry().registerHandler(
-  new EmailNotificationHandler()
-);
+customSystem.getRegistry().registerHandler(new EmailNotificationHandler());
 ```
 
 ## API Routes Integration
@@ -175,31 +170,28 @@ import { createWebhookSystem } from '@/lib/webhook';
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
   const signature = request.headers.get('X-Paycrest-Signature') ?? '';
-  
+
   const webhookSystem = createWebhookSystem();
-  
+
   // Validate webhook
   const validation = await webhookSystem.validateWebhook(
     'paycrest',
     rawBody,
     signature,
-    Object.fromEntries(request.headers.entries())
+    Object.fromEntries(request.headers.entries()),
   );
-  
+
   if (!validation.valid) {
-    return NextResponse.json(
-      { error: validation.reason },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: validation.reason }, { status: 401 });
   }
-  
+
   // Process webhook
   const results = await webhookSystem.processWebhook(
     'paycrest',
     rawBody,
-    Object.fromEntries(request.headers.entries())
+    Object.fromEntries(request.headers.entries()),
   );
-  
+
   return NextResponse.json({ results });
 }
 ```
@@ -213,20 +205,20 @@ import { PaycrestWebhookProvider } from '@/lib/webhook/providers/paycrest-provid
 
 describe('PaycrestWebhookProvider', () => {
   let provider: PaycrestWebhookProvider;
-  
+
   beforeEach(() => {
     provider = new PaycrestWebhookProvider({
       webhookSecret: 'test-secret',
     });
   });
-  
+
   it('should validate correct signatures', async () => {
     const payload = '{"event":"test","data":{}}';
     const signature = 'valid-signature';
-    
+
     // Mock signature validation
     vi.spyOn(provider, 'validateSignature').mockResolvedValue(true);
-    
+
     const valid = await provider.validateSignature(payload, signature, 'test-secret');
     expect(valid).toBe(true);
   });
@@ -240,7 +232,7 @@ import { createWebhookSystem } from '@/lib/webhook';
 
 describe('Webhook System Integration', () => {
   let webhookSystem: ReturnType<typeof createWebhookSystem>;
-  
+
   beforeEach(() => {
     webhookSystem = createWebhookSystem({
       paycrest: {
@@ -248,13 +240,13 @@ describe('Webhook System Integration', () => {
       },
     });
   });
-  
+
   it('should process paycrest webhooks', async () => {
     const rawBody = JSON.stringify({
       event: 'payment_order.settled',
       data: { id: 'order-123' },
     });
-    
+
     const results = await webhookSystem.processWebhook('paycrest', rawBody, {});
     expect(results).toBeDefined();
   });
@@ -266,11 +258,11 @@ describe('Webhook System Integration', () => {
 The system provides specific error types for different failure scenarios:
 
 ```typescript
-import { 
+import {
   SignatureValidationError,
   EventParsingError,
   ProviderNotFoundError,
-  HandlerNotFoundError 
+  HandlerNotFoundError,
 } from '@/lib/webhook/core/errors';
 
 try {
@@ -303,16 +295,16 @@ interface WebhookSystemConfig {
   // Paycrest configuration
   paycrest?: {
     webhookSecret: string;
-    timestampToleranceMs?: number;  // Default: 300000 (5 minutes)
-    requireNonce?: boolean;         // Default: true
+    timestampToleranceMs?: number; // Default: 300000 (5 minutes)
+    requireNonce?: boolean; // Default: true
   };
-  
+
   // Additional providers
   providers?: WebhookProvider[];
-  
+
   // Additional handlers
   handlers?: WebhookHandler[];
-  
+
   // Whether to register default handlers
   registerDefaultHandlers?: boolean; // Default: true
 }
@@ -339,7 +331,7 @@ const webhookSystem = createWebhookSystem();
 const results = await webhookSystem.processWebhook(
   'paycrest',
   JSON.stringify({ event: 'payment_order.settled', data: { id: 'order-123' } }),
-  {}
+  {},
 );
 ```
 

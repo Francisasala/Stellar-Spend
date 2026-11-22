@@ -92,13 +92,13 @@ export const Interactive: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const button = canvas.getByRole('button', { name: /click me/i });
-    
+
     // Test that button is initially enabled
     await expect(button).not.toBeDisabled();
-    
+
     // Test click interaction
     await userEvent.click(button);
-    
+
     // Button should remain in document after click
     await expect(button).toBeInTheDocument();
   },
@@ -110,13 +110,13 @@ export const InteractiveWithCallback: Story = {
     children: 'Submit',
     onClick: async () => {
       // Simulate async action
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     },
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const button = canvas.getByRole('button', { name: /submit/i });
-    
+
     // Test button is clickable
     await userEvent.click(button);
     await expect(button).toBeInTheDocument();

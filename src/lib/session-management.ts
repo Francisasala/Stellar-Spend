@@ -358,9 +358,7 @@ export class SessionManagementService {
     sessionIds.forEach((sessionId, i) => {
       const revocationId = `revocation_${now}_${crypto.randomBytes(8).toString('hex')}`;
       const base = i * 5;
-      placeholders.push(
-        `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`,
-      );
+      placeholders.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`);
       values.push(revocationId, sessionId, userAddress, reason || null, now);
     });
 

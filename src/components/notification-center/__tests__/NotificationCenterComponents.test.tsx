@@ -119,13 +119,7 @@ describe('NotificationCenter Subcomponents', () => {
     it('should announce notification removal to screen readers', () => {
       const onRemove = vi.fn();
 
-      render(
-        <NotificationItem
-          event={mockEvent}
-          onClick={vi.fn()}
-          onRemove={onRemove}
-        />,
-      );
+      render(<NotificationItem event={mockEvent} onClick={vi.fn()} onRemove={onRemove} />);
 
       const removeButton = screen.getByLabelText(/remove notification/i);
       fireEvent.click(removeButton);
@@ -199,13 +193,7 @@ describe('NotificationCenter Subcomponents', () => {
     it('should handle Enter key on notification items', () => {
       const onClick = vi.fn();
 
-      render(
-        <NotificationItem
-          event={mockEvent}
-          onClick={onClick}
-          onRemove={vi.fn()}
-        />,
-      );
+      render(<NotificationItem event={mockEvent} onClick={onClick} onRemove={vi.fn()} />);
 
       const notificationElement = screen.getByText('Payout Delivered').closest('li');
       fireEvent.keyDown(notificationElement!, { key: 'Enter' });

@@ -124,16 +124,31 @@ describe('HELP_CATEGORIES', () => {
 
 describe('per-category topic modules', () => {
   const allModules = [
-    { name: 'gettingStartedTopics', topics: gettingStartedTopics, category: 'getting-started', expectedCount: 2 },
+    {
+      name: 'gettingStartedTopics',
+      topics: gettingStartedTopics,
+      category: 'getting-started',
+      expectedCount: 2,
+    },
     { name: 'walletTopics', topics: walletTopics, category: 'wallet', expectedCount: 2 },
     { name: 'sendingTopics', topics: sendingTopics, category: 'sending', expectedCount: 2 },
     { name: 'feesTopics', topics: feesTopics, category: 'fees', expectedCount: 2 },
-    { name: 'currenciesTopics', topics: currenciesTopics, category: 'currencies', expectedCount: 2 },
+    {
+      name: 'currenciesTopics',
+      topics: currenciesTopics,
+      category: 'currencies',
+      expectedCount: 2,
+    },
     { name: 'trackingTopics', topics: trackingTopics, category: 'tracking', expectedCount: 2 },
     { name: 'refundsTopics', topics: refundsTopics, category: 'refunds', expectedCount: 2 },
     { name: 'securityTopics', topics: securityTopics, category: 'security', expectedCount: 1 },
     { name: 'faqTopics', topics: faqTopics, category: 'faq', expectedCount: 3 },
-    { name: 'troubleshootingTopics', topics: troubleshootingTopics, category: 'troubleshooting', expectedCount: 1 },
+    {
+      name: 'troubleshootingTopics',
+      topics: troubleshootingTopics,
+      category: 'troubleshooting',
+      expectedCount: 1,
+    },
   ] as const;
 
   for (const mod of allModules) {

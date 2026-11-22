@@ -1,4 +1,4 @@
-import { randomHex } from "@/lib/crypto/ids";
+import { randomHex } from '@/lib/crypto/ids';
 import { QRCodeData, QRCodeOptions, GeneratedQRCode } from '@stellar-spend/shared';
 
 export class QRCodeService {

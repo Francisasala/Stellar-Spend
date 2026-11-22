@@ -159,7 +159,9 @@ describe('Scheduling Service - Execution & Timing Edge Cases', () => {
         [executedTxId, scheduledId],
       );
       expect((result as { rows: Array<Record<string, unknown>> }).rows[0].status).toBe('executed');
-      expect((result as { rows: Array<Record<string, unknown>> }).rows[0].transaction_id).toBe(executedTxId);
+      expect((result as { rows: Array<Record<string, unknown>> }).rows[0].transaction_id).toBe(
+        executedTxId,
+      );
     });
   });
 
@@ -205,7 +207,9 @@ describe('Scheduling Service - Execution & Timing Edge Cases', () => {
         expect.stringContaining('UPDATE scheduled_transactions SET scheduled_for = $1'),
         [newScheduledTime, scheduledId],
       );
-      expect((result as { rows: Array<Record<string, unknown>> }).rows[0].scheduled_for).toEqual(newScheduledTime);
+      expect((result as { rows: Array<Record<string, unknown>> }).rows[0].scheduled_for).toEqual(
+        newScheduledTime,
+      );
     });
   });
 });

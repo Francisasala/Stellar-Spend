@@ -1,5 +1,9 @@
-import { randomHex } from "@/lib/crypto/ids";
-import type { TransactionStatus, PayoutStatus, BridgeStatus } from '@/lib/transactions/transaction-status';
+import { randomHex } from '@/lib/crypto/ids';
+import type {
+  TransactionStatus,
+  PayoutStatus,
+  BridgeStatus,
+} from '@/lib/transactions/transaction-status';
 
 export interface Transaction {
   id: string;

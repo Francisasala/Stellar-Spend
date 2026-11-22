@@ -123,10 +123,7 @@ describe('useWebVitals', () => {
       id: 'v1-123',
     });
 
-    expect(mockSendBeacon).toHaveBeenCalledWith(
-      '/api/monitoring/vitals',
-      expect.any(Blob),
-    );
+    expect(mockSendBeacon).toHaveBeenCalledWith('/api/monitoring/vitals', expect.any(Blob));
   });
 
   it('sends FCP metric via sendBeacon', () => {

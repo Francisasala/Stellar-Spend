@@ -8,7 +8,15 @@ vi.mock('@/lib/db', () => {
       query: vi.fn(async (sql: string, params: any[] = []) => {
         if (sql.includes('INSERT INTO multisig_proposals')) {
           const [id, description, target, value, created_at, expires_at] = params;
-          proposals.set(id, { id, description, target, value, executed: false, created_at, expires_at });
+          proposals.set(id, {
+            id,
+            description,
+            target,
+            value,
+            executed: false,
+            created_at,
+            expires_at,
+          });
           signatures.set(id, []);
           return { rows: [] };
         }

@@ -37,7 +37,12 @@ export class ProviderNotFoundError extends WebhookError {
 
 export class HandlerNotFoundError extends WebhookError {
   constructor(eventType: string) {
-    super(`No handler found for event type: ${eventType}`, 'HANDLER_NOT_FOUND', undefined, eventType);
+    super(
+      `No handler found for event type: ${eventType}`,
+      'HANDLER_NOT_FOUND',
+      undefined,
+      eventType,
+    );
     this.name = 'HandlerNotFoundError';
   }
 }

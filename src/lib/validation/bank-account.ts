@@ -25,10 +25,7 @@ const countryValidators: Record<string, CountryValidator> = {};
  * Register a country-specific validator for a given country code.
  * Country codes are normalized to upper-case.
  */
-export function registerCountryValidator(
-  countryCode: string,
-  validator: CountryValidator,
-): void {
+export function registerCountryValidator(countryCode: string, validator: CountryValidator): void {
   if (!countryCode) {
     throw new Error('countryCode is required');
   }
@@ -42,9 +39,7 @@ export function registerCountryValidator(
  * Retrieve a country-specific validator for a given country code.
  * Returns undefined if none is registered.
  */
-export function getCountryValidator(
-  countryCode: string,
-): CountryValidator | undefined {
+export function getCountryValidator(countryCode: string): CountryValidator | undefined {
   if (!countryCode) {
     return undefined;
   }
@@ -127,9 +122,7 @@ export function validateIBAN(value: string): ValidationResult {
     return fail('IBAN length is invalid');
   }
   const rearranged = trimmed.slice(4) + trimmed.slice(0, 4);
-  const numeric = rearranged.replace(/[A-Z]/g, (ch) =>
-    String(ch.charCodeAt(0) - 55),
-  );
+  const numeric = rearranged.replace(/[A-Z]/g, (ch) => String(ch.charCodeAt(0) - 55));
   // Compute mod 97 in chunks to avoid precision issues.
   let remainder = 0;
   for (let i = 0; i < numeric.length; i += 7) {

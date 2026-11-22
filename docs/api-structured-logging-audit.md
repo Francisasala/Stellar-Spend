@@ -27,6 +27,6 @@ by this pass since no console calls needed migrating.
 
 ## Acceptance criteria status
 
-- [x] Zero console.* calls remain in src/app/api (confirmed via grep; 0 found)
+- [x] Zero console.\* calls remain in src/app/api (confirmed via grep; 0 found)
 - [x] Regression guard test added (`no-console-in-api.test.ts`)
 - [ ] Code review — pending PR review

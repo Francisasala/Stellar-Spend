@@ -290,9 +290,7 @@ describe('useCurrencyConverter', () => {
       result.current.copyResult();
     });
 
-    expect(mockWriteText).toHaveBeenCalledWith(
-      expect.stringContaining('USDC'),
-    );
+    expect(mockWriteText).toHaveBeenCalledWith(expect.stringContaining('USDC'));
     unmount();
   });
 
@@ -319,10 +317,7 @@ describe('useCurrencyConverter', () => {
     expect(result.current.copied).toBe(true);
 
     // Wait for the 2000ms timeout to fire (real timers)
-    await waitFor(
-      () => expect(result.current.copied).toBe(false),
-      { timeout: 3000 },
-    );
+    await waitFor(() => expect(result.current.copied).toBe(false), { timeout: 3000 });
     unmount();
   });
 
@@ -346,12 +341,26 @@ describe('useCurrencyConverter', () => {
     const { result, unmount } = renderHook(() => useCurrencyConverter());
 
     const required = [
-      'fromAmount', 'toAmount', 'fromCurrency', 'toCurrency',
-      'rate', 'fees', 'loading', 'currencies', 'copied', 'isPending',
-      'quoteSecondsLeft', 'isStale', 'rateUpdated',
-      'handleFromAmountChange', 'handleToAmountChange',
-      'setFromCurrency', 'setToCurrency',
-      'swapCurrencies', 'copyResult', 'refreshRate',
+      'fromAmount',
+      'toAmount',
+      'fromCurrency',
+      'toCurrency',
+      'rate',
+      'fees',
+      'loading',
+      'currencies',
+      'copied',
+      'isPending',
+      'quoteSecondsLeft',
+      'isStale',
+      'rateUpdated',
+      'handleFromAmountChange',
+      'handleToAmountChange',
+      'setFromCurrency',
+      'setToCurrency',
+      'swapCurrencies',
+      'copyResult',
+      'refreshRate',
     ];
 
     for (const key of required) {

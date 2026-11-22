@@ -143,7 +143,6 @@ describe('ErrorHandler', () => {
   });
 });
 
-
 describe('withApiErrorHandling', () => {
   it('passes through a successful response untouched', async () => {
     const handler = withApiErrorHandling(async () => NextResponse.json({ ok: true }));

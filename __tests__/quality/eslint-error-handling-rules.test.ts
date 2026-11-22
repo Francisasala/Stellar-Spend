@@ -36,7 +36,7 @@ describe('Quality Gate — ESLint error-handling rules (#1543)', () => {
     expect(configSource).toContain('@typescript-eslint/no-floating-promises');
     // Must be set to 'error', not 'warn' or 'off'
     const match = configSource.match(
-      /'@typescript-eslint\/no-floating-promises'\s*:\s*['"](\w+)['"]/
+      /'@typescript-eslint\/no-floating-promises'\s*:\s*['"](\w+)['"]/,
     );
     expect(match, 'no-floating-promises must have an explicit severity').toBeTruthy();
     expect(match![1]).toBe('error');

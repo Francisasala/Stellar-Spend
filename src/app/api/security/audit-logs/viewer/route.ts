@@ -17,7 +17,10 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate')
       ? parseInt(searchParams.get('endDate')!, 10)
       : undefined;
-    const { offset, limit } = parsePaginationQuery(searchParams, { defaultLimit: 100, maxLimit: 1000 });
+    const { offset, limit } = parsePaginationQuery(searchParams, {
+      defaultLimit: 100,
+      maxLimit: 1000,
+    });
 
     const logs = await auditLoggingService.getAuditLogs(
       {
@@ -33,9 +36,7 @@ export async function GET(request: NextRequest) {
 
     const { data } = trimLookahead(logs, limit);
 
-    return NextResponse.json(
-      createPaginatedResponse(data, offset, limit, offset + logs.length),
-    );
+    return NextResponse.json(createPaginatedResponse(data, offset, limit, offset + logs.length));
   } catch (error) {
     logger.error('Failed to fetch audit logs', { error });
     return ErrorHandler.handle(new ApiError(ErrorType.SERVER_ERROR, 'Failed to fetch audit logs'));

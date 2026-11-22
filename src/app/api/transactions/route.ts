@@ -3,10 +3,7 @@ import { z } from 'zod';
 import { ErrorHandler } from '@/lib/error-handler';
 import { withIdempotency } from '@/lib/idempotency';
 import { validateBody } from '@/lib/validation/validate-request';
-import {
-  listTransactionsByWallet,
-  createTransaction,
-} from '@/lib/services/transactions';
+import { listTransactionsByWallet, createTransaction } from '@/lib/services/transactions';
 
 const walletQuerySchema = z.object({
   wallet: z.string().min(1),

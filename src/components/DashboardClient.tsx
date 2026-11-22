@@ -33,12 +33,8 @@ function DashboardClient() {
   const { isConnected, isConnecting, walletAddress, resetKey, handleConnect, handleDisconnect } =
     useDashboardWallet();
 
-  const {
-    handleSubmit,
-    handleQuoteChange,
-    handleAmountChange,
-    handleCurrencyChange,
-  } = useDashboardState();
+  const { handleSubmit, handleQuoteChange, handleAmountChange, handleCurrencyChange } =
+    useDashboardState();
 
   return (
     <>

@@ -12,7 +12,9 @@ import { z } from 'zod';
 export interface UseFormOptions<T extends Record<string, unknown>> {
   initialValues: T;
   schema?: z.ZodType<unknown, z.ZodTypeDef, unknown>;
-  validate?: (values: T) => Partial<Record<keyof T, string>> | Promise<Partial<Record<keyof T, string>>>;
+  validate?: (
+    values: T,
+  ) => Partial<Record<keyof T, string>> | Promise<Partial<Record<keyof T, string>>>;
   validateOnChange?: boolean;
   validateOnBlur?: boolean;
   onSubmit?: (values: T) => Promise<void> | void;
@@ -172,7 +174,8 @@ export function useForm<T extends Record<string, unknown>>({
   const setValues = useCallback(
     (newValues: Partial<T> | ((prev: T) => T)) => {
       const current = getValues() as T;
-      const next = typeof newValues === 'function' ? newValues(current) : { ...current, ...newValues };
+      const next =
+        typeof newValues === 'function' ? newValues(current) : { ...current, ...newValues };
       for (const key of Object.keys(next) as (keyof T)[]) {
         setValue(key as Path<T>, next[key] as PathValue<T, Path<T>>, {
           shouldValidate: validateOnChange,
@@ -274,10 +277,9 @@ export function useForm<T extends Record<string, unknown>>({
 
   const resetForm = useCallback(
     (newValues?: Partial<T>) => {
-      reset(
-        newValues ? ({ ...initialValues, ...newValues } as T) : initialValues,
-        { keepDefaultValues: false },
-      );
+      reset(newValues ? ({ ...initialValues, ...newValues } as T) : initialValues, {
+        keepDefaultValues: false,
+      });
     },
     [reset, initialValues],
   );

@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useMemo,
-  useCallback,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useMemo, useCallback, type ReactNode } from 'react';
 
 // ---------------------------------------------------------------------------
 // #1184 — Split wallet context into three narrower contexts
@@ -31,8 +25,7 @@ export interface WalletConnectionContextValue {
   onDisconnect: () => void;
 }
 
-const WalletConnectionContext =
-  createContext<WalletConnectionContextValue | null>(null);
+const WalletConnectionContext = createContext<WalletConnectionContextValue | null>(null);
 
 function useWalletConnection(): WalletConnectionContextValue {
   const ctx = useContext(WalletConnectionContext);
@@ -55,8 +48,7 @@ export interface WalletAccountContextValue {
   walletType?: 'Freighter' | 'Lobstr' | null;
 }
 
-const WalletAccountContext =
-  createContext<WalletAccountContextValue | null>(null);
+const WalletAccountContext = createContext<WalletAccountContextValue | null>(null);
 
 function useWalletAccount(): WalletAccountContextValue {
   const ctx = useContext(WalletAccountContext);
@@ -76,15 +68,12 @@ export interface WalletTransactionsContextValue {
   _reserved: true;
 }
 
-const WalletTransactionsContext =
-  createContext<WalletTransactionsContextValue | null>(null);
+const WalletTransactionsContext = createContext<WalletTransactionsContextValue | null>(null);
 
 function useWalletTransactionsContext(): WalletTransactionsContextValue {
   const ctx = useContext(WalletTransactionsContext);
   if (!ctx) {
-    throw new Error(
-      'useWalletTransactionsContext must be used within a <WalletProvider>',
-    );
+    throw new Error('useWalletTransactionsContext must be used within a <WalletProvider>');
   }
   return ctx;
 }
@@ -127,21 +116,8 @@ function useWalletContext(): WalletContextValue {
 //   • the transactions slice is completely independent
 // ---------------------------------------------------------------------------
 
-function WalletProvider({
-  children,
-  value,
-}: {
-  children: ReactNode;
-  value: WalletContextValue;
-}) {
-  const {
-    isConnected,
-    isConnecting,
-    walletAddress,
-    walletType,
-    onConnect,
-    onDisconnect,
-  } = value;
+function WalletProvider({ children, value }: { children: ReactNode; value: WalletContextValue }) {
+  const { isConnected, isConnecting, walletAddress, walletType, onConnect, onDisconnect } = value;
 
   // Stable callback references so consumers don't re-render just because the
   // parent re-renders with a new function literal.
@@ -181,14 +157,7 @@ function WalletProvider({
       onConnect: stableConnect,
       onDisconnect: stableDisconnect,
     }),
-    [
-      isConnected,
-      isConnecting,
-      walletAddress,
-      walletType,
-      stableConnect,
-      stableDisconnect,
-    ],
+    [isConnected, isConnecting, walletAddress, walletType, stableConnect, stableDisconnect],
   );
 
   return (

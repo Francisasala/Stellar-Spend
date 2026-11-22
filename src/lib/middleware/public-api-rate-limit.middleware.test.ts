@@ -3,7 +3,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { getRouteRateLimitConfig, PUBLIC_API_RATE_LIMITS } from './public-api-rate-limit.middleware';
+import {
+  getRouteRateLimitConfig,
+  PUBLIC_API_RATE_LIMITS,
+} from './public-api-rate-limit.middleware';
 
 describe('getRouteRateLimitConfig (#1461)', () => {
   it('returns the configured limit for an exact route match', () => {

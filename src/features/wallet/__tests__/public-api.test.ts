@@ -173,7 +173,12 @@ describe('Wallet Feature: Public API Boundary', () => {
     });
 
     it('should maintain consistent naming conventions', () => {
-      const componentExports = ['WalletModal', 'WalletModalHeader', 'WalletModalError', 'WalletOptionButton'];
+      const componentExports = [
+        'WalletModal',
+        'WalletModalHeader',
+        'WalletModalError',
+        'WalletOptionButton',
+      ];
 
       componentExports.forEach((name) => {
         expect(name).toMatch(/^[A-Z]/);

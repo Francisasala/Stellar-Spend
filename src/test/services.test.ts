@@ -28,7 +28,11 @@ describe('QuoteService', () => {
 
   it('should reject invalid fee method', async () => {
     await expect(
-      service.getQuote({ amount: '100', currency: 'NGN', feeMethod: 'INVALID' as 'USDC' | 'XLM' | 'stablecoin' | 'native' }),
+      service.getQuote({
+        amount: '100',
+        currency: 'NGN',
+        feeMethod: 'INVALID' as 'USDC' | 'XLM' | 'stablecoin' | 'native',
+      }),
     ).rejects.toThrow('feeMethod must be');
   });
 });
@@ -134,7 +138,9 @@ describe('WebhookService', () => {
   });
 
   it('should validate webhook payload', async () => {
-    const result = await service.processPaycrestWebhook(null as unknown as Parameters<typeof service.processPaycrestWebhook>[0]);
+    const result = await service.processPaycrestWebhook(
+      null as unknown as Parameters<typeof service.processPaycrestWebhook>[0],
+    );
     expect(result.success).toBe(false);
     expect(result.error).toContain('Invalid webhook payload');
   });
@@ -146,7 +152,10 @@ describe('WebhookService', () => {
   });
 
   it('should require webhook data', async () => {
-    const result = await service.processPaycrestWebhook({ event: 'test', data: null as unknown as Record<string, unknown> });
+    const result = await service.processPaycrestWebhook({
+      event: 'test',
+      data: null as unknown as Record<string, unknown>,
+    });
     expect(result.success).toBe(false);
     expect(result.error).toContain('Webhook data is required');
   });

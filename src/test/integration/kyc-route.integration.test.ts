@@ -97,7 +97,9 @@ describe('GET /api/kyc', () => {
 
   it('returns reminders for ?action=reminders', async () => {
     const { GET } = await import('@/app/api/kyc/route');
-    const res = await GET(makeGet('http://localhost/api/kyc?userId=user_reminders&action=reminders'));
+    const res = await GET(
+      makeGet('http://localhost/api/kyc?userId=user_reminders&action=reminders'),
+    );
     expect(res.status).toBe(200);
     const body = await json(res);
     expect(body).toHaveProperty('reminders');
@@ -273,9 +275,7 @@ describe('PATCH /api/kyc — verify and reject', () => {
 
   it('returns 400 when userId or action is missing', async () => {
     const { PATCH } = await import('@/app/api/kyc/route');
-    const res = await PATCH(
-      makePatch('http://localhost/api/kyc', { action: 'verify' }),
-    );
+    const res = await PATCH(makePatch('http://localhost/api/kyc', { action: 'verify' }));
     expect(res.status).toBe(400);
   });
 });

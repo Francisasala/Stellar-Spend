@@ -23,7 +23,11 @@ export { WalletOptionButton } from './components/modal/WalletOptionButton';
 export { WalletProvider, useWalletContext } from './context/WalletContext';
 export type { WalletContextValue } from './context/WalletContext';
 // Narrower context hooks (#1184)
-export { useWalletConnection, useWalletAccount, useWalletTransactionsContext } from './context/WalletContext';
+export {
+  useWalletConnection,
+  useWalletAccount,
+  useWalletTransactionsContext,
+} from './context/WalletContext';
 export type {
   WalletConnectionContextValue,
   WalletAccountContextValue,

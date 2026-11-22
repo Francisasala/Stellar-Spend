@@ -38,7 +38,10 @@ export async function createBatch(userId: string, totalAmount: number) {
   return result.rows[0];
 }
 
-export async function addTransactionToBatch(batchId: string, transactionData: Record<string, unknown>) {
+export async function addTransactionToBatch(
+  batchId: string,
+  transactionData: Record<string, unknown>,
+) {
   const result = await db.query(
     `INSERT INTO batch_transactions (batch_id, status, payload)
      VALUES ($1, 'pending', $2)

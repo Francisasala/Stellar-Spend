@@ -222,7 +222,10 @@ describe('useKycFlow', () => {
         result.current.setLoading(true);
         result.current.updateFormField({ documentType: 'passport', documentId: 'ABC123' });
       });
-      expect(result.current.state.formData).toEqual({ documentType: 'passport', documentId: 'ABC123' });
+      expect(result.current.state.formData).toEqual({
+        documentType: 'passport',
+        documentId: 'ABC123',
+      });
       expect(result.current.state.loading).toBe(true);
 
       act(() => {

@@ -126,6 +126,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   route tree against access logs and test coverage and deleted the following
   dead routes (no client call sites, no tests, superseded by the listed
   replacements):
+
   - `GET /api/transactions/legacy` → use `GET /api/transactions`
   - `POST /api/transactions/legacy/sync` → use `POST /api/transactions/sync`
   - `GET /api/wallet/balance-old` → use `GET /api/wallet/balance`

@@ -22,7 +22,9 @@ describe('api-utils client wrappers (delegate to @/lib/api/client)', () => {
   }
 
   it('apiGet issues a GET request and returns parsed JSON', async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockResponse({ hello: 'world' }));
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      mockResponse({ hello: 'world' }),
+    );
 
     const result = await apiGet<{ hello: string }>('/api/test');
 

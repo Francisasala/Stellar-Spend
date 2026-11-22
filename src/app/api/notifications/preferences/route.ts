@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ErrorHandler } from '@/lib/error-handler';
-import {
-  getNotificationPreferences,
-  upsertNotificationPreferences,
-} from '@/lib/notifications';
+import { getNotificationPreferences, upsertNotificationPreferences } from '@/lib/notifications';
 
 export async function GET(request: NextRequest) {
   const userAddress = request.nextUrl.searchParams.get('userAddress');

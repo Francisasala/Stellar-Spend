@@ -71,9 +71,7 @@ describe('useKeyboardNavigation', () => {
   it('should not fire any handler when enabled = false', () => {
     const onEscape = vi.fn();
     const onEnter = vi.fn();
-    renderHook(() =>
-      useKeyboardNavigation({ onEscape, onEnter, enabled: false }),
-    );
+    renderHook(() => useKeyboardNavigation({ onEscape, onEnter, enabled: false }));
 
     fireKey('Escape');
     fireKey('Enter');
@@ -84,9 +82,7 @@ describe('useKeyboardNavigation', () => {
 
   it('should remove the event listener on unmount', () => {
     const onEscape = vi.fn();
-    const { unmount } = renderHook(() =>
-      useKeyboardNavigation({ onEscape }),
-    );
+    const { unmount } = renderHook(() => useKeyboardNavigation({ onEscape }));
 
     unmount();
 

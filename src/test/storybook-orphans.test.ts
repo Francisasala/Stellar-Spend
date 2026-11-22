@@ -27,7 +27,9 @@ describe('Storybook Orphans Check Documentation', () => {
       ];
 
       expect(validStoryPatterns.length).toBeGreaterThan(0);
-      expect(validLocationRules.every((rule) => rule.includes('Story') || rule.includes('directory'))).toBe(true);
+      expect(
+        validLocationRules.every((rule) => rule.includes('Story') || rule.includes('directory')),
+      ).toBe(true);
     });
   });
 
@@ -114,16 +116,16 @@ describe('Storybook Orphans Check Documentation', () => {
       };
 
       expect(contributeGuidelines.section).toContain('Refactoring');
-      expect(contributeGuidelines.items.some((item) => item.includes('storybook:check-orphans'))).toBe(true);
+      expect(
+        contributeGuidelines.items.some((item) => item.includes('storybook:check-orphans')),
+      ).toBe(true);
     });
 
     it('should specify when and how to run the orphans check', () => {
       const checkTiming = {
-        beforeRefactoring:
-          'Review existing stories for the component you are about to modify',
+        beforeRefactoring: 'Review existing stories for the component you are about to modify',
         duringRefactoring: 'Keep stories in sync with component changes',
-        beforeSubmittingPR:
-          'Run npm run storybook:check-orphans to ensure no orphaned stories',
+        beforeSubmittingPR: 'Run npm run storybook:check-orphans to ensure no orphaned stories',
         afterMerge: 'CI should verify Storybook builds successfully',
       };
 

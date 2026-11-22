@@ -134,18 +134,18 @@ export const WithButtons: Story = {
   ),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    
+
     // Test all card parts
     const header = canvas.getByText(/confirmation/i);
     const content = canvas.getByText(/are you sure/i);
     const cancelBtn = canvas.getByRole('button', { name: /cancel/i });
     const confirmBtn = canvas.getByRole('button', { name: /confirm/i });
-    
+
     await expect(header).toBeInTheDocument();
     await expect(content).toBeInTheDocument();
     await expect(cancelBtn).toBeInTheDocument();
     await expect(confirmBtn).toBeInTheDocument();
-    
+
     // Test button interactions
     await userEvent.click(confirmBtn);
     await expect(confirmBtn).toBeInTheDocument();

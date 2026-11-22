@@ -22,18 +22,18 @@
 
 ## Toolchain Requirements
 
-| Component | Required Version | Purpose | Installation |
-|-----------|-----------------|---------|--------------|
-| **Node.js** | `20.19.2` (pinned in Dockerfile) | Next.js frontend, API routes, tooling | [nodejs.org](https://nodejs.org) or `nvm install 20.19.2` |
-| **npm** | Bundled with Node.js | Package management | Bundled with Node.js |
-| **TypeScript** | `5.7.3` (hard-pinned in `package.json`) | Type safety across the project | Bundled via `npm install` |
-| **Next.js** | `^15.5.14` | App framework (App Router, API routes) | Bundled via `npm install` |
-| **Rust** | Stable toolchain, edition `2021` | Compiling Soroban smart contracts | [rustup.rs](https://rustup.rs) |
-| **wasm32 Target** | `wasm32-unknown-unknown` | Compiling Rust contracts to WebAssembly | `rustup target add wasm32-unknown-unknown` |
-| **cargo-audit** | Latest | Security vulnerability scanning for Rust deps | `cargo install cargo-audit` |
-| **stellar-cli** | `>= 21.0.0` | Contract building, deployment, simulation | `cargo install --locked stellar-cli --features opt` |
-| **PostgreSQL** | `16-alpine` (Docker image) | Transaction records, idempotency keys, API keys | Docker Compose or local install |
-| **Redis** | `7-alpine` (Docker image) | Caching, session store | Docker Compose or local install |
+| Component         | Required Version                        | Purpose                                         | Installation                                              |
+| ----------------- | --------------------------------------- | ----------------------------------------------- | --------------------------------------------------------- |
+| **Node.js**       | `20.19.2` (pinned in Dockerfile)        | Next.js frontend, API routes, tooling           | [nodejs.org](https://nodejs.org) or `nvm install 20.19.2` |
+| **npm**           | Bundled with Node.js                    | Package management                              | Bundled with Node.js                                      |
+| **TypeScript**    | `5.7.3` (hard-pinned in `package.json`) | Type safety across the project                  | Bundled via `npm install`                                 |
+| **Next.js**       | `^15.5.14`                              | App framework (App Router, API routes)          | Bundled via `npm install`                                 |
+| **Rust**          | Stable toolchain, edition `2021`        | Compiling Soroban smart contracts               | [rustup.rs](https://rustup.rs)                            |
+| **wasm32 Target** | `wasm32-unknown-unknown`                | Compiling Rust contracts to WebAssembly         | `rustup target add wasm32-unknown-unknown`                |
+| **cargo-audit**   | Latest                                  | Security vulnerability scanning for Rust deps   | `cargo install cargo-audit`                               |
+| **stellar-cli**   | `>= 21.0.0`                             | Contract building, deployment, simulation       | `cargo install --locked stellar-cli --features opt`       |
+| **PostgreSQL**    | `16-alpine` (Docker image)              | Transaction records, idempotency keys, API keys | Docker Compose or local install                           |
+| **Redis**         | `7-alpine` (Docker image)               | Caching, session store                          | Docker Compose or local install                           |
 
 > **Note:** The `package.json` hard-pins `typescript` to `5.7.3` and `react`/`react-dom` to `19.0.0` — these are build contracts. The `Dockerfile` pins `node:20.19.2-alpine3.21` to ensure reproducible builds.
 
@@ -55,12 +55,12 @@ rustup target list --installed  # Verify wasm32-unknown-unknown
 
 The `docker-compose.yml` defines the **production-equivalent local infrastructure** with four services:
 
-| Service | Image | Port | Purpose |
-|---------|-------|------|---------|
-| `app` | `stellar-spend:latest` | `3000:3000` | Next.js application (built via `Dockerfile`) |
-| `postgres` | `postgres:16-alpine` | `5432:5432` | Primary database |
-| `redis` | `redis:7-alpine` | `6379:6379` | Cache and session store |
-| `migrate` | `stellar-spend:latest` (builder target) | — | Runs `npx ts-node scripts/migrate.ts` (requires `--profile migrate`) |
+| Service    | Image                                   | Port        | Purpose                                                              |
+| ---------- | --------------------------------------- | ----------- | -------------------------------------------------------------------- |
+| `app`      | `stellar-spend:latest`                  | `3000:3000` | Next.js application (built via `Dockerfile`)                         |
+| `postgres` | `postgres:16-alpine`                    | `5432:5432` | Primary database                                                     |
+| `redis`    | `redis:7-alpine`                        | `6379:6379` | Cache and session store                                              |
+| `migrate`  | `stellar-spend:latest` (builder target) | —           | Runs `npx ts-node scripts/migrate.ts` (requires `--profile migrate`) |
 
 **Key characteristics:**
 
@@ -95,14 +95,14 @@ The `docker-compose.canary.yml` is an **override file** that runs a second `app`
 
 **Key differences from the primary stack:**
 
-| Aspect | `docker-compose.yml` | `docker-compose.canary.yml` |
-|--------|---------------------|----------------------------|
-| **App containers** | 1 (`stellar-spend:latest`) | 2 (primary + canary) |
-| **Canary port** | — | `${CANARY_PORT:-3002}` |
-| **App image** | Built from `Dockerfile` | `'stellar-spend:${IMAGE_TAG:-latest}'` |
-| **Container name** | — | `stellar-spend-canary` |
-| **Postgres/Redis** | Same instances | **Shared** with primary stack |
-| **Health check** | Full `/api/health` | Same endpoint |
+| Aspect             | `docker-compose.yml`       | `docker-compose.canary.yml`            |
+| ------------------ | -------------------------- | -------------------------------------- |
+| **App containers** | 1 (`stellar-spend:latest`) | 2 (primary + canary)                   |
+| **Canary port**    | —                          | `${CANARY_PORT:-3002}`                 |
+| **App image**      | Built from `Dockerfile`    | `'stellar-spend:${IMAGE_TAG:-latest}'` |
+| **Container name** | —                          | `stellar-spend-canary`                 |
+| **Postgres/Redis** | Same instances             | **Shared** with primary stack          |
+| **Health check**   | Full `/api/health`         | Same endpoint                          |
 
 **Usage:**
 

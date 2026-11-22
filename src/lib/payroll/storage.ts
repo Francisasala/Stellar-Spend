@@ -1,4 +1,4 @@
-import { randomHex } from "@/lib/crypto/ids";
+import { randomHex } from '@/lib/crypto/ids';
 import type { PayrollTemplate, PayrollRun } from './types';
 
 const TEMPLATE_KEY = 'stellar_spend_payroll_templates';

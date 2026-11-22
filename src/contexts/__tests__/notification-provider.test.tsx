@@ -346,7 +346,9 @@ describe('useNotification guard', () => {
       useNotification();
       return null;
     }
-    expect(() => render(<Orphan />)).toThrow(/useNotification must be used within NotificationProvider/);
+    expect(() => render(<Orphan />)).toThrow(
+      /useNotification must be used within NotificationProvider/,
+    );
     spy.mockRestore();
   });
 });

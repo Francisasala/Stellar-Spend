@@ -29,11 +29,13 @@ function degraded(message = 'Slow response', responseTime = 300) {
   return { status: 'degraded' as const, message, responseTime };
 }
 
-function makeHealthResponse(overrides: {
-  stellar?: ReturnType<typeof healthy>;
-  paycrest?: ReturnType<typeof healthy>;
-  allbridge?: ReturnType<typeof healthy>;
-} = {}) {
+function makeHealthResponse(
+  overrides: {
+    stellar?: ReturnType<typeof healthy>;
+    paycrest?: ReturnType<typeof healthy>;
+    allbridge?: ReturnType<typeof healthy>;
+  } = {},
+) {
   return {
     status: 'healthy' as const,
     timestamp: new Date().toISOString(),
@@ -119,9 +121,7 @@ describe('GET /api/health/readiness', () => {
 
   it('returns 200 when non-critical dep (paycrest) is degraded', async () => {
     mockCheckDatabaseHealth.mockResolvedValue(healthy());
-    mockPerformHealthCheck.mockResolvedValue(
-      makeHealthResponse({ paycrest: degraded() }),
-    );
+    mockPerformHealthCheck.mockResolvedValue(makeHealthResponse({ paycrest: degraded() }));
 
     const response = await getReadiness();
     // paycrest degraded does not block readiness — only DB and Stellar are critical

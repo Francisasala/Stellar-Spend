@@ -12,13 +12,7 @@ import type {
 
 describe('Dispute types', () => {
   it('DisputeStatus includes all valid statuses', () => {
-    const statuses: DisputeStatus[] = [
-      'open',
-      'in_review',
-      'resolved',
-      'rejected',
-      'escalated',
-    ];
+    const statuses: DisputeStatus[] = ['open', 'in_review', 'resolved', 'rejected', 'escalated'];
     expect(statuses).toHaveLength(5);
   });
 

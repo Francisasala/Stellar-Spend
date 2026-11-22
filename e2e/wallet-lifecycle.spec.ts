@@ -83,9 +83,7 @@ test.describe('Wallet Connect — Freighter happy path', () => {
     });
   });
 
-  test('clicking Connect Wallet opens the wallet picker or connects directly', async ({
-    page,
-  }) => {
+  test('clicking Connect Wallet opens the wallet picker or connects directly', async ({ page }) => {
     await page.goto(BASE_URL);
     await page.waitForLoadState('networkidle');
 
@@ -93,7 +91,10 @@ test.describe('Wallet Connect — Freighter happy path', () => {
 
     // Wait for any observable state change: modal, wallet option, or connected state.
     await expect(async () => {
-      const modalVisible = await page.getByRole('dialog').isVisible().catch(() => false);
+      const modalVisible = await page
+        .getByRole('dialog')
+        .isVisible()
+        .catch(() => false);
       const freighterVisible = await page
         .getByRole('button', { name: /freighter/i })
         .isVisible()
@@ -299,7 +300,9 @@ test.describe('Wallet Disconnect & Session Cleanup', () => {
     const connectedState = await page.evaluate(() =>
       JSON.stringify(
         Object.entries(localStorage)
-          .filter(([k]) => k.toLowerCase().includes('wallet') || k.toLowerCase().includes('session'))
+          .filter(
+            ([k]) => k.toLowerCase().includes('wallet') || k.toLowerCase().includes('session'),
+          )
           .map(([k, v]) => ({ key: k, hasValue: !!v })),
       ),
     );
@@ -329,7 +332,9 @@ test.describe('Wallet Disconnect & Session Cleanup', () => {
     const disconnectedState = await page.evaluate(() =>
       JSON.stringify(
         Object.entries(localStorage)
-          .filter(([k]) => k.toLowerCase().includes('wallet') || k.toLowerCase().includes('session'))
+          .filter(
+            ([k]) => k.toLowerCase().includes('wallet') || k.toLowerCase().includes('session'),
+          )
           .map(([k, v]) => ({ key: k, hasValue: !!v })),
       ),
     );

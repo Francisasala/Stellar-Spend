@@ -36,7 +36,9 @@ describe('useUndo', () => {
     const { result } = renderHook(() => useUndo());
     const action = makeAction('a1');
 
-    act(() => { result.current.addAction(action); });
+    act(() => {
+      result.current.addAction(action);
+    });
 
     expect(result.current.canUndo).toBe(true);
     expect(result.current.history).toHaveLength(1);
@@ -47,8 +49,12 @@ describe('useUndo', () => {
     const { result } = renderHook(() => useUndo());
     const action = makeAction('a1');
 
-    act(() => { result.current.addAction(action); });
-    act(() => { result.current.undo(); });
+    act(() => {
+      result.current.addAction(action);
+    });
+    act(() => {
+      result.current.undo();
+    });
 
     expect(action.undo).toHaveBeenCalledTimes(1);
   });
@@ -57,9 +63,15 @@ describe('useUndo', () => {
     const { result } = renderHook(() => useUndo());
     const action = makeAction('a1');
 
-    act(() => { result.current.addAction(action); });
-    act(() => { result.current.undo(); });
-    act(() => { result.current.redo(); });
+    act(() => {
+      result.current.addAction(action);
+    });
+    act(() => {
+      result.current.undo();
+    });
+    act(() => {
+      result.current.redo();
+    });
 
     expect(action.redo).toHaveBeenCalledTimes(1);
   });
@@ -68,10 +80,14 @@ describe('useUndo', () => {
     const { result } = renderHook(() => useUndo());
     const action = makeAction('a1');
 
-    act(() => { result.current.addAction(action); });
+    act(() => {
+      result.current.addAction(action);
+    });
 
     expect(result.current.canRedo).toBe(false);
-    act(() => { result.current.redo(); }); // no-op
+    act(() => {
+      result.current.redo();
+    }); // no-op
 
     expect(action.redo).not.toHaveBeenCalled();
   });
@@ -80,10 +96,14 @@ describe('useUndo', () => {
     const { result } = renderHook(() => useUndo({ timeout: 1000 }));
     const action = makeAction('a1');
 
-    act(() => { result.current.addAction(action); });
+    act(() => {
+      result.current.addAction(action);
+    });
     expect(result.current.history).toHaveLength(1);
 
-    act(() => { vi.advanceTimersByTime(1000); });
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
     expect(result.current.history).toHaveLength(0);
   });
 

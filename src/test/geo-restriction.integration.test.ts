@@ -420,10 +420,10 @@ describe('Geo/IP Restriction Coverage — Compliance', () => {
 
   it('respects jurisdiction restrictions for specific regions', () => {
     const jurisdictions = {
-      'US': 'allowed',
-      'EU': 'restricted_data_handling',
-      'CN': 'blocked',
-      'KP': 'blocked',
+      US: 'allowed',
+      EU: 'restricted_data_handling',
+      CN: 'blocked',
+      KP: 'blocked',
     };
 
     Object.entries(jurisdictions).forEach(([country]) => {

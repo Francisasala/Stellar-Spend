@@ -44,6 +44,7 @@ npx ts-node scripts/migrate.ts verify 028
 ```
 
 #### Flags
+
 - `--dry-run`: Simulates execution and logs queries without executing them.
 - `--verbose`: Outputs detailed execution logging.
 
@@ -58,6 +59,7 @@ migrations/<NNN>_<verb>_<subject>.sql
 ```
 
 ### Numbering (`NNN`)
+
 - **Three-digit zero-padded sequence** starting at `001` (e.g. `001`, `002`, ..., `028`).
 - Numbers must be **globally unique** within the `migrations/` directory.
 - Determine the next sequential number using:
@@ -70,6 +72,7 @@ migrations/<NNN>_<verb>_<subject>.sql
   ```
 
 ### Verbs
+
 Use explicit action verbs in lowercase:
 | Verb | Purpose | Example |
 | :--- | :--- | :--- |
@@ -80,11 +83,14 @@ Use explicit action verbs in lowercase:
 | `enhance` / `optimize` | Add indexes or performance optimizations | `027_fix_query_optimization_indexes.sql` |
 
 ### Subject
+
 - Written in lowercase `snake_case`.
 - Identifies the target entity or domain table (e.g. `merchant_accounts`, `webhook_subscriptions`, `query_indexes`).
 
 ### File Header
+
 Every migration file must begin with a descriptive header comment:
+
 ```sql
 -- Migration: 028_add_customer_metadata
 -- Description: Adds optional metadata JSONB column for KYC tracking
@@ -104,11 +110,13 @@ The migration runner strictly parses SQL files into `up` and `down` sections usi
 > A file missing `-- up` or `-- down` markers will parse as empty blocks. The runner will register the file in `schema_migrations` without applying DDL to the database.
 
 ### Rules for the `up` block:
+
 1. Must contain additive changes only (Expand phase).
 2. Must use `IF NOT EXISTS` for all `CREATE TABLE` and `CREATE INDEX` statements.
 3. New columns must be `NULL` or have a safe default.
 
 ### Rules for the `down` block:
+
 1. Must cleanly reverse all operations in the `up` block in **exact reverse order**.
 2. Must use `IF EXISTS` for all `DROP` statements.
 3. Must be idempotent and safe to run multiple times.
@@ -121,11 +129,13 @@ The migration runner strictly parses SQL files into `up` and `down` sections usi
 Safety checks are configured in `migrations/lint/rules.json` and validated with `npx ts-node scripts/migrate.ts lint`.
 
 ### 1. No Blocking Locks (`no_blocking_locks`)
+
 - **No table locks**: Never run `LOCK TABLE` on production tables.
 - **Concurrent index creation**: Always use `CREATE INDEX CONCURRENTLY` on high-traffic or large tables.
 - **Default values**: Avoid `ALTER TABLE ... ADD COLUMN ... DEFAULT 'val'` with non-null constraints on large tables in a single step without validating lock duration.
 
 ### 2. Expand / Contract Pattern (`expand_contract`)
+
 - **Phase 1 (Expand)**:
   1. Add new tables / nullable columns in migration.
   2. Deploy application code that dual-writes to both old and new columns.
@@ -135,6 +145,7 @@ Safety checks are configured in `migrations/lint/rules.json` and validated with 
   2. Remove old columns or tables in a separate, subsequent migration.
 
 ### 3. Backward Compatibility (`backward_compatible`)
+
 - **Critical Tables**: `users`, `transactions`, `balances`, `campaigns`, `donations`.
 - Disallow instant column drops (`ALTER TABLE ... DROP COLUMN`) or immediate renames (`ALTER TABLE ... RENAME COLUMN`) in the same deployment cycle.
 - Disallow changing column types in-place (`ALTER TABLE ... ALTER COLUMN ... TYPE`). Instead, add a new column, dual-write, and migrate.
@@ -144,16 +155,21 @@ Safety checks are configured in `migrations/lint/rules.json` and validated with 
 ## 6. Rollback Strategy & Procedures
 
 ### Pre-Deployment Verification
+
 Before pushing or deploying a new migration:
+
 ```bash
 # Verify rollback integrity on scratch database
 export DATABASE_URL=postgresql://test:test@localhost:5432/test_scratch
 npx ts-node scripts/migrate.ts verify 028
 ```
+
 The command applies the migration, executes its `down` block, and confirms the migration record is removed from `schema_migrations`.
 
 ### Stepwise Production Rollback
+
 When rolling back in production or staging environments:
+
 1. Always roll back **one step at a time**:
    ```bash
    npx ts-node scripts/migrate.ts down 1
@@ -161,6 +177,7 @@ When rolling back in production or staging environments:
 2. Verify the database state after each rollback step before continuing.
 
 ### Production Rollback Order of Operations
+
 ```mermaid
 graph TD
     A["1. Detect Incident in Production"] --> B["2. Roll Back Application Deployment"]
@@ -215,6 +232,7 @@ npm run test:migrations
 ```
 
 The test suite validates:
+
 1. Successful dry-run execution (`migrate.ts up --dry-run`).
 2. Rollback handling without errors (`migrate.ts down 1`).
 3. Rollback integrity verification (`migrate.ts verify 001`).

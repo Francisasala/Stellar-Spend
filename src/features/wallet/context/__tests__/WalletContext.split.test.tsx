@@ -38,8 +38,12 @@ describe('WalletContext – narrow context split (#1184)', () => {
         <div>
           <span data-testid="connected">{String(isConnected)}</span>
           <span data-testid="connecting">{String(isConnecting)}</span>
-          <button data-testid="btn-connect" onClick={onConnect}>Connect</button>
-          <button data-testid="btn-disconnect" onClick={onDisconnect}>Disconnect</button>
+          <button data-testid="btn-connect" onClick={onConnect}>
+            Connect
+          </button>
+          <button data-testid="btn-disconnect" onClick={onDisconnect}>
+            Disconnect
+          </button>
         </div>
       );
     };
@@ -47,7 +51,9 @@ describe('WalletContext – narrow context split (#1184)', () => {
     const onConnect = vi.fn();
     const onDisconnect = vi.fn();
     render(
-      <WalletProvider value={makeValue({ isConnected: true, isConnecting: false, onConnect, onDisconnect })}>
+      <WalletProvider
+        value={makeValue({ isConnected: true, isConnecting: false, onConnect, onDisconnect })}
+      >
         <Consumer />
       </WalletProvider>,
     );
@@ -74,9 +80,7 @@ describe('WalletContext – narrow context split (#1184)', () => {
     };
 
     render(
-      <WalletProvider
-        value={makeValue({ walletAddress: 'GTEST...1234', walletType: 'Freighter' })}
-      >
+      <WalletProvider value={makeValue({ walletAddress: 'GTEST...1234', walletType: 'Freighter' })}>
         <Consumer />
       </WalletProvider>,
     );
@@ -107,7 +111,9 @@ describe('WalletContext – narrow context split (#1184)', () => {
         <div>
           <span data-testid="connected">{String(isConnected)}</span>
           <span data-testid="address">{walletAddress ?? 'none'}</span>
-          <button data-testid="connect" onClick={onConnect}>Go</button>
+          <button data-testid="connect" onClick={onConnect}>
+            Go
+          </button>
         </div>
       );
     };
@@ -164,9 +170,7 @@ describe('WalletContext – narrow context split (#1184)', () => {
     };
 
     render(
-      <WalletProvider
-        value={makeValue({ isConnected: true, walletAddress: 'GBTEST...' })}
-      >
+      <WalletProvider value={makeValue({ isConnected: true, walletAddress: 'GBTEST...' })}>
         <ConnConsumer />
         <AccConsumer />
       </WalletProvider>,

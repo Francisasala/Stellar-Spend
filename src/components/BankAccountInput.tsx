@@ -3,11 +3,7 @@
 import { useState, useCallback } from 'react';
 import { cn } from '@/lib/cn';
 import { useTranslations } from '@/lib/i18n';
-import {
-  validateBankField,
-  type BankFieldType,
-  type ValidationResult,
-} from '@/lib/validation';
+import { validateBankField, type BankFieldType, type ValidationResult } from '@/lib/validation';
 
 interface BankFieldProps {
   type: BankFieldType;
@@ -59,7 +55,11 @@ export function BankField({ type, value, onChange, label, placeholder, disabled 
   const showError = touched && !result.valid;
   const showSuccess = touched && result.valid && value.trim().length > 0;
 
-  const borderColorClass = showError ? 'border-error' : showSuccess ? 'border-success' : 'border-line';
+  const borderColorClass = showError
+    ? 'border-error'
+    : showSuccess
+      ? 'border-success'
+      : 'border-line';
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -154,7 +154,11 @@ export function BankAccountInput({
   return (
     <div className="flex flex-col gap-3">
       {/* Mode tabs */}
-      <div role="tablist" aria-label="Bank account format" className="flex gap-0 border-b border-line">
+      <div
+        role="tablist"
+        aria-label="Bank account format"
+        className="flex gap-0 border-b border-line"
+      >
         {MODES.map((m) => (
           <button
             key={m}

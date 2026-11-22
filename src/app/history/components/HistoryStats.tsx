@@ -35,7 +35,10 @@ export function HistoryStats({ transactions }: HistoryStatsProps) {
       </div>
       <div className="border border-[#333333] bg-[#111111] p-4">
         <p className="text-[10px] tracking-widest uppercase text-[#777777]">Active Coverage</p>
-        <p className="mt-2 text-2xl font-semibold text-[#4ade80] tabular-nums" data-testid="total-amount">
+        <p
+          className="mt-2 text-2xl font-semibold text-[#4ade80] tabular-nums"
+          data-testid="total-amount"
+        >
           {formatUsdc(activeCoverage)} USDC
         </p>
       </div>

@@ -3,10 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { useFocusTrap, useFocusRestore } from '@/hooks/useFocusTrap';
-import {
-  type WalletModalProps,
-  type WalletOption,
-} from './modal/types';
+import { type WalletModalProps, type WalletOption } from './modal/types';
 import { WalletConnectorList } from './modal/WalletConnectorList';
 import { WalletModalHeader } from './modal/WalletModalHeader';
 import { WalletModalError } from './modal/WalletModalError';
@@ -146,4 +143,3 @@ export function WalletModal({
     </div>
   );
 }
-

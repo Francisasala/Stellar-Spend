@@ -138,11 +138,13 @@ describe('POST /api/merchant', () => {
 
   it('returns 201 with merchant data on success', async () => {
     mockCreateMerchant.mockResolvedValue(makeMerchant());
-    const res = await POST(postReq({
-      userId: 'user-001',
-      businessName: 'Acme Corp',
-      businessEmail: 'billing@acme.com',
-    }));
+    const res = await POST(
+      postReq({
+        userId: 'user-001',
+        businessName: 'Acme Corp',
+        businessEmail: 'billing@acme.com',
+      }),
+    );
     expect(res.status).toBe(201);
     const body = await res.json();
     expect(body.data.id).toBe('merchant-001');
@@ -150,15 +152,21 @@ describe('POST /api/merchant', () => {
 
   it('delegates to merchantService.createMerchant with correct args', async () => {
     mockCreateMerchant.mockResolvedValue(makeMerchant());
-    await POST(postReq({ userId: 'u-xyz', businessName: 'My Shop', businessEmail: 'shop@test.io' }));
+    await POST(
+      postReq({ userId: 'u-xyz', businessName: 'My Shop', businessEmail: 'shop@test.io' }),
+    );
     expect(mockCreateMerchant).toHaveBeenCalledWith('u-xyz', 'My Shop', 'shop@test.io');
   });
 
   it('returns 500 when service throws', async () => {
     mockCreateMerchant.mockRejectedValue(new Error('DB failure'));
-    const res = await POST(postReq({
-      userId: 'u1', businessName: 'Test', businessEmail: 'test@test.com',
-    }));
+    const res = await POST(
+      postReq({
+        userId: 'u1',
+        businessName: 'Test',
+        businessEmail: 'test@test.com',
+      }),
+    );
     expect(res.status).toBe(500);
   });
 
@@ -217,13 +225,15 @@ describe('POST /api/merchant/payouts', () => {
   const validPayoutBody = {
     merchantId: 'merchant-001',
     idempotencyKey: 'idem-001',
-    items: [{
-      beneficiaryInstitution: 'GTBank',
-      beneficiaryAccount: '1234567890',
-      beneficiaryName: 'John Doe',
-      amount: 500,
-      currency: 'NGN',
-    }],
+    items: [
+      {
+        beneficiaryInstitution: 'GTBank',
+        beneficiaryAccount: '1234567890',
+        beneficiaryName: 'John Doe',
+        amount: 500,
+        currency: 'NGN',
+      },
+    ],
   };
 
   beforeEach(async () => {

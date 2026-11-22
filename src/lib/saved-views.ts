@@ -1,4 +1,4 @@
-import { randomHex } from "@/lib/crypto/ids";
+import { randomHex } from '@/lib/crypto/ids';
 import type { SearchFilters } from '@/lib/transactions';
 
 export interface SavedView {

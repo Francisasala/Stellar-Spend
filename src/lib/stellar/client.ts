@@ -86,9 +86,7 @@ export class StellarClient {
   /**
    * Submits a transaction to the Stellar network with retry logic.
    */
-  async submitTransaction(
-    transaction: Transaction,
-  ): Promise<TransactionResponse> {
+  async submitTransaction(transaction: Transaction): Promise<TransactionResponse> {
     return this.withRetry(async () => {
       try {
         const result = await this.horizon.submitTransaction(transaction);
@@ -300,10 +298,9 @@ export class StellarClient {
 
     // Retries exhausted on a transient failure: report the outage clearly and keep the cause (#1473)
     if (!lastError) throw new Error('Unknown error in Stellar RPC call');
-    throw new Error(
-      `Stellar network unavailable after ${this.retryConfig.maxAttempts} attempts`,
-      { cause: lastError },
-    );
+    throw new Error(`Stellar network unavailable after ${this.retryConfig.maxAttempts} attempts`, {
+      cause: lastError,
+    });
   }
 
   /**
@@ -347,7 +344,7 @@ export class StellarClient {
    * Sleeps for a given number of milliseconds.
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**

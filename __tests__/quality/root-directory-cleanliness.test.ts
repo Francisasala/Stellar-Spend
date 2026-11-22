@@ -36,22 +36,35 @@ const ROOT = path.resolve(process.cwd());
 /** Glob-style patterns converted to RegExp for banned root filenames. */
 const BANNED_PATTERNS: { pattern: RegExp; description: string }[] = [
   { pattern: /^task\d*\.md$/i, description: 'task note files (task*.md)' },
-  { pattern: /^DELIVERABLES.*\.txt$/i, description: 'deliverable checklist files (DELIVERABLES*.txt)' },
+  {
+    pattern: /^DELIVERABLES.*\.txt$/i,
+    description: 'deliverable checklist files (DELIVERABLES*.txt)',
+  },
   { pattern: /^ACCEPTANCE_VERIFICATION.*\.md$/i, description: 'acceptance verification files' },
   { pattern: /^ERROR_HANDLER_AUDIT.*\.md$/i, description: 'error handler audit files' },
-  { pattern: /.*_COMPLETION_REPORT\.md$/i, description: 'completion report files (*_COMPLETION_REPORT.md)' },
+  {
+    pattern: /.*_COMPLETION_REPORT\.md$/i,
+    description: 'completion report files (*_COMPLETION_REPORT.md)',
+  },
   { pattern: /.*_AUDIT\.md$/i, description: 'ad hoc audit summary files (*_AUDIT.md)' },
-  { pattern: /^IMPLEMENTATION_.*\.md$/i, description: 'implementation summary files (IMPLEMENTATION_*.md)' },
-  { pattern: /.*_IMPLEMENTATION\.md$/i, description: 'implementation summary files (*_IMPLEMENTATION.md)' },
-  { pattern: /^PR_DESCRIPTION.*\.md$/i, description: 'PR description scratch files (PR_DESCRIPTION*.md)' },
+  {
+    pattern: /^IMPLEMENTATION_.*\.md$/i,
+    description: 'implementation summary files (IMPLEMENTATION_*.md)',
+  },
+  {
+    pattern: /.*_IMPLEMENTATION\.md$/i,
+    description: 'implementation summary files (*_IMPLEMENTATION.md)',
+  },
+  {
+    pattern: /^PR_DESCRIPTION.*\.md$/i,
+    description: 'PR description scratch files (PR_DESCRIPTION*.md)',
+  },
 ];
 
 describe('Quality Gate — Root Directory Cleanliness', () => {
   it('root directory contains no banned scratch or stale files', () => {
     const rootEntries = fs.readdirSync(ROOT, { withFileTypes: true });
-    const rootFiles = rootEntries
-      .filter((e) => e.isFile())
-      .map((e) => e.name);
+    const rootFiles = rootEntries.filter((e) => e.isFile()).map((e) => e.name);
 
     const violations: string[] = [];
 

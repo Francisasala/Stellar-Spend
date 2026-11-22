@@ -17,9 +17,6 @@ export {
   getCountryValidator,
 } from '@/lib/validation/bank-account';
 
-export type {
-  BankFieldType,
-  CountryValidatorFn,
-} from '@/lib/validation/bank-account';
+export type { BankFieldType, CountryValidatorFn } from '@/lib/validation/bank-account';
 
 export type { ValidationResult } from '@/lib/validation/rules';

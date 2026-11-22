@@ -199,9 +199,7 @@ export function getRouteRateLimitConfig(pathname: string): RouteRateLimitConfig 
 
   // Pattern match for dynamic routes (e.g., /api/transactions/[hash])
   for (const [pattern, config] of Object.entries(PUBLIC_API_RATE_LIMITS)) {
-    const regexPattern = pattern
-      .replace(/\[.*?\]/g, '[^/]+')
-      .replace(/\//g, '\\/');
+    const regexPattern = pattern.replace(/\[.*?\]/g, '[^/]+').replace(/\//g, '\\/');
     const regex = new RegExp(`^${regexPattern}$`);
     if (regex.test(pathname)) {
       return config;

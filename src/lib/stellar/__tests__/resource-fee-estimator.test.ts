@@ -14,7 +14,10 @@ describe('ResourceFeeEstimator', () => {
   let estimator: ResourceFeeEstimator;
   const mockRpcUrl = 'https://soroban-rpc.stellar.org';
   const contractId = 'CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4';
-  const testSourceAccount = new Account('GBRPYHIL2CI3WHZDTOOQFC6EB4RRRKC3D5NJ5XASFXWF5UCLCJLXIEO', '1');
+  const testSourceAccount = new Account(
+    'GBRPYHIL2CI3WHZDTOOQFC6EB4RRRKC3D5NJ5XASFXWF5UCLCJLXIEO',
+    '1',
+  );
 
   beforeEach(() => {
     estimator = new ResourceFeeEstimator(mockRpcUrl);
@@ -267,9 +270,7 @@ describe('ResourceFeeEstimator', () => {
     });
 
     it('should preserve original call data', () => {
-      const contractCalls = [
-        { method: 'transfer', reads: 5, writes: 3 },
-      ];
+      const contractCalls = [{ method: 'transfer', reads: 5, writes: 3 }];
 
       const optimized = estimator.optimizeStorageAccess(contractCalls);
 

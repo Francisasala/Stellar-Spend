@@ -32,11 +32,7 @@ function createFocusableContainer(buttonCount: number): HTMLDivElement {
 }
 
 /** Simulate a keydown event on the container element */
-function fireKeyDown(
-  container: HTMLElement,
-  key: string,
-  shiftKey = false,
-): void {
+function fireKeyDown(container: HTMLElement, key: string, shiftKey = false): void {
   const event = new KeyboardEvent('keydown', { key, shiftKey, bubbles: true });
   container.dispatchEvent(event);
 }

@@ -48,7 +48,10 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       if (event.defaultPrevented) {
         return;
       }
-      if (isInteractive && (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar')) {
+      if (
+        isInteractive &&
+        (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar')
+      ) {
         event.preventDefault();
         onActivate?.();
       }
@@ -80,7 +83,8 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         className={cn(
           'rounded-lg p-6',
           variantStyles[variant],
-          isInteractive && 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+          isInteractive &&
+            'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
           className,
         )}
         {...interactiveProps}

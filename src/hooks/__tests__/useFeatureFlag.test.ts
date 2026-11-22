@@ -50,9 +50,7 @@ describe('useFeatureFlag', () => {
     renderHook(() => useFeatureFlag('user-42'));
 
     await waitFor(() =>
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('userId=user-42'),
-      ),
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('userId=user-42')),
     );
   });
 

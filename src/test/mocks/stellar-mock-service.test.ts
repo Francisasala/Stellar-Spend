@@ -82,9 +82,9 @@ describe('buildHorizonAccount', () => {
   });
 
   it('accepts custom balances', () => {
-    const acc = buildHorizonAccount('GABC', [
-      { asset_type: 'native', balance: '0.5000000' },
-    ]) as { balances: unknown[] };
+    const acc = buildHorizonAccount('GABC', [{ asset_type: 'native', balance: '0.5000000' }]) as {
+      balances: unknown[];
+    };
     expect(acc.balances.length).toBe(1);
   });
 
@@ -221,9 +221,7 @@ describe('Horizon mock — GET /transactions/:hash', () => {
   });
 
   it('marks the transaction as successful', async () => {
-    const tx = await fetchJson<{ successful: boolean }>(
-      `${HORIZON_BASE}/transactions/somehash`,
-    );
+    const tx = await fetchJson<{ successful: boolean }>(`${HORIZON_BASE}/transactions/somehash`);
     expect(tx.successful).toBe(true);
   });
 });
@@ -249,10 +247,9 @@ describe('Horizon mock — POST /transactions', () => {
 
 describe('Soroban RPC mock — simulateTransaction', () => {
   it('returns a simulation result with minResourceFee', async () => {
-    const res = await rpcCall<{ result: { minResourceFee: string } }>(
-      'simulateTransaction',
-      { transaction: 'AAAA' },
-    );
+    const res = await rpcCall<{ result: { minResourceFee: string } }>('simulateTransaction', {
+      transaction: 'AAAA',
+    });
     expect(res.result.minResourceFee).toBeDefined();
     expect(parseInt(res.result.minResourceFee, 10)).toBeGreaterThanOrEqual(0);
   });
@@ -266,10 +263,9 @@ describe('Soroban RPC mock — simulateTransaction', () => {
 
 describe('Soroban RPC mock — sendTransaction', () => {
   it('returns PENDING status with a hash', async () => {
-    const res = await rpcCall<{ result: { status: string; hash: string } }>(
-      'sendTransaction',
-      { transaction: 'AAAA' },
-    );
+    const res = await rpcCall<{ result: { status: string; hash: string } }>('sendTransaction', {
+      transaction: 'AAAA',
+    });
     expect(res.result.status).toBe('PENDING');
     expect(typeof res.result.hash).toBe('string');
   });
@@ -277,10 +273,9 @@ describe('Soroban RPC mock — sendTransaction', () => {
 
 describe('Soroban RPC mock — getTransaction', () => {
   it('returns SUCCESS status with a ledger number', async () => {
-    const res = await rpcCall<{ result: { status: string; ledger: number } }>(
-      'getTransaction',
-      { hash: 'c'.repeat(64) },
-    );
+    const res = await rpcCall<{ result: { status: string; ledger: number } }>('getTransaction', {
+      hash: 'c'.repeat(64),
+    });
     expect(res.result.status).toBe('SUCCESS');
     expect(typeof res.result.ledger).toBe('number');
   });
@@ -303,9 +298,7 @@ describe('Soroban RPC mock — getHealth', () => {
 
 describe('Soroban RPC mock — unknown method', () => {
   it('returns a method-not-found error with code -32601', async () => {
-    const res = await rpcCall<{ error: { code: number; message: string } }>(
-      'nonExistentMethod',
-    );
+    const res = await rpcCall<{ error: { code: number; message: string } }>('nonExistentMethod');
     expect(res.error).toBeDefined();
     expect(res.error.code).toBe(-32601);
     expect(res.error.message).toContain('nonExistentMethod');

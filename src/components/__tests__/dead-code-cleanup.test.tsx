@@ -52,7 +52,15 @@ describe('Dead Code Cleanup — Issue #1098', () => {
 
     it('validates that all public barrel exports are used', () => {
       // design-system barrel should only export what is imported
-      const barrelExports = ['Alert', 'Badge', 'Button', 'Card', 'CardContent', 'CardFooter', 'CardHeader'];
+      const barrelExports = [
+        'Alert',
+        'Badge',
+        'Button',
+        'Card',
+        'CardContent',
+        'CardFooter',
+        'CardHeader',
+      ];
 
       // Each export must be verified to be used somewhere
       barrelExports.forEach((exportName) => {
@@ -112,8 +120,22 @@ describe('Dead Code Cleanup — Issue #1098', () => {
 
       const componentExportSpec = {
         'insurance-option': ['PremiumBreakdown', 'TermsModal', 'types'],
-        'insurance-claim': ['ClaimFormHeader', 'ClaimFormFields', 'FileUploadZone', 'EligibilityState', 'types'],
-        'design-system': ['Alert', 'Badge', 'Button', 'Card', 'CardContent', 'CardFooter', 'CardHeader'],
+        'insurance-claim': [
+          'ClaimFormHeader',
+          'ClaimFormFields',
+          'FileUploadZone',
+          'EligibilityState',
+          'types',
+        ],
+        'design-system': [
+          'Alert',
+          'Badge',
+          'Button',
+          'Card',
+          'CardContent',
+          'CardFooter',
+          'CardHeader',
+        ],
       };
 
       Object.entries(componentExportSpec).forEach(([dir, exports]) => {
@@ -159,10 +181,7 @@ describe('Dead Code Cleanup — Issue #1098', () => {
       // 2. Exported as public API (and used somewhere)
       // 3. Removed if neither applies
 
-      const unusedFunctions = [
-        'buildProviderQuotes',
-        'getEventIcon',
-      ];
+      const unusedFunctions = ['buildProviderQuotes', 'getEventIcon'];
 
       // These should be either removed or verified to be used
       unusedFunctions.forEach((fn) => {

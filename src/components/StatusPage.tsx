@@ -127,9 +127,7 @@ export default function StatusPage() {
             <div>
               <div className="text-lg font-semibold">{getStatusText(overallStatus)}</div>
               <div className="text-xs opacity-75">
-                {overallStatus === 'operational'
-                  ? t('allSystemsNormal')
-                  : t('someSystemsAffected')}
+                {overallStatus === 'operational' ? t('allSystemsNormal') : t('someSystemsAffected')}
               </div>
             </div>
           </div>

@@ -176,7 +176,14 @@ export const CONTRAST_PAIRS: ReadonlyArray<readonly [string, string]> = [
 // ---------------------------------------------------------------------------
 
 /** Semantic color roles shared by transaction badges and status-page indicators. */
-export type StatusVariant = 'success' | 'warning' | 'danger' | 'info' | 'accent' | 'neutral' | 'special';
+export type StatusVariant =
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'info'
+  | 'accent'
+  | 'neutral'
+  | 'special';
 
 /** Container classes for each variant (border, background and text). */
 export const STATUS_VARIANT_CLASSES: Record<StatusVariant, string> = {

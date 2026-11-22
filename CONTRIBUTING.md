@@ -56,6 +56,7 @@ npm run dev
 ### Run checks before committing
 
 ### Creating Scratch Files
+
 ```bash
 npm run lint             # ESLint
 npm run format:check     # Prettier
@@ -453,6 +454,7 @@ All error handling must follow these rules (enforced by ESLint — violations fa
 
 - **No floating promises.** Every `async` call must be `await`ed or explicitly
   discarded with `void`:
+
   ```ts
   // ❌ Floating — rejection is silently lost
   fetchData();
@@ -463,10 +465,12 @@ All error handling must follow these rules (enforced by ESLint — violations fa
   // ✅ Intentionally fire-and-forget
   void fetchData();
   ```
+
   Rule: `@typescript-eslint/no-floating-promises: error`
 
 - **No empty catch blocks.** At minimum, log the error or rethrow it. If you
   genuinely want to ignore an error, prefix the parameter with `_` and add a comment:
+
   ```ts
   // ❌ Swallowed — no trace of what went wrong
   try { ... } catch (e) {}
@@ -481,6 +485,7 @@ All error handling must follow these rules (enforced by ESLint — violations fa
     // Safe to ignore: optional cache warm-up — the main path continues without it
   }
   ```
+
   Rule: `no-empty: ['error', { allowEmptyCatch: false }]`
 
 - **Use the shared `ErrorHandler`** for all API route errors. See
@@ -582,10 +587,10 @@ Stellar-Spend uses a two-tier dependency versioning strategy to balance security
 
 The following packages **must** use exact version strings (no `^` or `~`) in `package.json`:
 
-| Package | Reason |
-|---|---|
-| `react` | Major/minor bumps require coordinated changes; silent upgrades cause hydration mismatches |
-| `react-dom` | Must always match `react` exactly |
+| Package      | Reason                                                                                                                    |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `react`      | Major/minor bumps require coordinated changes; silent upgrades cause hydration mismatches                                 |
+| `react-dom`  | Must always match `react` exactly                                                                                         |
 | `typescript` | Compiler version is a build contract — drift between developer and CI compiler versions causes false-positive type errors |
 
 If you need to update a hard-pinned dependency, open a dedicated PR with a changelog entry explaining the reason and test coverage for any API changes.

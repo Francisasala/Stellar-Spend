@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ErrorHandler } from '@/lib/error-handler';
-import {
-  authenticateApiKey,
-  checkApiKeyRateLimit,
-  recordApiKeyUsage,
-} from '@/lib/api-keys';
+import { authenticateApiKey, checkApiKeyRateLimit, recordApiKeyUsage } from '@/lib/api-keys';
 import type { ApiKeyRecord } from '@/lib/api-keys/types';
 import { getClientIp } from '@/lib/offramp';
 import { enforceScope } from '@/lib/middleware';

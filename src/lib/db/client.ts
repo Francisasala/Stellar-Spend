@@ -75,7 +75,11 @@ export const pool: Pick<Pool, 'query' | 'connect'> = {
 } as Pick<Pool, 'query' | 'connect'>;
 
 /** Stats for the single shared pool owned by this module. */
-export function getSharedPoolStats(): { totalCount: number; idleCount: number; waitingCount: number } {
+export function getSharedPoolStats(): {
+  totalCount: number;
+  idleCount: number;
+  waitingCount: number;
+} {
   return {
     totalCount: _pool.totalCount,
     idleCount: _pool.idleCount,

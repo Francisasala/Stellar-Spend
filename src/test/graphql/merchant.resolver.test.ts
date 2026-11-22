@@ -3,11 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  merchantQueries,
-  merchantMutations,
-  merchantSubscriptions,
-} from '@/lib/graphql';
+import { merchantQueries, merchantMutations, merchantSubscriptions } from '@/lib/graphql';
 import type { GraphQLContext } from '@/lib/graphql';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

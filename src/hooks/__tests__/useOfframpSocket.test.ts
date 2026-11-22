@@ -8,15 +8,13 @@ let capturedOnClose: (() => void) | null = null;
 const mockDisconnect = vi.fn();
 
 vi.mock('@/lib/polling/websocket-client', () => ({
-  connectWebSocket: vi.fn((
-    _id: string,
-    onMessage: (push: unknown) => void,
-    onClose: () => void,
-  ) => {
-    capturedOnMessage = onMessage;
-    capturedOnClose = onClose;
-    return mockDisconnect;
-  }),
+  connectWebSocket: vi.fn(
+    (_id: string, onMessage: (push: unknown) => void, onClose: () => void) => {
+      capturedOnMessage = onMessage;
+      capturedOnClose = onClose;
+      return mockDisconnect;
+    },
+  ),
 }));
 
 describe('useOfframpSocket', () => {
@@ -33,9 +31,7 @@ describe('useOfframpSocket', () => {
   });
 
   it('should start as "disconnected" when id is null', () => {
-    const { result } = renderHook(() =>
-      useOfframpSocket({ id: null, onStatusUpdate: vi.fn() }),
-    );
+    const { result } = renderHook(() => useOfframpSocket({ id: null, onStatusUpdate: vi.fn() }));
     expect(result.current.socketState).toBe('disconnected');
     expect(result.current.isConnected).toBe(false);
   });
@@ -51,9 +47,7 @@ describe('useOfframpSocket', () => {
 
   it('should transition to "connected" when a message arrives', () => {
     const onStatusUpdate = vi.fn();
-    const { result } = renderHook(() =>
-      useOfframpSocket({ id: 'order-1', onStatusUpdate }),
-    );
+    const { result } = renderHook(() => useOfframpSocket({ id: 'order-1', onStatusUpdate }));
 
     act(() => {
       capturedOnMessage?.({ type: 'status_update', status: 'pending', orderId: 'order-1' });
@@ -75,7 +69,9 @@ describe('useOfframpSocket', () => {
     });
 
     // Now simulate a disconnect
-    act(() => { capturedOnClose?.(); });
+    act(() => {
+      capturedOnClose?.();
+    });
 
     expect(result.current.socketState).toBe('disconnected');
   });

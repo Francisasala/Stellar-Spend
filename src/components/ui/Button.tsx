@@ -74,11 +74,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(buttonVariants({ variant, size }), className)}
         {...props}
       >
-        {isLoading ? (
-          <span aria-hidden="true">...</span>
-        ) : (
-          children
-        )}
+        {isLoading ? <span aria-hidden="true">...</span> : children}
       </button>
     );
   },

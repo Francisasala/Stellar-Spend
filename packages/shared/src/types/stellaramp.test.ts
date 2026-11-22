@@ -86,11 +86,7 @@ describe('StellarRamp types', () => {
 
   it('StateVariant accepts all valid tones', () => {
     const walletTones: Array<'muted' | 'accent'> = ['muted', 'accent'];
-    const ctaTones: Array<'accent' | 'disabled' | 'light'> = [
-      'accent',
-      'disabled',
-      'light',
-    ];
+    const ctaTones: Array<'accent' | 'disabled' | 'light'> = ['accent', 'disabled', 'light'];
     walletTones.forEach((tone) => {
       expect(['muted', 'accent']).toContain(tone);
     });

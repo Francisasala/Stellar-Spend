@@ -38,7 +38,9 @@ export function EligibilityState({ isChecking, isEligible, onCancel }: Eligibili
         aria-live="assertive"
         className="p-4 bg-red-900/20 border border-red-500/50 flex flex-col items-center gap-3"
       >
-        <span aria-hidden="true" className="text-2xl">⚠</span>
+        <span aria-hidden="true" className="text-2xl">
+          ⚠
+        </span>
         <p className="text-xs text-red-400 text-center">{t('insurance.ineligible')}</p>
         <button
           type="button"

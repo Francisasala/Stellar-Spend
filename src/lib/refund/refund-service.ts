@@ -66,7 +66,15 @@ export async function processRefund(
 
   const failed = (error: string, refundAmount = '0'): RefundResult => {
     transitionCompensation('refund', transactionId, 'pending', 'failed');
-    return { transactionId, success: false, status: 'failed', refundAmount, reason, error, timestamp };
+    return {
+      transactionId,
+      success: false,
+      status: 'failed',
+      refundAmount,
+      reason,
+      error,
+      timestamp,
+    };
   };
 
   let tx: Transaction | null;

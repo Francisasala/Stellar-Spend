@@ -71,10 +71,13 @@ export class PaycrestAdapter implements PayoutProviderAdapter {
 
   async verifyAccount(institution: string, accountIdentifier: string): Promise<string> {
     try {
-      const response = await this.http.post<PaycrestVerifyAccountResponse>('/sender/verify-account', {
-        institution,
-        accountIdentifier,
-      });
+      const response = await this.http.post<PaycrestVerifyAccountResponse>(
+        '/sender/verify-account',
+        {
+          institution,
+          accountIdentifier,
+        },
+      );
       return response?.accountName || response?.data || '';
     } catch {
       return '';

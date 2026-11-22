@@ -12,12 +12,7 @@ export {
 export type { PollingState, StatusResponse } from './polling-manager';
 
 // Backoff
-export {
-  calculateBackoff,
-  backoffCalculator,
-  BRIDGE_CONFIG,
-  PAYOUT_CONFIG,
-} from './backoff';
+export { calculateBackoff, backoffCalculator, BRIDGE_CONFIG, PAYOUT_CONFIG } from './backoff';
 export type { PollingConfig, BackoffCalculator } from './backoff';
 
 // WebSocket client

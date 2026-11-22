@@ -96,15 +96,12 @@ export function InsuranceOption({
 
   const isDisabled = disabled || amount <= MIN_INSURANCE_AMOUNT;
 
-  const handleTermsKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLButtonElement>) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        setShowTerms(true);
-      }
-    },
-    [],
-  );
+  const handleTermsKeyDown = useCallback((event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setShowTerms(true);
+    }
+  }, []);
 
   return (
     <>
@@ -185,12 +182,7 @@ export function InsuranceOption({
 
         {/* Premium breakdown */}
         {quote && amount > MIN_INSURANCE_AMOUNT && (
-          <PremiumBreakdown
-            quote={quote}
-            amount={amount}
-            enabled={enabled}
-            timeLeft={timeLeft}
-          />
+          <PremiumBreakdown quote={quote} amount={amount} enabled={enabled} timeLeft={timeLeft} />
         )}
 
         {/* Disabled hint */}

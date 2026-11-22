@@ -94,9 +94,7 @@ vi.mock('@/lib/rateLimiter', () => ({
 // ── idempotency mock (pass-through) ──────────────────────────────────────────
 
 vi.mock('@/lib/idempotency', () => ({
-  withIdempotency: vi.fn().mockImplementation(
-    (_req: unknown, fn: () => Promise<unknown>) => fn(),
-  ),
+  withIdempotency: vi.fn().mockImplementation((_req: unknown, fn: () => Promise<unknown>) => fn()),
 }));
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -346,9 +344,7 @@ describe('POST /api/offramp/verify-account', () => {
 
   it('error envelope has expected shape', async () => {
     const { POST } = await import('@/app/api/offramp/verify-account/route');
-    const res = await POST(
-      makePost('http://localhost/api/offramp/verify-account', {}),
-    );
+    const res = await POST(makePost('http://localhost/api/offramp/verify-account', {}));
     expect(res.status).toBe(400);
     const body = await json(res);
     expect(typeof body.error).toBe('string');
@@ -364,7 +360,7 @@ describe('GET /api/offramp/currencies', () => {
     expect(res.status).toBe(200);
     const body = await json(res);
     // Either an array or an object with a currencies array.
-    const list: unknown[] = Array.isArray(body) ? body : body.currencies ?? body.data ?? [];
+    const list: unknown[] = Array.isArray(body) ? body : (body.currencies ?? body.data ?? []);
     expect(list.length).toBeGreaterThan(0);
   });
 });
@@ -545,9 +541,7 @@ describe('POST /api/offramp/paycrest/order', () => {
 
   it('error envelope has expected shape', async () => {
     const { POST } = await import('@/app/api/offramp/paycrest/order/route');
-    const res = await POST(
-      makePost('http://localhost/api/offramp/paycrest/order', {}),
-    );
+    const res = await POST(makePost('http://localhost/api/offramp/paycrest/order', {}));
     expect(res.status).toBe(400);
     const body = await json(res);
     expect(typeof body.error).toBe('string');

@@ -146,10 +146,12 @@ If gitleaks reports a finding that is a **legitimate false positive** (e.g., a t
 3. **Placeholder patterns** — If a pattern like `YOUR_API_KEY` or `test_secret` is flagged, add it to `allowlist.regexes` in `.gitleaks.toml`.
 
 4. **Justified bypass** — If a false positive cannot be addressed via the allowlist, you may bypass the pre-commit hook **once** for that commit:
+
    ```bash
    # ⚠️ Only use if you have VERIFIED it's a false positive
    git commit --no-verify -m "commit message"
    ```
+
    **NEVER bypass for real credentials.** Real secrets must be rotated immediately.
 
 5. **Document** — If you add a new allowlist rule, include a comment in `.gitleaks.toml` explaining why it's safe.

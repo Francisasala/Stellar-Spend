@@ -290,19 +290,17 @@ describe('security/sessions routes delegate to lib (#1207)', () => {
   const user = 'GTESTUSER0000000000000000000000000000000000000000000000000';
 
   it('POST /sessions calls sessionManagementService.createSession', async () => {
-    const spy = vi
-      .spyOn(sessionManagementService, 'createSession')
-      .mockResolvedValue({
-        id: 's1',
-        userAddress: user,
-        token: 'tok',
-        refreshToken: 'ref',
-        isActive: true,
-        createdAt: 1,
-        expiresAt: 2,
-        lastActivityAt: 1,
-        activityCount: 0,
-      });
+    const spy = vi.spyOn(sessionManagementService, 'createSession').mockResolvedValue({
+      id: 's1',
+      userAddress: user,
+      token: 'tok',
+      refreshToken: 'ref',
+      isActive: true,
+      createdAt: 1,
+      expiresAt: 2,
+      lastActivityAt: 1,
+      activityCount: 0,
+    });
 
     const req = makeRequest('http://x/api/security/sessions', {
       method: 'POST',
@@ -317,9 +315,7 @@ describe('security/sessions routes delegate to lib (#1207)', () => {
   });
 
   it('GET /sessions calls getUserSessions', async () => {
-    const spy = vi
-      .spyOn(sessionManagementService, 'getUserSessions')
-      .mockResolvedValue([]);
+    const spy = vi.spyOn(sessionManagementService, 'getUserSessions').mockResolvedValue([]);
 
     const req = makeRequest('http://x/api/security/sessions', {
       headers: { 'x-user-address': user },
@@ -332,9 +328,7 @@ describe('security/sessions routes delegate to lib (#1207)', () => {
   });
 
   it('POST /sessions/refresh calls refreshSession', async () => {
-    const spy = vi
-      .spyOn(sessionManagementService, 'refreshSession')
-      .mockResolvedValue(null);
+    const spy = vi.spyOn(sessionManagementService, 'refreshSession').mockResolvedValue(null);
 
     const req = makeRequest('http://x/api/security/sessions/refresh', {
       method: 'POST',
@@ -349,9 +343,7 @@ describe('security/sessions routes delegate to lib (#1207)', () => {
   });
 
   it('POST /sessions/revoke calls revokeSession', async () => {
-    const spy = vi
-      .spyOn(sessionManagementService, 'revokeSession')
-      .mockResolvedValue(undefined);
+    const spy = vi.spyOn(sessionManagementService, 'revokeSession').mockResolvedValue(undefined);
 
     const req = makeRequest('http://x/api/security/sessions/revoke', {
       method: 'POST',
@@ -398,8 +390,6 @@ describe('security/sessions routes delegate to lib (#1207)', () => {
  *   - cleanupExpiredSessions: rowCount null falls back to 0
  *   - concurrent session limit: oldest session is revoked when limit is hit
  * ========================================================================= */
-
-
 
 describe('SessionManagementService – extended branch coverage (#1354)', () => {
   let svc: SessionManagementService;
@@ -450,9 +440,7 @@ describe('SessionManagementService – extended branch coverage (#1354)', () => 
       activity_count: 1,
     };
 
-    queryMock
-      .mockResolvedValueOnce({ rows: [row] })
-      .mockResolvedValueOnce({ rowCount: 1 });
+    queryMock.mockResolvedValueOnce({ rows: [row] }).mockResolvedValueOnce({ rowCount: 1 });
 
     const session = await strictSvc.validateSession('tok-ip', '10.0.0.2');
 
@@ -461,7 +449,7 @@ describe('SessionManagementService – extended branch coverage (#1354)', () => 
     expect(session?.id).toBe('sess-ip-1');
 
     // A warning must have been emitted.
-    expect((logger.warn as Mock)).toHaveBeenCalledWith(
+    expect(logger.warn as Mock).toHaveBeenCalledWith(
       'Session security event',
       expect.objectContaining({ type: 'ip_mismatch' }),
     );
@@ -607,7 +595,9 @@ describe('SessionManagementService – extended branch coverage (#1354)', () => 
     const events = await svc.detectSuspiciousActivity(USER);
 
     expect(events.length).toBeGreaterThanOrEqual(1);
-    expect(events.some((e) => e.type === 'suspicious_activity' && e.detail.includes('4 different IP'))).toBe(true);
+    expect(
+      events.some((e) => e.type === 'suspicious_activity' && e.detail.includes('4 different IP')),
+    ).toBe(true);
   });
 
   // --------------------------------------------------------------------------
@@ -637,7 +627,9 @@ describe('SessionManagementService – extended branch coverage (#1354)', () => 
 
     const events = await svc.detectSuspiciousActivity(USER);
 
-    expect(events.some((e) => e.type === 'suspicious_activity' && e.sessionId === 'sess-stale')).toBe(true);
+    expect(
+      events.some((e) => e.type === 'suspicious_activity' && e.sessionId === 'sess-stale'),
+    ).toBe(true);
   });
 
   // --------------------------------------------------------------------------

@@ -230,7 +230,7 @@ describe('amount validators', () => {
         errors: undefined,
       });
 
-      const result = validateMaxAmountLegacy('99.99', 100.00);
+      const result = validateMaxAmountLegacy('99.99', 100.0);
 
       expect(result.valid).toBe(true);
     });

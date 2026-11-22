@@ -14,13 +14,8 @@ vi.mock('@/lib/notifications/delivery-store', () => ({
 
 import { notifyTransactionStatusUpdate } from '@/lib/notifications';
 import type { ChannelAdapter } from '@/lib/notifications';
-import {
-  getNotificationPreferences,
-} from '@/lib/notifications';
-import {
-  createNotificationDelivery,
-  retryNotificationDelivery,
-} from '@/lib/notifications';
+import { getNotificationPreferences } from '@/lib/notifications';
+import { createNotificationDelivery, retryNotificationDelivery } from '@/lib/notifications';
 
 const getPrefsMock = vi.mocked(getNotificationPreferences);
 const createDeliveryMock = vi.mocked(createNotificationDelivery);
@@ -57,7 +52,9 @@ describe('notifyTransactionStatusUpdate', () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
-    createDeliveryMock.mockResolvedValue({ id: 'delivery-1' } as Awaited<ReturnType<typeof createNotificationDelivery>>);
+    createDeliveryMock.mockResolvedValue({ id: 'delivery-1' } as Awaited<
+      ReturnType<typeof createNotificationDelivery>
+    >);
     vi.mocked(retryNotificationDelivery).mockResolvedValue(undefined);
   });
 

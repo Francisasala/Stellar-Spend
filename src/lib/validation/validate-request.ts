@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z, ZodError, ZodSchema } from "zod";
-import { ErrorHandler } from "@/lib/errors/error-handler";
+import { NextRequest, NextResponse } from 'next/server';
+import { z, ZodError, ZodSchema } from 'zod';
+import { ErrorHandler } from '@/lib/errors/error-handler';
 
 /**
  * Shape of a single formatted validation issue.
@@ -28,7 +28,7 @@ export type ValidationResult<T> =
  */
 export function formatZodIssues(error: ZodError): ValidationFieldError[] {
   return error.issues.map((issue) => ({
-    path: issue.path.length > 0 ? issue.path.join(".") : "(root)",
+    path: issue.path.length > 0 ? issue.path.join('.') : '(root)',
     message: issue.message,
     code: issue.code,
   }));
@@ -39,7 +39,7 @@ export function formatZodIssues(error: ZodError): ValidationFieldError[] {
  */
 export function buildValidationErrorResponse(
   error: ZodError,
-  message = "Request validation failed",
+  message = 'Request validation failed',
 ): NextResponse {
   const fieldErrors = formatZodIssues(error);
   return ErrorHandler.validation(message, fieldErrors);
@@ -74,7 +74,7 @@ function parseWithSchema<T>(
 async function readJsonBody(request: NextRequest): Promise<unknown> {
   try {
     const text = await request.text();
-    if (text.trim() === "") {
+    if (text.trim() === '') {
       return undefined;
     }
     return JSON.parse(text);
@@ -92,7 +92,7 @@ async function readJsonBody(request: NextRequest): Promise<unknown> {
 export async function validateBody<T>(
   request: NextRequest,
   schema: ZodSchema<T>,
-  message = "Invalid request body",
+  message = 'Invalid request body',
 ): Promise<ValidationResult<T>> {
   const body = await readJsonBody(request);
   return parseWithSchema(schema, body, message);
@@ -108,7 +108,7 @@ export async function validateBody<T>(
 export function validateQuery<T>(
   request: NextRequest,
   schema: ZodSchema<T>,
-  message = "Invalid query parameters",
+  message = 'Invalid query parameters',
 ): ValidationResult<T> {
   const query: Record<string, string | string[]> = {};
   for (const key of new Set(request.nextUrl.searchParams.keys())) {
@@ -124,7 +124,7 @@ export function validateQuery<T>(
 export function validateParams<T>(
   params: unknown,
   schema: ZodSchema<T>,
-  message = "Invalid route parameters",
+  message = 'Invalid route parameters',
 ): ValidationResult<T> {
   return parseWithSchema(schema, params, message);
 }

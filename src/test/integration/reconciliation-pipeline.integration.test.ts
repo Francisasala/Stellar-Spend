@@ -188,7 +188,9 @@ describe('POST /api/offramp/reconciliation — report generation', () => {
     const req = makeRequest({ records: [UNMATCHED_RECORD_AMOUNT_MISMATCH] });
     const res = await reconciliationPost(req);
     const report = await res.json();
-    expect(report.discrepancies.some((d: Record<string, unknown>) => d.type === 'amount_mismatch')).toBe(true);
+    expect(
+      report.discrepancies.some((d: Record<string, unknown>) => d.type === 'amount_mismatch'),
+    ).toBe(true);
   });
 
   it('detects unsettled order for pending settlement fixture', async () => {
@@ -196,7 +198,9 @@ describe('POST /api/offramp/reconciliation — report generation', () => {
     const req = makeRequest({ records: [PENDING_SETTLEMENT_RECORD] });
     const res = await reconciliationPost(req);
     const report = await res.json();
-    expect(report.discrepancies.some((d: Record<string, unknown>) => d.type === 'unsettled_order')).toBe(true);
+    expect(
+      report.discrepancies.some((d: Record<string, unknown>) => d.type === 'unsettled_order'),
+    ).toBe(true);
     expect(report.summary.unsettledOrders).toBeGreaterThan(0);
   });
 

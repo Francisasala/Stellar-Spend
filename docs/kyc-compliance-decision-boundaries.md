@@ -68,6 +68,7 @@ Each user may access one of three limit tiers after passing corresponding verifi
 Payment corridors (e.g., NGN <-> USDC) may have different limit structures based on regulatory, partner, or operational constraints.
 
 **Example:** Nigeria (NGN) corridor tier 2:
+
 - Daily Limit: $10,000 (vs. global $5,000)
 - Monthly Limit: $100,000 (vs. global $50,000)
 - Per-Transaction Limit: $5,000 (vs. global $2,500)
@@ -127,25 +128,28 @@ AML screening assigns a risk score (0–100) based on user and transaction attri
 ### Risk Score Components
 
 #### User Verification Status
+
 - Unverified user: +30 points
 - Pending KYC: +30 points
 - Verified user: 0 points
 
 #### Transaction Amount
+
 - ≥$10,000: +20 points
 - ≥$50,000: +30 points (additional)
 
 #### Limit Proximity
+
 - Transaction >90% of tier daily/monthly/per-txn limit: +15 points
 
 ### Risk Level Determination
 
-| Score | Level   | Verdict | Action |
-|-------|---------|---------|--------|
-| 0–19  | Low     | Allow   | Process immediately |
-| 20–44 | Medium  | Allow   | Flag for manual review; add to compliance report |
+| Score | Level   | Verdict | Action                                               |
+| ----- | ------- | ------- | ---------------------------------------------------- |
+| 0–19  | Low     | Allow   | Process immediately                                  |
+| 20–44 | Medium  | Allow   | Flag for manual review; add to compliance report     |
 | 45–69 | High    | Review  | Hold transaction; require manual Compliance approval |
-| 70+   | Blocked | Deny    | Reject transaction; log incident |
+| 70+   | Blocked | Deny    | Reject transaction; log incident                     |
 
 **Legal Context:** This scoring model aligns with FinCEN guidance on transaction monitoring and OFAC compliance thresholds.
 
@@ -166,6 +170,7 @@ Transaction screening checks recipient addresses against external watchlists and
 Compliance operations can create manual overrides for known-good addresses or business partnerships.
 
 **Override Attributes:**
+
 - `address` (Stellar/EVM/bank account)
 - `verdict` (allow | review | deny)
 - `reason` (audit trail; e.g., "Bank partner verified Q4 2025")
@@ -194,18 +199,21 @@ The `KYCLimitService.generateComplianceReport(from, to)` method produces periodi
 ```typescript
 {
   generatedAt: number;
-  period: { from: number; to: number };
-  
+  period: {
+    from: number;
+    to: number;
+  }
+
   // KYC metrics
   totalUsers: number;
   verifiedUsers: number;
   pendingVerifications: number;
   rejectedVerifications: number;
-  
+
   // AML/Risk metrics
   highRiskUsers: number;
   blockedUsers: number;
-  
+
   // Transaction metrics
   totalTransactionVolume: number;
   flaggedTransactions: number;
@@ -256,19 +264,23 @@ All KYC and limit-related events are recorded in the audit trail for regulatory 
 ## Integrations & Cross-References
 
 ### corridor-config (Server)
+
 Defines payment corridor rules (limits, fees, corridors, verification requirements). Syncs to KYC limits on startup.
 
 **Cross-Reference:** `kyc-limits.ts:setCorridorOverrides()` → loads corridor config at boot time.
 
 ### compliance-screening.ts
+
 Performs real-time transaction recipient screening (SDN lists, watchlists). Complements KYC with per-transaction safeguards.
 
 **Cross-Reference:** Before transaction approval, `screenAddress()` checks recipient against screening providers and compliance overrides.
 
 ### Compliance Dashboard (Future)
+
 Exposes real-time KYC and AML metrics to Compliance team for monitoring and manual overrides.
 
 **Planned Integrations:**
+
 - Real-time high-risk user alerts
 - Bulk KYC renewal management
 - Screening override creation/revocation

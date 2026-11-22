@@ -13,6 +13,8 @@
  */
 
 import { test, expect, type Page } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { waitForNetworkIdle } from './helpers/wait';
 
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3001';
 
@@ -187,7 +189,7 @@ test.describe('A11y: Wallet connection modal', () => {
     const connectBtn = page.getByRole('button', { name: /connect.*wallet/i });
     if (await connectBtn.isVisible()) {
       await connectBtn.click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
 
       const dialog = page.getByRole('dialog');
       if (await dialog.isVisible()) {
@@ -224,5 +226,31 @@ test.describe('A11y: Color contrast', () => {
     });
 
     reportViolations(contrastViolations, 'Home page color contrast');
+  });
+});
+
+// ─── Main pages ─────────────────────────────────────────────────────────────
+
+test.describe('Main page accessibility', () => {
+  test('dashboard page has no critical/serious violations', async ({ page }) => {
+    await page.goto(BASE_URL);
+    await page.waitForLoadState('networkidle');
+
+    const results = await new AxeBuilder({ page }).analyze();
+    const critical = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
+    expect(critical).toHaveLength(0);
+  });
+
+  test('transaction history page has no critical/serious violations', async ({ page }) => {
+    await page.goto(`${BASE_URL}/transactions`);
+    await page.waitForLoadState('networkidle');
+
+    const results = await new AxeBuilder({ page }).analyze();
+    const critical = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
+    expect(critical).toHaveLength(0);
   });
 });

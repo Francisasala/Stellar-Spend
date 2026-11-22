@@ -42,8 +42,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     logger.error('cron.daily-reconciliation.failed', {}, err);
-    return ErrorHandler.handle(
-      new ApiError(ErrorType.SERVER_ERROR, 'Daily reconciliation failed')
-    );
+    return ErrorHandler.handle(new ApiError(ErrorType.SERVER_ERROR, 'Daily reconciliation failed'));
   }
 }

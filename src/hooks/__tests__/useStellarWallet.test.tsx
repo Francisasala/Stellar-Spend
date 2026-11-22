@@ -69,7 +69,9 @@ describe('useStellarWallet', () => {
     });
 
     it('should update lastUsedWallet when loaded', async () => {
-      (window.localStorage.getItem as unknown as ReturnType<typeof vi.fn>).mockReturnValue('freighter');
+      (window.localStorage.getItem as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+        'freighter',
+      );
 
       const { result } = renderHook(() => useStellarWallet());
 

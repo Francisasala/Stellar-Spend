@@ -316,9 +316,9 @@ describe('useNotifications - Error Handling & Cleanup', () => {
       });
 
       await waitFor(() => {
-        expect(
-          vi.mocked(notificationsLib.getOrCreateNotificationPreferences),
-        ).toHaveBeenCalledWith('GB1234');
+        expect(vi.mocked(notificationsLib.getOrCreateNotificationPreferences)).toHaveBeenCalledWith(
+          'GB1234',
+        );
       });
 
       vi.clearAllMocks();
@@ -330,9 +330,9 @@ describe('useNotifications - Error Handling & Cleanup', () => {
       rerender('GB5678');
 
       await waitFor(() => {
-        expect(
-          vi.mocked(notificationsLib.getOrCreateNotificationPreferences),
-        ).toHaveBeenCalledWith('GB5678');
+        expect(vi.mocked(notificationsLib.getOrCreateNotificationPreferences)).toHaveBeenCalledWith(
+          'GB5678',
+        );
       });
     });
   });

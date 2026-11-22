@@ -1,6 +1,6 @@
 /**
  * Paycrest Webhook Provider
- * 
+ *
  * Implementation of WebhookProvider for Paycrest payment service.
  */
 
@@ -23,10 +23,10 @@ export interface PaycrestWebhookConfig {
 export class PaycrestWebhookProvider extends BaseWebhookProvider {
   readonly providerId = 'paycrest';
   readonly displayName = 'Paycrest';
-  
+
   private config: PaycrestWebhookConfig;
   private nonceStore = new Set<string>();
-  
+
   constructor(config: PaycrestWebhookConfig) {
     super();
     this.config = {
@@ -35,24 +35,24 @@ export class PaycrestWebhookProvider extends BaseWebhookProvider {
       ...config,
     };
   }
-  
+
   /**
    * Validate Paycrest webhook signature using HMAC SHA256
    */
   async validateSignature(payload: string, signature: string, secret: string): Promise<boolean> {
     return this.validateHmacSignature(payload, signature, secret);
   }
-  
+
   /**
    * Parse Paycrest webhook event with specific headers
    */
   async parseEvent(rawBody: string, headers: Record<string, string>): Promise<WebhookEvent> {
     const parsed = await super.parseEvent(rawBody, headers);
-    
+
     // Extract Paycrest-specific headers
     const timestamp = headers['x-paycrest-timestamp'];
     const nonce = headers['x-paycrest-nonce'];
-    
+
     return {
       ...parsed,
       metadata: {
@@ -65,7 +65,7 @@ export class PaycrestWebhookProvider extends BaseWebhookProvider {
       },
     };
   }
-  
+
   /**
    * Handle Paycrest webhook event
    */
@@ -75,7 +75,7 @@ export class PaycrestWebhookProvider extends BaseWebhookProvider {
         event: event.event,
         providerId: this.providerId,
       });
-      
+
       // Map Paycrest event to transaction updates
       const updates = this.mapEventToUpdates(event.event);
       if (!updates) {
@@ -88,7 +88,7 @@ export class PaycrestWebhookProvider extends BaseWebhookProvider {
           metadata: { reason: 'No updates needed for this event type' },
         };
       }
-      
+
       const orderId = event.data?.id ?? event.data?.orderId ?? '';
       if (!orderId) {
         return {
@@ -96,7 +96,7 @@ export class PaycrestWebhookProvider extends BaseWebhookProvider {
           error: 'No order ID found in webhook data',
         };
       }
-      
+
       const transaction = await dal.getByPayoutOrderId(orderId);
       if (!transaction) {
         return {
@@ -104,11 +104,11 @@ export class PaycrestWebhookProvider extends BaseWebhookProvider {
           error: `No transaction found for Paycrest order: ${orderId}`,
         };
       }
-      
+
       // Apply updates to transaction
       await dal.update(transaction.id, updates);
       const updated = await dal.getById(transaction.id);
-      
+
       if (updated) {
         await notifyTransactionStatusUpdate({
           transaction: updated,
@@ -117,13 +117,13 @@ export class PaycrestWebhookProvider extends BaseWebhookProvider {
           source: 'paycrest_webhook',
         });
       }
-      
+
       logger.info('webhook.paycrest.processed', {
         event: event.event,
         transactionId: transaction.id,
         providerId: this.providerId,
       });
-      
+
       return {
         success: true,
         transactionId: transaction.id,
@@ -138,7 +138,7 @@ export class PaycrestWebhookProvider extends BaseWebhookProvider {
         event: event.event,
         providerId: this.providerId,
       });
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -149,7 +149,7 @@ export class PaycrestWebhookProvider extends BaseWebhookProvider {
       };
     }
   }
-  
+
   /**
    * Validate Paycrest webhook with timestamp and nonce checks
    */
@@ -162,30 +162,30 @@ export class PaycrestWebhookProvider extends BaseWebhookProvider {
       // Validate signature
       const secret = this.config.webhookSecret;
       const isValidSignature = await this.validateSignature(payload, signature, secret);
-      
+
       if (!isValidSignature) {
         return { valid: false, reason: 'Invalid signature' };
       }
-      
+
       // Validate timestamp
       const timestamp = headers['x-paycrest-timestamp'];
       if (!timestamp || !this.validateTimestamp(timestamp, this.config.timestampToleranceMs)) {
         return { valid: false, reason: 'Invalid or expired timestamp' };
       }
-      
+
       // Validate nonce if required
       if (this.config.requireNonce) {
         const nonce = headers['x-paycrest-nonce'];
         if (!nonce) {
           return { valid: false, reason: 'Missing nonce' };
         }
-        
+
         const isValidNonce = await this.validateNonceInternal(nonce);
         if (!isValidNonce) {
           return { valid: false, reason: 'Duplicate nonce (replay attack detected)' };
         }
       }
-      
+
       return { valid: true };
     } catch (error) {
       return {
@@ -194,7 +194,7 @@ export class PaycrestWebhookProvider extends BaseWebhookProvider {
       };
     }
   }
-  
+
   /**
    * Map Paycrest event types to transaction updates
    */
@@ -216,7 +216,7 @@ export class PaycrestWebhookProvider extends BaseWebhookProvider {
         return null;
     }
   }
-  
+
   /**
    * Internal nonce validation (in-memory store for demo)
    * In production, use a distributed store like Redis
@@ -225,18 +225,21 @@ export class PaycrestWebhookProvider extends BaseWebhookProvider {
     if (this.nonceStore.has(nonce)) {
       return false;
     }
-    
+
     this.nonceStore.add(nonce);
-    
+
     // Clean up old nonces periodically (simplified example)
     // In production, use TTL-based storage
-    setTimeout(() => {
-      this.nonceStore.delete(nonce);
-    }, this.config.timestampToleranceMs || 5 * 60 * 1000);
-    
+    setTimeout(
+      () => {
+        this.nonceStore.delete(nonce);
+      },
+      this.config.timestampToleranceMs || 5 * 60 * 1000,
+    );
+
     return true;
   }
-  
+
   /**
    * Get provider configuration
    */

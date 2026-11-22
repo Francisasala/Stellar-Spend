@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server';
 import { cache } from '@/lib/cache';
 import { ErrorHandler } from '@/lib/error-handler';
 import { logger } from '@/lib/logger';
-import { fetchMetricTimed, formatCacheMetrics, buildMetricsEnvelope } from '@/lib/monitoring-metrics';
+import {
+  fetchMetricTimed,
+  formatCacheMetrics,
+  buildMetricsEnvelope,
+} from '@/lib/monitoring-metrics';
 
 /**
  * GET /api/monitoring/cache

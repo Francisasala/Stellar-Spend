@@ -40,12 +40,16 @@ describe('useOnlineStatus (#1277)', () => {
 
     const { unmount } = renderHook(() => useOnlineStatus());
 
-    const added = addSpy.mock.calls.map(([type]) => type).filter((t) => t === 'online' || t === 'offline');
+    const added = addSpy.mock.calls
+      .map(([type]) => type)
+      .filter((t) => t === 'online' || t === 'offline');
     expect(added).toEqual(['online', 'offline']);
 
     unmount();
 
-    const removed = removeSpy.mock.calls.map(([type]) => type).filter((t) => t === 'online' || t === 'offline');
+    const removed = removeSpy.mock.calls
+      .map(([type]) => type)
+      .filter((t) => t === 'online' || t === 'offline');
     expect(removed).toEqual(['online', 'offline']);
   });
 });

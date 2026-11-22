@@ -17,7 +17,7 @@ export interface WebhookProcessResult {
 
 /**
  * Legacy Webhook Service - Maintained for backward compatibility
- * 
+ *
  * This service now delegates to the new modular webhook system.
  * New code should use the modular system directly.
  */
@@ -26,7 +26,7 @@ export class WebhookService {
 
   /**
    * Process Paycrest webhook (legacy method)
-   * 
+   *
    * @deprecated Use the modular webhook system directly
    */
   async processPaycrestWebhook(payload: WebhookPayload): Promise<WebhookProcessResult> {
@@ -42,11 +42,15 @@ export class WebhookService {
       };
 
       // Process through modular system
-      const results = await this.webhookSystem.processWebhook('paycrest', JSON.stringify(webhookEvent), {});
+      const results = await this.webhookSystem.processWebhook(
+        'paycrest',
+        JSON.stringify(webhookEvent),
+        {},
+      );
 
       // Find successful result with transaction ID
-      const successfulResult = results.find(r => r.success && r.transactionId);
-      
+      const successfulResult = results.find((r) => r.success && r.transactionId);
+
       if (successfulResult) {
         return {
           success: true,
@@ -55,7 +59,7 @@ export class WebhookService {
       }
 
       // Find any error
-      const errorResult = results.find(r => r.error);
+      const errorResult = results.find((r) => r.error);
       return {
         success: false,
         error: errorResult?.error || 'Failed to process webhook',

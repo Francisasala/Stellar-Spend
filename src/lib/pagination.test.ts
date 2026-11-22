@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  encodeCursor,
-  decodeCursor,
-  parsePaginationQuery,
-  trimLookahead,
-} from './pagination';
+import { encodeCursor, decodeCursor, parsePaginationQuery, trimLookahead } from './pagination';
 
 describe('parsePaginationQuery', () => {
   const options = { defaultLimit: 50, maxLimit: 200 };

@@ -23,7 +23,8 @@ export function ClaimFormHeader({ coverage, onCancel }: ClaimFormHeaderProps) {
         <p className="text-xs text-[#777777] mt-1">
           {t('insurance.coverage')} up to{' '}
           <span className="text-[#4ade80] font-bold">
-            {formatUsdcAmount(coverage, { minimumFractionDigits: 2, maximumFractionDigits: 3 })} USDC
+            {formatUsdcAmount(coverage, { minimumFractionDigits: 2, maximumFractionDigits: 3 })}{' '}
+            USDC
           </span>
         </p>
       </div>

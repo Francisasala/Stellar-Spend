@@ -108,7 +108,10 @@ describe('Routes Audit - Issue #1124', () => {
 
               if (stat.isDirectory()) {
                 search(itemPath);
-              } else if ((item.endsWith('.ts') || item.endsWith('.tsx')) && !item.endsWith('.test.ts')) {
+              } else if (
+                (item.endsWith('.ts') || item.endsWith('.tsx')) &&
+                !item.endsWith('.test.ts')
+              ) {
                 try {
                   const content = fs.readFileSync(itemPath, 'utf-8');
                   const lines = content.split('\n');
@@ -156,7 +159,10 @@ describe('Routes Audit - Issue #1124', () => {
 
               if (stat.isDirectory()) {
                 search(itemPath);
-              } else if ((item.endsWith('.ts') || item.endsWith('.tsx')) && !item.endsWith('.test.ts')) {
+              } else if (
+                (item.endsWith('.ts') || item.endsWith('.tsx')) &&
+                !item.endsWith('.test.ts')
+              ) {
                 try {
                   const content = fs.readFileSync(itemPath, 'utf-8');
                   if (content.includes(routePath)) {

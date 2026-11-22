@@ -1,5 +1,10 @@
 import type { Transaction } from '@/lib/transaction-storage';
-import { formatShortDateTime, getCurrencySymbol, formatUsdcAmount, truncateHash } from '@/lib/format';
+import {
+  formatShortDateTime,
+  getCurrencySymbol,
+  formatUsdcAmount,
+  truncateHash,
+} from '@/lib/format';
 
 // ---------------------------------------------------------------------------
 // Presentation helpers shared across the history components.
