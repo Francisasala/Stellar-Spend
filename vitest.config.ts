@@ -161,43 +161,48 @@ export default defineConfig({
         '**/src/test/docs-acceptance.test.ts',
       ],
     },
-    projects: [{
-      extends: true,
-      name: 'unit',
-      test: {
-        environment: 'jsdom',
-        globals: true,
-        setupFiles: ['./src/test/setup.ts'],
-        // Registers jest-axe matchers (toHaveNoViolations) for accessibility assertions
-        setupFilesAfterEach: ['./src/test/setup.ts'],
-        include: [
-          'src/**/*.{test,spec}.{ts,tsx}',
-          'tests/**/*.{test,spec}.{ts,tsx}',
-          'packages/**/*.{test,spec}.{ts,tsx}',
+    projects: [
+      {
+        extends: true,
+        name: 'unit',
+        test: {
+          environment: 'jsdom',
+          globals: true,
+          setupFiles: ['./src/test/setup.ts'],
+          include: [
+            'src/**/*.{test,spec}.{ts,tsx}',
+            'tests/**/*.{test,spec}.{ts,tsx}',
+            'packages/**/*.{test,spec}.{ts,tsx}',
+            '__tests__/**/*.{test,spec}.{ts,tsx}',
+          ],
+          exclude: ['**/node_modules/**', '**/e2e/**', '**/*.stories.*'],
+        },
+      },
+      {
+        extends: true,
+        plugins: [
+          // The plugin will run tests for the stories defined in your Storybook config
+          // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
+          storybookTest({
+            configDir: path.join(dirname, '.storybook'),
+          }),
         ],
-        exclude: ['**/node_modules/**', '**/e2e/**', '**/*.stories.*']
-      }
-    }, {
-      extends: true,
-      plugins: [
-      // The plugin will run tests for the stories defined in your Storybook config
-      // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
-      storybookTest({
-        configDir: path.join(dirname, '.storybook')
-      })],
-      test: {
-        name: 'storybook',
-        // Pick up story files (including interaction tests) for shared components
-        include: ['src/**/*.stories.{ts,tsx}'],
-        browser: {
-          enabled: true,
-          headless: true,
-          provider: playwright({}),
-          instances: [{
-            browser: 'chromium'
-          }]
-        }
-      }
-    }]
-  }
+        test: {
+          name: 'storybook',
+          // Pick up story files (including interaction tests) for shared components
+          include: ['src/**/*.stories.{ts,tsx}'],
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright({}),
+            instances: [
+              {
+                browser: 'chromium',
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
 });

@@ -6,6 +6,7 @@
  */
 import { test, expect } from '@playwright/test';
 import { injectFreighterStub } from './fixtures/wallet-fixtures';
+import { waitForNetworkIdle } from './helpers/wait';
 
 test.describe('Transaction History', () => {
   test.beforeEach(async ({ page }) => {
@@ -94,7 +95,7 @@ test.describe('Transaction History', () => {
     await page.selectOption('[data-testid="filter-status"]', 'completed');
 
     // Wait for filtered results
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
 
     // Verify only completed transactions are shown
     const entries = await page.locator('[data-testid="transaction-entry"]');
@@ -118,7 +119,7 @@ test.describe('Transaction History', () => {
     await page.fill('[data-testid="search-input"]', 'NGN');
 
     // Wait for search results
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
 
     // Verify results contain search term
     const entries = await page.locator('[data-testid="transaction-entry"]');
@@ -140,7 +141,7 @@ test.describe('Transaction History', () => {
     await page.click('[data-testid="sort-direction-desc"]');
 
     // Wait for sorted results
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
 
     // Verify transactions are sorted
     const entries = await page.locator('[data-testid="transaction-entry"]');

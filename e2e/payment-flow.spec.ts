@@ -14,6 +14,7 @@
  */
 
 import { test, expect, type Page } from '@playwright/test';
+import { waitForNetworkIdle } from './helpers/wait';
 
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3001';
 
@@ -262,13 +263,13 @@ async function connectWallet(page: Page): Promise<void> {
   const connectBtn = page.getByRole('button', { name: /connect wallet/i });
   await expect(connectBtn).toBeVisible({ timeout: 10_000 });
   await connectBtn.click();
-  await page.waitForTimeout(400);
+  await waitForNetworkIdle(page);
 
   // Try the Freighter option — some UIs show a modal, some connect directly
   const freighterBtn = page.getByRole('button', { name: /freighter/i });
   if (await freighterBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
     await freighterBtn.click();
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
   }
 }
 
@@ -357,7 +358,7 @@ test.describe('Payment Flow — Core Happy Path (P0)', () => {
     const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
     if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await getQuoteBtn.click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     }
 
     // Quote result should contain the mocked destination amount or rate
@@ -375,7 +376,7 @@ test.describe('Payment Flow — Core Happy Path (P0)', () => {
     // No JS runtime errors
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.waitForTimeout(300);
+    await waitForNetworkIdle(page);
     expect(errors.filter((e) => !e.includes('ResizeObserver'))).toHaveLength(0);
   });
 
@@ -394,7 +395,7 @@ test.describe('Payment Flow — Core Happy Path (P0)', () => {
     const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
     if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await getQuoteBtn.click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     }
 
     // NGN should appear somewhere in the quote area
@@ -445,20 +446,20 @@ test.describe('Payment Flow — Core Happy Path (P0)', () => {
 
     // Step 1 — connect wallet
     await connectWallet(page);
-    await page.waitForTimeout(400);
+    await waitForNetworkIdle(page);
 
     // Step 2 — enter amount
     const amountInput = page.getByPlaceholder(/enter amount/i).first();
     if (await amountInput.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await amountInput.fill(TEST_PAYMENT.amount);
-      await page.waitForTimeout(200);
+      await waitForNetworkIdle(page);
     }
 
     // Step 3 — get quote
     const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
     if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await getQuoteBtn.click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     }
 
     // Step 4 — enter beneficiary
@@ -468,14 +469,14 @@ test.describe('Payment Flow — Core Happy Path (P0)', () => {
       .first();
     if (await accountInput.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await accountInput.fill(TEST_PAYMENT.recipient.accountIdentifier);
-      await page.waitForTimeout(200);
+      await waitForNetworkIdle(page);
     }
 
     // Step 5 — confirm/review transaction
     const confirmBtn = page.getByRole('button', { name: /confirm|review|send|proceed/i }).first();
     if (await confirmBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await confirmBtn.click();
-      await page.waitForTimeout(600);
+      await waitForNetworkIdle(page);
     }
 
     // After confirming, the page must not be in a hard error state
@@ -523,7 +524,7 @@ test.describe('Payment Flow — Core Happy Path (P0)', () => {
 
     if (await historyLink.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await historyLink.click();
-      await page.waitForTimeout(600);
+      await waitForNetworkIdle(page);
     } else {
       await page.goto(`${BASE_URL}/history`);
       await page.waitForLoadState('networkidle');
@@ -556,12 +557,12 @@ test.describe('Payment Flow — Core Happy Path (P0)', () => {
     const amountInput = page.getByPlaceholder(/enter amount/i).first();
     if (await amountInput.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await amountInput.fill('-100');
-      await page.waitForTimeout(200);
+      await waitForNetworkIdle(page);
 
       const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
       if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
         await getQuoteBtn.click();
-        await page.waitForTimeout(400);
+        await waitForNetworkIdle(page);
       }
 
       // Either an inline validation error, or the quote API was not called
@@ -591,12 +592,12 @@ test.describe('Payment Flow — Core Happy Path (P0)', () => {
     const amountInput = page.getByPlaceholder(/enter amount/i).first();
     if (await amountInput.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await amountInput.fill('0');
-      await page.waitForTimeout(200);
+      await waitForNetworkIdle(page);
 
       const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
       if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
         await getQuoteBtn.click();
-        await page.waitForTimeout(400);
+        await waitForNetworkIdle(page);
       }
 
       // Quote for zero amount should not reach the settled state
@@ -627,7 +628,7 @@ test.describe('Payment Flow — Mobile Viewport', () => {
 
     // Click and verify no crash
     await connectBtn.click();
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
     expect(page.url()).not.toContain('/500');
   });
 });

@@ -32,12 +32,13 @@
  * Stability design:
  * - `waitForNavigation` is never used (flaky anti-pattern)
  * - Assertions use `isVisible` with catch fallback where optional steps diverge
- * - `waitForTimeout` is kept ≤ 600ms per step; the suite stays fast
+ * - Condition-based waits replace fixed delays; the suite stays fast and less flaky
  * - Tests are independent — each gets a fresh page context
  */
 
 import { test, expect, type Page } from '@playwright/test';
 import {
+import { waitForNetworkIdle } from "./helpers/wait";
   injectFreighterStub,
   mockHorizonAccount,
   mockOfframpApis,
@@ -86,7 +87,7 @@ test.describe('Send Payment — Stage 1: Compose', () => {
     await connectFreighterViaUI(page);
 
     // The connect button should either disappear or change state
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
     const connectBtnGone = !(await page
       .getByRole('button', { name: /connect wallet/i })
       .isVisible({ timeout: 2_000 })
@@ -132,7 +133,7 @@ test.describe('Send Payment — Stage 1: Compose', () => {
       await amountInput.fill(MOCK_PAYMENT.amount);
     }
 
-    await page.waitForTimeout(400);
+    await waitForNetworkIdle(page);
 
     const fatalErrors = jsErrors.filter(
       (e) =>
@@ -167,7 +168,7 @@ test.describe('Send Payment — Stage 2: Quote', () => {
     const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
     if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await getQuoteBtn.click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     }
 
     // The mocked quote contains rate 1582 and destination amount 158200
@@ -201,7 +202,7 @@ test.describe('Send Payment — Stage 2: Quote', () => {
     const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
     if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await getQuoteBtn.click();
-      await page.waitForTimeout(600);
+      await waitForNetworkIdle(page);
       expect(quoteApiCalled).toBe(true);
     }
   });
@@ -219,7 +220,7 @@ test.describe('Send Payment — Stage 2: Quote', () => {
     const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
     if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await getQuoteBtn.click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     }
 
     // NGN or ₦ should appear somewhere on the page
@@ -276,7 +277,7 @@ test.describe('Send Payment — Stage 3: Recipient Details', () => {
     const verifyBtn = page.getByRole('button', { name: /verify/i });
     if (await verifyBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await verifyBtn.click();
-      await page.waitForTimeout(600);
+      await waitForNetworkIdle(page);
       expect(verifyApiCalled).toBe(true);
     }
   });
@@ -311,14 +312,14 @@ test.describe('Send Payment — Stage 4: Confirm & Submit', () => {
     const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
     if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await getQuoteBtn.click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     }
 
     // Try confirm button
     const confirmBtn = page.getByRole('button', { name: /confirm|send|submit|pay now/i });
     if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await confirmBtn.click();
-      await page.waitForTimeout(1_000);
+      await waitForNetworkIdle(page);
       // submit-soroban may be called as part of the flow
       // (may not be reached if additional form steps are needed)
     }
@@ -342,13 +343,13 @@ test.describe('Send Payment — Stage 4: Confirm & Submit', () => {
     const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
     if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await getQuoteBtn.click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     }
 
     const confirmBtn = page.getByRole('button', { name: /confirm|send|submit|pay now/i });
     if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await confirmBtn.click();
-      await page.waitForTimeout(1_000);
+      await waitForNetworkIdle(page);
     }
 
     // build-tx is called when the user confirms; if the UI reached that stage, assert it
@@ -383,13 +384,13 @@ test.describe('Send Payment — Stage 5: Success State', () => {
     const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
     if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await getQuoteBtn.click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     }
 
     const confirmBtn = page.getByRole('button', { name: /confirm|send|submit|pay now/i });
     if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await confirmBtn.click();
-      await page.waitForTimeout(1_200);
+      await waitForNetworkIdle(page);
     }
 
     const fatalErrors = jsErrors.filter(
@@ -415,13 +416,13 @@ test.describe('Send Payment — Stage 5: Success State', () => {
     const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
     if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await getQuoteBtn.click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     }
 
     const confirmBtn = page.getByRole('button', { name: /confirm|send|submit|pay now/i });
     if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await confirmBtn.click();
-      await page.waitForTimeout(2_000);
+      await waitForNetworkIdle(page);
 
       // Possible success indicators
       const successIndicators = [
@@ -459,13 +460,13 @@ test.describe('Send Payment — Stage 5: Success State', () => {
     const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
     if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await getQuoteBtn.click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     }
 
     const confirmBtn = page.getByRole('button', { name: /confirm|send|submit|pay now/i });
     if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await confirmBtn.click();
-      await page.waitForTimeout(2_000);
+      await waitForNetworkIdle(page);
 
       // The tx hash is abcdef12... — at minimum the first 8 chars should appear
       const hashPrefix = MOCK_SUBMIT_RESULT.txHash.slice(0, 8);
@@ -511,7 +512,7 @@ test.describe('Send Payment — Full Happy Path (Integrated)', () => {
     });
 
     await connectFreighterViaUI(page);
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
 
     // ── Stage 2: Enter amount ──────────────────────────────────────────────
     const amountInput = page.getByPlaceholder(/enter amount/i).first();
@@ -524,14 +525,14 @@ test.describe('Send Payment — Full Happy Path (Integrated)', () => {
     const getQuoteBtn = page.getByRole('button', { name: /get quote/i });
     if (await getQuoteBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await getQuoteBtn.click();
-      await page.waitForTimeout(600);
+      await waitForNetworkIdle(page);
     }
 
     // ── Stage 4: Confirm ───────────────────────────────────────────────────
     const confirmBtn = page.getByRole('button', { name: /confirm|send|submit|pay now/i });
     if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await confirmBtn.click();
-      await page.waitForTimeout(1_500);
+      await waitForNetworkIdle(page);
     }
 
     // ── Stage 5: Assert final state ────────────────────────────────────────

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitForNetworkIdle } from './helpers/wait';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:6006'; // Storybook URL
 
@@ -66,7 +67,7 @@ test.describe('Design System Component Visual Regression Tests', () => {
 
       const card = page.locator('[data-testid="card"]').first();
       await card.hover();
-      await page.waitForTimeout(200);
+      await waitForNetworkIdle(page);
 
       await expect(card).toHaveScreenshot('card-hover.png', {
         maxDiffPixels: 50,
@@ -157,7 +158,7 @@ test.describe('Design System Component Visual Regression Tests', () => {
 
       const input = page.locator('input').first();
       await input.focus();
-      await page.waitForTimeout(200);
+      await waitForNetworkIdle(page);
 
       await expect(input).toHaveScreenshot('input-focus.png', {
         maxDiffPixels: 50,
@@ -234,7 +235,7 @@ test.describe('Design System Component Visual Regression Tests', () => {
       await page.evaluate(() => {
         document.documentElement.classList.add('dark');
       });
-      await page.waitForTimeout(300);
+      await waitForNetworkIdle(page);
 
       await expect(page).toHaveScreenshot('button-primary-dark.png', {
         maxDiffPixels: 50,
@@ -248,7 +249,7 @@ test.describe('Design System Component Visual Regression Tests', () => {
       await page.evaluate(() => {
         document.documentElement.classList.add('dark');
       });
-      await page.waitForTimeout(300);
+      await waitForNetworkIdle(page);
 
       await expect(page).toHaveScreenshot('card-default-dark.png', {
         maxDiffPixels: 50,
@@ -262,7 +263,7 @@ test.describe('Design System Component Visual Regression Tests', () => {
       await page.evaluate(() => {
         document.documentElement.classList.add('dark');
       });
-      await page.waitForTimeout(300);
+      await waitForNetworkIdle(page);
 
       await expect(page).toHaveScreenshot('alert-success-dark.png', {
         maxDiffPixels: 50,
@@ -277,7 +278,7 @@ test.describe('Design System Component Visual Regression Tests', () => {
 
       const button = page.locator('button').first();
       await button.focus();
-      await page.waitForTimeout(200);
+      await waitForNetworkIdle(page);
 
       const focusStyle = await button.evaluate((el) => {
         return window.getComputedStyle(el, ':focus').outline;
@@ -324,7 +325,7 @@ test.describe('Design System Component Visual Regression Tests', () => {
 
       const button = page.locator('button').first();
       await button.hover();
-      await page.waitForTimeout(200);
+      await waitForNetworkIdle(page);
 
       await expect(button).toHaveScreenshot('button-hover.png', {
         maxDiffPixels: 50,
@@ -337,7 +338,7 @@ test.describe('Design System Component Visual Regression Tests', () => {
 
       const button = page.locator('button').first();
       await button.dispatchEvent('mousedown');
-      await page.waitForTimeout(100);
+      await waitForNetworkIdle(page);
 
       await expect(button).toHaveScreenshot('button-active.png', {
         maxDiffPixels: 50,

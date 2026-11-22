@@ -16,6 +16,7 @@
 
 import { test, expect, type Page } from '@playwright/test';
 import {
+import { waitForNetworkIdle } from "./helpers/wait";
   KYC_USERS,
   KYC_DOCUMENTS,
   KYC_REJECTION_REASONS,
@@ -98,19 +99,19 @@ test.describe('KYC Rejection & Resubmission Flow', () => {
 
     // Connect wallet
     await page.getByRole('button', { name: /connect wallet/i }).click();
-    await page.waitForTimeout(300);
+    await waitForNetworkIdle(page);
 
     // The app should render a "Freighter" option or connect directly
     const freighterBtn = page.getByRole('button', { name: /freighter/i });
     if (await freighterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await freighterBtn.click();
     }
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
 
     // Page should load without JS errors
     const errors: string[] = [];
     page.on('pageerror', (err) => errors.push(err.message));
-    await page.waitForTimeout(300);
+    await waitForNetworkIdle(page);
     expect(errors.filter((e) => !e.includes('Non-Error'))).toHaveLength(0);
   });
 
@@ -148,18 +149,18 @@ test.describe('KYC Rejection & Resubmission Flow', () => {
 
     // Connect wallet
     await page.getByRole('button', { name: /connect wallet/i }).click();
-    await page.waitForTimeout(300);
+    await waitForNetworkIdle(page);
     const freighterBtn = page.getByRole('button', { name: /freighter/i });
     if (await freighterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await freighterBtn.click();
     }
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
 
     // Look for KYC start button or form
     const kycStartBtn = page.getByRole('button', { name: KYC_UI_LABELS.startKycButton });
     if (await kycStartBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await kycStartBtn.click();
-      await page.waitForTimeout(300);
+      await waitForNetworkIdle(page);
 
       // Fill document fields if present
       const docIdInput = page.getByLabel(KYC_UI_LABELS.documentIdInput);
@@ -171,13 +172,13 @@ test.describe('KYC Rejection & Resubmission Flow', () => {
       const submitBtn = page.getByRole('button', { name: KYC_UI_LABELS.submitButton });
       if (await submitBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
         await submitBtn.click();
-        await page.waitForTimeout(500);
+        await waitForNetworkIdle(page);
       }
     }
 
     // If a KYC form was visible and submitted, the response should show pending
     // This assertion is resilient: it passes whether the submit form was shown or not
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
     expect(page.url()).not.toContain('error');
   });
 
@@ -202,12 +203,12 @@ test.describe('KYC Rejection & Resubmission Flow', () => {
 
     // Connect wallet
     await page.getByRole('button', { name: /connect wallet/i }).click();
-    await page.waitForTimeout(300);
+    await waitForNetworkIdle(page);
     const freighterBtn = page.getByRole('button', { name: /freighter/i });
     if (await freighterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await freighterBtn.click();
     }
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
 
     // The rejection reason comes from the API response — verify it is surfaced
     // if the UI renders a KYC status banner/section
@@ -254,12 +255,12 @@ test.describe('KYC Rejection & Resubmission Flow', () => {
 
     // Connect wallet
     await page.getByRole('button', { name: /connect wallet/i }).click();
-    await page.waitForTimeout(300);
+    await waitForNetworkIdle(page);
     const freighterBtn = page.getByRole('button', { name: /freighter/i });
     if (await freighterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await freighterBtn.click();
     }
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
 
     // Verify page doesn't crash
     const title = await page.title();
@@ -315,18 +316,18 @@ test.describe('KYC Rejection & Resubmission Flow', () => {
 
     // Connect wallet
     await page.getByRole('button', { name: /connect wallet/i }).click();
-    await page.waitForTimeout(300);
+    await waitForNetworkIdle(page);
     const freighterBtn = page.getByRole('button', { name: /freighter/i });
     if (await freighterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await freighterBtn.click();
     }
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
 
     // If the resubmit button is visible, click it and fill new document
     const resubmitBtn = page.getByRole('button', { name: KYC_UI_LABELS.resubmitButton });
     if (await resubmitBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await resubmitBtn.click();
-      await page.waitForTimeout(300);
+      await waitForNetworkIdle(page);
 
       // Fill with a different (license) document
       const docIdInput = page.getByLabel(KYC_UI_LABELS.documentIdInput);
@@ -338,7 +339,7 @@ test.describe('KYC Rejection & Resubmission Flow', () => {
       const submitBtn = page.getByRole('button', { name: KYC_UI_LABELS.submitButton });
       if (await submitBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
         await submitBtn.click();
-        await page.waitForTimeout(500);
+        await waitForNetworkIdle(page);
       }
 
       // After resubmit, status should show "pending"
@@ -381,12 +382,12 @@ test.describe('KYC Rejection & Resubmission Flow', () => {
     await page.waitForLoadState('networkidle');
 
     await page.getByRole('button', { name: /connect wallet/i }).click();
-    await page.waitForTimeout(300);
+    await waitForNetworkIdle(page);
     const freighterBtn = page.getByRole('button', { name: /freighter/i });
     if (await freighterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await freighterBtn.click();
     }
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
 
     // If KYC status is shown, it should be "approved/verified"
     const approvedEl = page.getByText(KYC_UI_LABELS.statusApproved);
@@ -422,12 +423,12 @@ test.describe('KYC Rejection & Resubmission Flow', () => {
     await page.waitForLoadState('networkidle');
 
     await page.getByRole('button', { name: /connect wallet/i }).click();
-    await page.waitForTimeout(300);
+    await waitForNetworkIdle(page);
     const freighterBtn = page.getByRole('button', { name: /freighter/i });
     if (await freighterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await freighterBtn.click();
     }
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
 
     // If the rejection reason is rendered, its text must match the API value
     const reasonEl = page.getByText(EXPECTED_REASON, { exact: false });
@@ -444,7 +445,7 @@ test.describe('KYC Rejection & Resubmission Flow', () => {
     page.on('console', (msg) => {
       if (msg.type() === 'error') consoleLogs.push(msg.text());
     });
-    await page.waitForTimeout(300);
+    await waitForNetworkIdle(page);
     // Filter out known benign extension/network errors
     const realErrors = consoleLogs.filter(
       (m) => !m.includes('Extension') && !m.includes('net::ERR'),
@@ -472,13 +473,13 @@ test.describe('KYC Rejection & Resubmission Flow', () => {
     await page.waitForLoadState('networkidle');
 
     await page.getByRole('button', { name: /connect wallet/i }).click();
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
 
     const freighterBtn = page.getByRole('button', { name: /freighter/i });
     if (await freighterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await freighterBtn.click();
     }
-    await page.waitForTimeout(500);
+    await waitForNetworkIdle(page);
 
     // Filter non-critical errors (e.g. browser extension noise)
     const criticalErrors = jsErrors.filter(

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitForNetworkIdle } from './helpers/wait';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
 
@@ -35,7 +36,7 @@ test.describe('Visual Regression Tests', () => {
       await page.waitForLoadState('networkidle');
 
       await page.getByRole('button', { name: /connect wallet/i }).click();
-      await page.waitForTimeout(300);
+      await waitForNetworkIdle(page);
 
       await expect(page).toHaveScreenshot('dashboard.png', {
         maxDiffPixels: 100,
@@ -59,7 +60,7 @@ test.describe('Visual Regression Tests', () => {
 
       await page.getByRole('button', { name: /connect wallet/i }).click();
       await page.waitForSelector('[data-testid="wallet-modal"]');
-      await page.waitForTimeout(200);
+      await waitForNetworkIdle(page);
 
       await expect(page).toHaveScreenshot('wallet-modal.png', {
         maxDiffPixels: 100,
@@ -72,7 +73,7 @@ test.describe('Visual Regression Tests', () => {
     test('light theme', async ({ page }) => {
       await page.goto(BASE_URL);
       await page.evaluate(() => document.documentElement.classList.remove('dark'));
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
 
       await expect(page).toHaveScreenshot('theme-light.png', {
         maxDiffPixels: 100,
@@ -82,7 +83,7 @@ test.describe('Visual Regression Tests', () => {
     test('dark theme', async ({ page }) => {
       await page.goto(BASE_URL);
       await page.evaluate(() => document.documentElement.classList.add('dark'));
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
 
       await expect(page).toHaveScreenshot('theme-dark.png', {
         maxDiffPixels: 100,
@@ -92,7 +93,7 @@ test.describe('Visual Regression Tests', () => {
     test('light theme history page', async ({ page }) => {
       await page.goto(`${BASE_URL}/history`);
       await page.evaluate(() => document.documentElement.classList.remove('dark'));
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
 
       await expect(page).toHaveScreenshot('theme-light-history.png', {
         maxDiffPixels: 100,
@@ -102,7 +103,7 @@ test.describe('Visual Regression Tests', () => {
     test('dark theme history page', async ({ page }) => {
       await page.goto(`${BASE_URL}/history`);
       await page.evaluate(() => document.documentElement.classList.add('dark'));
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
 
       await expect(page).toHaveScreenshot('theme-dark-history.png', {
         maxDiffPixels: 100,
@@ -117,7 +118,7 @@ test.describe('Visual Regression Tests', () => {
         document.documentElement.setAttribute('dir', 'rtl');
         document.documentElement.setAttribute('lang', 'ar');
       });
-      await page.waitForTimeout(300);
+      await waitForNetworkIdle(page);
 
       await expect(page).toHaveScreenshot('rtl-main-page.png', {
         maxDiffPixels: 100,
@@ -131,7 +132,7 @@ test.describe('Visual Regression Tests', () => {
         document.documentElement.setAttribute('dir', 'rtl');
         document.documentElement.setAttribute('lang', 'ar');
       });
-      await page.waitForTimeout(300);
+      await waitForNetworkIdle(page);
 
       await expect(page).toHaveScreenshot('rtl-history.png', {
         maxDiffPixels: 100,
@@ -190,7 +191,7 @@ test.describe('Visual Regression Tests', () => {
       const button = page.getByRole('button').first();
       if (await button.isVisible()) {
         await button.hover();
-        await page.waitForTimeout(200);
+        await waitForNetworkIdle(page);
         await expect(button).toHaveScreenshot('button-hover.png', {
           maxDiffPixels: 50,
         });
@@ -204,7 +205,7 @@ test.describe('Visual Regression Tests', () => {
       const input = page.locator('input').first();
       if (await input.isVisible()) {
         await input.focus();
-        await page.waitForTimeout(200);
+        await waitForNetworkIdle(page);
         await expect(input).toHaveScreenshot('input-focus.png', {
           maxDiffPixels: 50,
         });
@@ -230,7 +231,7 @@ test.describe('Visual Regression Tests', () => {
 
       await page.getByRole('button', { name: /connect wallet/i }).click();
       await page.waitForSelector('[data-testid="wallet-modal"]');
-      await page.waitForTimeout(300);
+      await waitForNetworkIdle(page);
 
       await expect(page).toHaveScreenshot('modal-open.png', {
         maxDiffPixels: 100,
@@ -274,7 +275,7 @@ test.describe('Visual Regression Tests', () => {
       const button = page.getByRole('button').first();
       if (await button.isVisible()) {
         await button.focus();
-        await page.waitForTimeout(200);
+        await waitForNetworkIdle(page);
         const focusStyle = await button.evaluate((el) => {
           return window.getComputedStyle(el, ':focus').outline;
         });

@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { isolatedTest as test } from './fixtures/test-isolation';
+import { waitForNetworkIdle } from './helpers/wait';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
 
@@ -56,15 +57,24 @@ test.describe('Critical Journeys', () => {
 
       // Wait for wallet picker or connected state
       await expect(async () => {
-        const freighterVisible = await page.getByRole('button', { name: /Freighter/i }).isVisible().catch(() => false);
-        const connected = !(await page.getByRole('button', { name: /connect wallet/i }).isVisible().catch(() => true));
+        const freighterVisible = await page
+          .getByRole('button', { name: /Freighter/i })
+          .isVisible()
+          .catch(() => false);
+        const connected = !(await page
+          .getByRole('button', { name: /connect wallet/i })
+          .isVisible()
+          .catch(() => true));
         if (!freighterVisible && !connected) throw new Error('Picker not yet visible');
       }).toPass({ timeout: 5_000 });
 
       await page.getByRole('button', { name: /Freighter/i }).click();
 
       await expect(async () => {
-        const ready = await page.locator('input[placeholder="Enter amount"]').isVisible().catch(() => false);
+        const ready = await page
+          .locator('input[placeholder="Enter amount"]')
+          .isVisible()
+          .catch(() => false);
         if (!ready) throw new Error('Form not yet visible');
       }).toPass({ timeout: 5_000 });
 
@@ -74,7 +84,7 @@ test.describe('Critical Journeys', () => {
       await page.fill('input[name="beneficiaryName"]', 'John Doe');
 
       await page.getByRole('button', { name: /get quote/i }).click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     });
   });
 
@@ -94,13 +104,13 @@ test.describe('Critical Journeys', () => {
       await page.waitForLoadState('networkidle');
 
       await page.getByRole('button', { name: /connect wallet/i }).click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
       await page.getByRole('button', { name: /Freighter/i }).click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
 
       await page.fill('input[placeholder="Enter amount"]', '100');
       await page.getByRole('button', { name: /confirm/i }).click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     });
 
     test('handles stale quote gracefully', async ({ page }) => {
@@ -125,13 +135,13 @@ test.describe('Critical Journeys', () => {
       await page.waitForLoadState('networkidle');
 
       await page.getByRole('button', { name: /connect wallet/i }).click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
       await page.getByRole('button', { name: /Freighter/i }).click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
 
       await page.fill('input[placeholder="Enter amount"]', '100');
       await page.getByRole('button', { name: /get quote/i }).click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     });
   });
 
@@ -144,7 +154,7 @@ test.describe('Critical Journeys', () => {
 
       await expect(page.getByRole('button', { name: /connect wallet/i })).toBeVisible();
       await page.getByRole('button', { name: /connect wallet/i }).click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
     });
   });
 
@@ -162,7 +172,7 @@ test.describe('Critical Journeys', () => {
       await page.waitForLoadState('networkidle');
 
       await page.getByRole('button', { name: /connect wallet/i }).click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
 
       const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
       const criticalViolations = results.violations.filter(

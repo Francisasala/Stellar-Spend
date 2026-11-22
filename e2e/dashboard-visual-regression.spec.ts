@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitForNetworkIdle } from './helpers/wait';
 
 /**
  * Visual regression coverage for the 5 critical dashboard screens.
@@ -37,7 +38,7 @@ test.describe('Critical dashboard screens', () => {
     const connectButton = page.getByRole('button', { name: /connect wallet/i });
     if (await connectButton.isVisible()) {
       await connectButton.click();
-      await page.waitForTimeout(300);
+      await waitForNetworkIdle(page);
     }
 
     await expect(page).toHaveScreenshot('02-dashboard-connected.png', {

@@ -13,6 +13,7 @@
  */
 
 import { test, expect, type Page } from '@playwright/test';
+import { waitForNetworkIdle } from './helpers/wait';
 
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3001';
 
@@ -187,7 +188,7 @@ test.describe('A11y: Wallet connection modal', () => {
     const connectBtn = page.getByRole('button', { name: /connect.*wallet/i });
     if (await connectBtn.isVisible()) {
       await connectBtn.click();
-      await page.waitForTimeout(500);
+      await waitForNetworkIdle(page);
 
       const dialog = page.getByRole('dialog');
       if (await dialog.isVisible()) {

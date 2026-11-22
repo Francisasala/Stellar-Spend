@@ -32,7 +32,7 @@ test.describe('Offline fallback', () => {
     // environment. Skip on non-Chromium to avoid false failures.
     test.skip(
       browserName !== 'chromium',
-      'Service worker offline simulation is only reliable in Chromium'
+      'Service worker offline simulation is only reliable in Chromium',
     );
 
     // 1. Load the page while online so the SW has a chance to install/activate.
@@ -58,12 +58,12 @@ test.describe('Offline fallback', () => {
     // 5. Verify offline.html content is rendered.
     await expect(
       page.getByRole('heading', { name: /you're offline/i }),
-      "Offline page heading \"You're Offline\" must be visible"
+      'Offline page heading "You\'re Offline" must be visible',
     ).toBeVisible({ timeout: 10_000 });
 
     await expect(
       page.getByRole('button', { name: /try again/i }),
-      'Offline page retry button must be visible'
+      'Offline page retry button must be visible',
     ).toBeVisible();
 
     // 6. Restore network to avoid affecting subsequent tests.
@@ -79,23 +79,19 @@ test.describe('Offline fallback', () => {
     const html = await res.text();
 
     // App name in <title>
-    expect(html, 'offline.html must mention Stellar-Spend in the title').toMatch(
-      /Stellar-Spend/i
-    );
+    expect(html, 'offline.html must mention Stellar-Spend in the title').toMatch(/Stellar-Spend/i);
 
     // Main heading
     expect(html, 'offline.html must contain the "You\'re Offline" heading').toMatch(
-      /you['']re offline/i
+      /you['']re offline/i,
     );
 
     // Retry button
-    expect(html, 'offline.html must contain a "Try Again" button').toMatch(
-      /try again/i
-    );
+    expect(html, 'offline.html must contain a "Try Again" button').toMatch(/try again/i);
 
     // App name in body copy
     expect(html, 'offline.html must reference the Stellar-Spend app name in body text').toMatch(
-      /stellar-spend/i
+      /stellar-spend/i,
     );
   });
 
@@ -103,17 +99,13 @@ test.describe('Offline fallback', () => {
   test('[3] Service worker script (/sw.js) is accessible', async ({ request }) => {
     const res = await request.get(`${BASE_URL}/sw.js`, { timeout: 10_000 });
 
-    expect(
-      res.status(),
-      '/sw.js must return HTTP 200'
-    ).toBe(200);
+    expect(res.status(), '/sw.js must return HTTP 200').toBe(200);
 
     const contentType = res.headers()['content-type'] ?? '';
     // Browsers require SW scripts to be served as JS.
-    expect(
-      contentType,
-      '/sw.js Content-Type must indicate JavaScript'
-    ).toMatch(/javascript|text\/plain/i);
+    expect(contentType, '/sw.js Content-Type must indicate JavaScript').toMatch(
+      /javascript|text\/plain/i,
+    );
   });
 
   // ── [4] CACHE_NAME versioning pattern ────────────────────────────────────
@@ -133,7 +125,7 @@ test.describe('Offline fallback', () => {
     expect(
       source,
       'CACHE_NAME must be set to a versioned string matching stellar-spend-v<number> ' +
-        '(e.g. "stellar-spend-v1"). Bump this value on each deploy to bust stale caches.'
+        '(e.g. "stellar-spend-v1"). Bump this value on each deploy to bust stale caches.',
     ).toMatch(cacheNamePattern);
 
     // Also verify the cleanup logic keys off the same prefix so old versions
@@ -141,7 +133,7 @@ test.describe('Offline fallback', () => {
     expect(
       source,
       'sw.js activate handler must filter cache keys by the "stellar-spend-" prefix ' +
-        'to ensure old versioned caches are cleaned up on deploy'
+        'to ensure old versioned caches are cleaned up on deploy',
     ).toMatch(/stellar-spend-/);
   });
 });
