@@ -1,4 +1,4 @@
-# Quality Gate Tests (`__tests__/quality/`)
+# Quality Gate Tests (`tests/quality/`)
 
 This directory contains **quality-gate tests** — automated checks that enforce project-wide policies which cannot be caught by ordinary unit or integration tests. They run as part of the standard `npm test` suite.
 
@@ -51,17 +51,17 @@ Placing these alongside unit tests in `src/test/` would pollute the application 
 npm test
 
 # Run only quality gate tests
-npx vitest run __tests__/quality/
+npx vitest run tests/quality/
 
 # Watch mode
-npx vitest __tests__/quality/ --watch
+npx vitest tests/quality/ --watch
 ```
 
 ---
 
 ## Adding a new quality gate
 
-1. Create a new file in `__tests__/quality/` with a `.test.ts` extension.
+1. Create a new file in `tests/quality/` with a `.test.ts` extension.
 2. Use `vitest`'s `describe` / `it` / `expect` — no additional setup needed.
 3. Add a row to the table above explaining what the test checks and why.
 4. Ensure the test passes on the current codebase before committing (run `npm test` locally).
@@ -70,7 +70,7 @@ npx vitest __tests__/quality/ --watch
 
 ## What belongs here vs. `src/test/`
 
-| Belongs in `__tests__/quality/` | Belongs in `src/test/` |
+| Belongs in `tests/quality/` | Belongs in `src/test/` |
 |---|---|
 | Checks that `package.json` policies are followed | Unit tests for library functions |
 | Checks that documentation exists / contains required sections | Integration tests for API routes |

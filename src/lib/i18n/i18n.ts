@@ -105,4 +105,4 @@ export class I18n {
   }
 }
 
-const i18n = new I18n('en');
+export const i18n = new I18n('en');

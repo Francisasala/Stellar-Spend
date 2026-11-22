@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 
 vi.mock('../src/lib/performance', () => ({ recordApiTiming: vi.fn() }));
@@ -32,6 +32,10 @@ function makeRequest(path: string, headers: Record<string, string> = {}) {
 }
 
 describe('middleware composition', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('chains middleware in correct order: geo → auth → security → logging', async () => {
     const req = makeRequest('/api/v1/transactions');
     const res = await middleware(req);

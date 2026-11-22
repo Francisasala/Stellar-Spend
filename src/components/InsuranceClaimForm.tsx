@@ -1,17 +1,17 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useForm } from '@/hooks/useForm';
 import { randomHexUpper } from '@/lib/crypto/ids';
 import { apiPatch } from '@/lib/api/client';
 import { useTranslations } from '@/hooks/useTranslations';
 import {
+  insuranceClaimSchema,
   type InsuranceClaimFormProps,
 } from './insurance-claim/types';
 import { ClaimFormHeader } from './insurance-claim/ClaimFormHeader';
 import { EligibilityState } from './insurance-claim/EligibilityState';
 import { ClaimFormFields } from './insurance-claim/ClaimFormFields';
-import { useInsuranceClaimForm } from '@/hooks/useInsuranceClaimForm';
 
 export * from './insurance-claim/types';
 
@@ -33,16 +33,14 @@ export function InsuranceClaimForm({
   const [isEligible, setIsEligible] = useState<boolean | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslations();
 
   const {
     values,
-    error,
-    loading,
-    isCheckingEligibility: hookIsCheckingEligibility,
-    isEligible: hookIsEligible,
-    selectedFile: hookSelectedFile,
-    filePreview: hookFilePreview,
+    errors,
+    submitError,
+    isSubmitting: loading,
     setFieldValue,
     setSubmitError,
     handleSubmit: submitForm,
@@ -76,17 +74,6 @@ export function InsuranceClaimForm({
         data?.claim?.claim_id ?? data?.claim?.id ?? CLAIM_ID_FALLBACK;
       onSuccess(claimId);
     },
-  });
-
-  const {
-    setFileError: setHookFileError,
-    handleFileSelect: hookHandleFileSelect,
-    handleSubmit: hookHandleSubmit,
-  } = useInsuranceClaimForm({
-    transactionId,
-    insuranceId,
-    onSuccess,
-    onCancel,
   });
 
   const error = fileError || submitError || errors.reason;
